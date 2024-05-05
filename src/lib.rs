@@ -192,6 +192,17 @@ pub struct ChannelVarset {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
+pub struct ChannelHangupRequest {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub soft: Option<bool>,
+    pub cause: i32,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
 pub struct Channel {
     pub id: String,
     pub name: String,
@@ -230,4 +241,5 @@ pub enum Event {
     ChannelCreated(ChannelCreated),
     ChannelDestroyed(ChannelDestroyed),
     ChannelVarset(ChannelVarset),
+    ChannelHangupRequest(ChannelHangupRequest),
 }
