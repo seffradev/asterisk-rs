@@ -139,3 +139,51 @@ pub struct Client {
     pub password: String,
     pub app_name: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct StasisStart {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub args: Vec<String>,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct Channel {
+    pub id: String,
+    pub name: String,
+    pub state: String,
+    pub protocol_id: String,
+    pub caller: Caller,
+    pub connected: Caller,
+    pub accountcode: String,
+    pub dialplan: Dialplan,
+    pub creationtime: String,
+    pub language: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct Caller {
+    pub name: String,
+    pub number: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct Dialplan {
+    pub context: String,
+    pub exten: String,
+    pub priority: i32,
+    pub app_name: String,
+    pub app_data: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
+pub enum Event {
+    StasisStart(StasisStart),
+}
