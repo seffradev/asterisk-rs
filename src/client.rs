@@ -1,5 +1,5 @@
-use crate::Result;
 use crate::AriError;
+use crate::Result;
 use tracing::{event, span, Level};
 
 impl ClientBuilder<Disconnected> {
