@@ -74,7 +74,7 @@ impl ClientBuilder<Connected> {
         };
 
         event!(Level::TRACE, "Using host '{}'", host);
-let port = url.port().unwrap_or(8088);
+        let port = url.port().unwrap_or(8088);
         event!(Level::TRACE, "Using port {}", port);
 
         let scheme = match url.scheme() {
