@@ -122,6 +122,7 @@ pub struct Disconnected {
 pub struct Connected(Client);
 
 impl Client {
+    #[allow(clippy::new_ret_no_self)]
     pub fn new() -> ClientBuilder<Disconnected> {
         ClientBuilder {
             data: Disconnected {
