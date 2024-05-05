@@ -152,6 +152,15 @@ pub struct StasisStart {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
+pub struct StasisEnd {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
 pub struct Channel {
     pub id: String,
     pub name: String,
@@ -186,4 +195,5 @@ pub struct Dialplan {
 #[serde(tag = "type")]
 pub enum Event {
     StasisStart(StasisStart),
+    StasisEnd(StasisEnd),
 }
