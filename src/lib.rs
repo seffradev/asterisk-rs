@@ -170,6 +170,17 @@ pub struct ChannelCreated {
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
+pub struct ChannelDestroyed {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub cause: i32,
+    pub cause_txt: String,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
 pub struct Channel {
     pub id: String,
     pub name: String,
@@ -206,4 +217,5 @@ pub enum Event {
     StasisStart(StasisStart),
     StasisEnd(StasisEnd),
     ChannelCreated(ChannelCreated),
+    ChannelDestroyed(ChannelDestroyed),
 }
