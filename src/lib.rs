@@ -1,10 +1,13 @@
 use chrono::DateTime;
 use derive_more::Display;
+use device::DeviceStateChanged;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tracing::{event, span, Level};
 
 type Result<T> = std::result::Result<T, AriError>;
+pub mod device;
+
 
 impl From<url::ParseError> for AriError {
     fn from(err: url::ParseError) -> Self {
@@ -252,22 +255,6 @@ pub struct Dialplan {
     pub priority: i32,
     pub app_name: String,
     pub app_data: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct DeviceStateChanged {
-    pub application: String,
-    pub timestamp: DateTime<chrono::Utc>,
-    pub device_state: DeviceState,
-    pub asterisk_id: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct DeviceState {
-    pub name: String,
-    pub state: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
