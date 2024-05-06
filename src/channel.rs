@@ -1,15 +1,15 @@
+use crate::Result;
 use crate::{
-    client::{ClientBuilder, ClientProps, Connected},
+    client::{Client, ClientBuilder, Connected},
     playback::Playback,
     recording::Recording,
     rtp_stat::RtpStat,
     variable::Variable,
 };
-use crate::{Handler, Result};
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 
-impl ClientProps {
+impl Client {
     pub async fn list_channels(&self) -> Result<Vec<Channel>> {
         let url = format!(
             "{}/channels?api_key={}:{}",
@@ -134,48 +134,75 @@ impl ClientProps {
 }
 
 impl ClientBuilder<Connected> {
-    pub fn on_stasis_start(mut self, f: Handler<StasisStart>) -> Self {
-        self.data.0.handlers.on_stasis_start = Some(f);
+    pub fn on_stasis_start<F>(mut self, f: F) -> Self
+    where
+        F: Fn(StasisStart) + 'static,
+    {
+        self.data.0.on_stasis_start = Some(Box::new(f));
         self
     }
 
-    pub fn on_stasis_end(mut self, f: Handler<StasisEnd>) -> Self {
-        self.data.0.handlers.on_stasis_end = Some(f);
+    pub fn on_stasis_end<F>(mut self, f: F) -> Self
+    where
+        F: Fn(StasisEnd) + 'static,
+    {
+        self.data.0.on_stasis_end = Some(Box::new(f));
         self
     }
 
-    pub fn on_channel_created(mut self, f: Handler<ChannelCreated>) -> Self {
-        self.data.0.handlers.on_channel_created = Some(f);
+    pub fn on_channel_created<F>(mut self, f: F) -> Self
+    where
+        F: Fn(ChannelCreated) + 'static,
+    {
+        self.data.0.on_channel_created = Some(Box::new(f));
         self
     }
 
-    pub fn on_channel_destroyed(mut self, f: Handler<ChannelDestroyed>) -> Self {
-        self.data.0.handlers.on_channel_destroyed = Some(f);
+    pub fn on_channel_destroyed<F>(mut self, f: F) -> Self
+    where
+        F: Fn(ChannelDestroyed) + 'static,
+    {
+        self.data.0.on_channel_destroyed = Some(Box::new(f));
         self
     }
 
-    pub fn on_channel_varset(mut self, f: Handler<ChannelVarset>) -> Self {
-        self.data.0.handlers.on_channel_varset = Some(f);
+    pub fn on_channel_varset<F>(mut self, f: F) -> Self
+    where
+        F: Fn(ChannelVarset) + 'static,
+    {
+        self.data.0.on_channel_varset = Some(Box::new(f));
         self
     }
 
-    pub fn on_channel_hangup_request(mut self, f: Handler<ChannelHangupRequest>) -> Self {
-        self.data.0.handlers.on_channel_hangup_request = Some(f);
+    pub fn on_channel_hangup_request<F>(mut self, f: F) -> Self
+    where
+        F: Fn(ChannelHangupRequest) + 'static,
+    {
+        self.data.0.on_channel_hangup_request = Some(Box::new(f));
         self
     }
 
-    pub fn on_channel_dialplan(mut self, f: Handler<ChannelDialplan>) -> Self {
-        self.data.0.handlers.on_channel_dialplan = Some(f);
+    pub fn on_channel_dialplan<F>(mut self, f: F) -> Self
+    where
+        F: Fn(ChannelDialplan) + 'static,
+    {
+        self.data.0.on_channel_dialplan = Some(Box::new(f));
         self
     }
 
-    pub fn on_channel_state_change(mut self, f: Handler<ChannelStateChange>) -> Self {
-        self.data.0.handlers.on_channel_state_change = Some(f);
+    pub fn on_channel_state_change<F>(mut self, f: F) -> Self
+    where
+        F: Fn(ChannelStateChange) + 'static,
+    {
+        self.data.0.on_channel_state_change = Some(Box::new(f));
         self
     }
 
-    pub fn on_channel_dtmf_received(mut self, f: Handler<ChannelDtmfReceived>) -> Self {
-        self.data.0.handlers.on_channel_dtmf_received = Some(f);
+    pub fn on_channel_dtmf_received<F>(mut self, f: F) -> Self
+    where
+        F: Fn(ChannelDtmfReceived) + 'static,
+    {
+        self.data.0.on_channel_dtmf_received = Some(Box::new(f));
         self
     }
 }
