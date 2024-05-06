@@ -55,7 +55,7 @@ impl ClientBuilder<Disconnected> {
 }
 
 impl ClientBuilder<Connected> {
-    pub fn build(self) -> Result<Client> {
+    pub fn build(mut self) -> Result<Client> {
         let span = span!(Level::INFO, "build");
         let _guard = span.enter();
 
@@ -95,11 +95,7 @@ impl ClientBuilder<Connected> {
             scheme, host, port, self.data.0.app_name, self.data.0.username, self.data.0.password
         );
 
-        event!(
-            Level::INFO,
-            "Connecting to WebSocket server with URL '{}'",
-            ws_url
-        );
+        self.data.0.ws_url = Url::parse(&ws_url)?;
 
         Ok(self.data.0)
     }
