@@ -1,6 +1,5 @@
 use channel::{
-    ChannelCreated, ChannelDestroyed, ChannelDialplan, ChannelHangupRequest, ChannelStateChange,
-    ChannelVarset, StasisEnd, StasisStart,
+    ChannelCreated, ChannelDestroyed, ChannelDialplan, ChannelDtmfReceived, ChannelHangupRequest, ChannelStateChange, ChannelVarset, StasisEnd, StasisStart
 };
 use derive_more::Display;
 use device::DeviceStateChanged;
@@ -48,6 +47,7 @@ pub enum Event {
     ChannelHangupRequest(ChannelHangupRequest),
     ChannelDialplan(ChannelDialplan),
     ChannelStateChange(ChannelStateChange),
+    ChannelDtmfReceived(ChannelDtmfReceived),
     DeviceStateChanged(DeviceStateChanged),
     #[serde(other)]
     Unknown,

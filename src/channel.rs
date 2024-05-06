@@ -67,6 +67,14 @@ impl ClientBuilder<Connected> {
         self.data.0.on_channel_state_change = Some(Box::new(f));
         self
     }
+
+    pub fn on_channel_dtmf_received<F>(mut self, f: F) -> Self
+    where
+        F: Fn(&Client, ChannelDtmfReceived) + 'static,
+    {
+        self.data.0.on_channel_dtmf_received = Some(Box::new(f));
+        self
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -145,6 +153,17 @@ pub struct ChannelDialplan {
 #[serde(rename_all = "snake_case")]
 pub struct ChannelStateChange {
     pub timestamp: DateTime<chrono::Utc>,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelDtmfReceived {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub digit: String,
+    pub duration_ms: i32,
     pub channel: Channel,
     pub asterisk_id: String,
     pub application: String,

@@ -209,6 +209,12 @@ impl Client {
                     f(self, event);
                 }
             }
+            Event::ChannelDtmfReceived(event) => {
+                if let Some(f) = &self.on_channel_dtmf_received {
+                    event!(Level::TRACE, "ChannelDtmfReceived: {:?}", event);
+                    f(self, event);
+                }
+            }
             Event::DeviceStateChanged(event) => {
                 if let Some(f) = &self.on_device_state_changed {
                     event!(Level::TRACE, "DeviceStateChanged: {:?}", event);
@@ -313,6 +319,7 @@ impl Default for Client {
             on_channel_hangup_request: None,
             on_channel_dialplan: None,
             on_channel_state_change: None,
+            on_channel_dtmf_received: None,
             on_device_state_changed: None,
         }
     }
@@ -332,5 +339,6 @@ pub struct Client {
     pub on_channel_hangup_request: Option<Box<dyn Fn(&Client, ChannelHangupRequest)>>,
     pub on_channel_dialplan: Option<Box<dyn Fn(&Client, ChannelDialplan)>>,
     pub on_channel_state_change: Option<Box<dyn Fn(&Client, ChannelStateChange)>>,
+    pub on_channel_dtmf_received: Option<Box<dyn Fn(&Client, ChannelDtmfReceived)>>,
     pub on_device_state_changed: Option<Box<dyn Fn(&Client, DeviceStateChanged)>>,
 }
