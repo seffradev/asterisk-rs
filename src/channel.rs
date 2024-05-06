@@ -1,7 +1,132 @@
+use crate::Result;
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 
-use crate::client::{Client, ClientBuilder, Connected};
+use crate::{
+    client::{Client, ClientBuilder, Connected},
+    playback::Playback,
+    recording::Recording,
+    rtp_stat::RtpStat,
+    variable::Variable,
+};
+
+impl Client {
+    pub fn list_channels(&self) -> Result<Vec<Channel>> {
+        unimplemented!()
+    }
+
+    pub fn originate_channel(&self) -> Result<Channel> {
+        unimplemented!()
+    }
+
+    pub fn create_channel(&self) -> Result<Channel> {
+        unimplemented!()
+    }
+
+    pub fn get_channel(&self, _channel_id: &str) -> Result<Channel> {
+        unimplemented!()
+    }
+
+    pub fn originate_channel_with_id(&self, _channel_id: &str) -> Result<Channel> {
+        unimplemented!()
+    }
+
+    pub fn hangup_channel(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn continue_in_dialplan(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn move_channel(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn answer_channel(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn ring_channel(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn send_dtmf(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn mute_channel(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn unmute_channel(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn hold_channel(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn unhold_channel(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn start_moh(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn stop_moh(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn start_silence(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn stop_silence(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn play_media(&self, _channel_id: &str) -> Result<Playback> {
+        unimplemented!()
+    }
+
+    pub fn play_media_with_id(&self, _channel_id: &str) -> Result<Playback> {
+        unimplemented!()
+    }
+
+    pub fn record_channel(&self, _channel_id: &str) -> Result<Recording> {
+        unimplemented!()
+    }
+
+    pub fn get_channel_variable(&self, _channel_id: &str) -> Result<Variable> {
+        unimplemented!()
+    }
+
+    pub fn set_channel_variable(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn snoop(&self, _channel_id: &str) -> Result<Channel> {
+        unimplemented!()
+    }
+
+    pub fn snoop_with_id(&self, _channel_id: &str) -> Result<Channel> {
+        unimplemented!()
+    }
+
+    pub fn dial(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn get_rtp_stat(&self, _channel_id: &str) -> Result<RtpStat> {
+        unimplemented!()
+    }
+
+    pub fn start_external_media(&self, _channel_id: &str) -> Result<Channel> {
+        unimplemented!()
+    }
+}
 
 impl ClientBuilder<Connected> {
     pub fn on_stasis_start<F>(mut self, f: F) -> Self

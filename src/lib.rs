@@ -9,6 +9,10 @@ use thiserror::Error;
 pub mod channel;
 pub mod client;
 pub mod device;
+pub mod playback;
+pub mod recording;
+pub mod variable;
+pub mod rtp_stat;
 
 pub type Result<T> = std::result::Result<T, AriError>;
 
