@@ -296,7 +296,7 @@ impl Client {
 impl Default for Client {
     fn default() -> Self {
         Self {
-            url: match Url::parse("http://localhost:8088") {
+            url: match Url::parse("http://localhost:8088/ari") {
                 Ok(url) => url,
                 Err(_) => panic!("Failed to parse URL"),
             },
