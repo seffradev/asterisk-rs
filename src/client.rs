@@ -91,7 +91,7 @@ impl ClientBuilder<Connected> {
         };
 
         let ws_url = format!(
-            "{}://{}:{}/ari/events?app={}&api_key={}:{}?subscribeAll=true",
+            "{}://{}:{}/ari/events?app={}&api_key={}:{}&subscribeAll=true",
             scheme, host, port, self.data.0.app_name, self.data.0.username, self.data.0.password
         );
 
@@ -257,7 +257,7 @@ impl Default for Client {
                 Ok(url) => url,
                 Err(_) => panic!("Failed to parse URL"),
             },
-            ws_url: match Url::parse("ws://localhost:8088/ari/events?app=ari&api_key=asterisk:asterisk?subscribeAll=true") {
+            ws_url: match Url::parse("ws://localhost:8088/ari/events?app=ari&api_key=asterisk:asterisk&subscribeAll=true") {
                 Ok(url) => url,
                 Err(_) => panic!("Failed to parse URL"),
             },
