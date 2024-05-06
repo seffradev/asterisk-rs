@@ -54,6 +54,7 @@ dependencies = [
  "httparse",
  "hyper",
  "hyper-util",
+ "rand",
  "serde",
  "serde_json",
  "thiserror",

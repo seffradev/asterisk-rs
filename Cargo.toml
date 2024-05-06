@@ -23,6 +23,7 @@ tracing = { version = "0.1.40", features = ["attributes"] }
 tungstenite = "0.21.0"
 url = "2.5.0"
 futures-channel = "0.3.30"
+rand = "0.8.5"
 
 [dev-dependencies]
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
