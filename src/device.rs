@@ -1,12 +1,12 @@
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 
-use crate::client::{ClientBuilder, Connected};
+use crate::client::{Client, ClientBuilder, Connected};
 
 impl ClientBuilder<Connected> {
     pub fn on_device_state_changed<F>(mut self, f: F) -> Self
     where
-        F: Fn(DeviceStateChanged) + 'static,
+        F: Fn(&Client, DeviceStateChanged) + 'static,
     {
         self.data.0.on_device_state_changed = Some(Box::new(f));
         self
