@@ -1,12 +1,8 @@
-use crate::channel::{
-    ChannelCreated, ChannelDestroyed, ChannelDialplan, ChannelDtmfReceived, ChannelHangupRequest,
-    ChannelStateChange, ChannelVarset, StasisEnd, StasisStart,
-};
-use crate::device::DeviceStateChanged;
-use crate::{Event, HandlerOption, Result};
+use crate::{Event, Result};
 use futures_util::{SinkExt, StreamExt};
 use rand::Rng;
 use std::time::Duration;
+use tokio::sync::mpsc::Sender;
 use tokio::time::interval;
 use tokio_tungstenite::connect_async;
 use tracing::{event, span, Level};
@@ -51,6 +47,11 @@ impl ClientBuilder<Disconnected> {
 }
 
 impl ClientBuilder<Connected> {
+    pub fn handler(mut self, tx: Sender<Event>) -> Self {
+        self.data.0.ws_channel = Some(tx);
+        self
+    }
+
     pub fn build(mut self) -> Result<Client> {
         let span = span!(Level::INFO, "build");
         let _guard = span.enter();
@@ -161,69 +162,12 @@ impl Client {
             }
         };
 
-        match event {
-            Event::StasisStart(event) => {
-                if let Some(f) = &self.on_stasis_start {
-                    event!(Level::TRACE, "StasisStart: {:?}", event);
-                    f(event);
-                }
-            }
-            Event::StasisEnd(event) => {
-                if let Some(f) = &self.on_stasis_end {
-                    event!(Level::TRACE, "StasisEnd: {:?}", event);
-                    f(event);
-                }
-            }
-            Event::ChannelCreated(event) => {
-                if let Some(f) = &self.on_channel_created {
-                    event!(Level::TRACE, "ChannelCreated: {:?}", event);
-                    f(event);
-                }
-            }
-            Event::ChannelDestroyed(event) => {
-                if let Some(f) = &self.on_channel_destroyed {
-                    event!(Level::TRACE, "ChannelDestroyed: {:?}", event);
-                    f(event);
-                }
-            }
-            Event::ChannelVarset(event) => {
-                if let Some(f) = &self.on_channel_varset {
-                    event!(Level::TRACE, "ChannelVarset: {:?}", event);
-                    f(event);
-                }
-            }
-            Event::ChannelHangupRequest(event) => {
-                if let Some(f) = &self.on_channel_hangup_request {
-                    event!(Level::TRACE, "ChannelHangupRequest: {:?}", event);
-                    f(event);
-                }
-            }
-            Event::ChannelDialplan(event) => {
-                if let Some(f) = &self.on_channel_dialplan {
-                    event!(Level::TRACE, "ChannelDialplan: {:?}", event);
-                    f(event);
-                }
-            }
-            Event::ChannelStateChange(event) => {
-                if let Some(f) = &self.on_channel_state_change {
-                    event!(Level::TRACE, "ChannelStateChange: {:?}", event);
-                    f(event);
-                }
-            }
-            Event::ChannelDtmfReceived(event) => {
-                if let Some(f) = &self.on_channel_dtmf_received {
-                    event!(Level::TRACE, "ChannelDtmfReceived: {:?}", event);
-                    f(event);
-                }
-            }
-            Event::DeviceStateChanged(event) => {
-                if let Some(f) = &self.on_device_state_changed {
-                    event!(Level::TRACE, "DeviceStateChanged: {:?}", event);
-                    f(event);
-                }
-            }
-            Event::Unknown => {
-                event!(Level::INFO, "Unknown event: {}", data);
+        event!(Level::TRACE, "Event parsed successfully");
+
+        if let Some(tx) = &self.ws_channel {
+            event!(Level::INFO, "Sending event to channel");
+            if let Err(e) = tx.try_send(event) {
+                event!(Level::ERROR, "Error sending event: {}", e);
             }
         }
     }
@@ -312,16 +256,7 @@ impl Default for Client {
             username: "asterisk".to_string(),
             password: "asterisk".to_string(),
             app_name: "ari".to_string(),
-            on_stasis_start: None,
-            on_stasis_end: None,
-            on_channel_created: None,
-            on_channel_destroyed: None,
-            on_channel_varset: None,
-            on_channel_hangup_request: None,
-            on_channel_dialplan: None,
-            on_channel_state_change: None,
-            on_channel_dtmf_received: None,
-            on_device_state_changed: None,
+            ws_channel: None,
         }
     }
 }
@@ -332,14 +267,5 @@ pub struct Client {
     pub username: String,
     pub password: String,
     pub app_name: String,
-    pub on_stasis_start: HandlerOption<StasisStart>,
-    pub on_stasis_end: HandlerOption<StasisEnd>,
-    pub on_channel_created: HandlerOption<ChannelCreated>,
-    pub on_channel_destroyed: HandlerOption<ChannelDestroyed>,
-    pub on_channel_varset: HandlerOption<ChannelVarset>,
-    pub on_channel_hangup_request: HandlerOption<ChannelHangupRequest>,
-    pub on_channel_dialplan: HandlerOption<ChannelDialplan>,
-    pub on_channel_state_change: HandlerOption<ChannelStateChange>,
-    pub on_channel_dtmf_received: HandlerOption<ChannelDtmfReceived>,
-    pub on_device_state_changed: HandlerOption<DeviceStateChanged>,
+    pub ws_channel: Option<Sender<Event>>,
 }

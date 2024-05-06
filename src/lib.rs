@@ -6,6 +6,7 @@ use derive_more::Display;
 use device::DeviceStateChanged;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
+use tokio::task::JoinError;
 
 pub mod channel;
 pub mod client;
@@ -16,8 +17,6 @@ pub mod rtp_stat;
 pub mod variable;
 
 pub type Result<T> = std::result::Result<T, AriError>;
-pub type Handler<T> = Box<dyn Fn(T) + 'static>;
-pub type HandlerOption<T> = Option<Handler<T>>;
 
 impl From<url::ParseError> for AriError {
     fn from(err: url::ParseError) -> Self {
@@ -43,11 +42,18 @@ impl From<reqwest::Error> for AriError {
     }
 }
 
+impl From<JoinError> for AriError {
+    fn from(err: JoinError) -> Self {
+        AriError::JoinError(err)
+    }
+}
+
 #[derive(Debug, Display, Error)]
 pub enum AriError {
     UrlParseError(url::ParseError),
     TungsteniteError(tungstenite::Error),
     ReqwestError(reqwest::Error),
+    JoinError(JoinError),
 }
 
 #[derive(Serialize, Deserialize, Debug)]

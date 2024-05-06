@@ -1,15 +1,6 @@
+use crate::client::Client;
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
-
-use crate::{client::{Client, ClientBuilder, Connected}, Handler};
-
-impl ClientBuilder<Connected> {
-    pub fn on_device_state_changed(mut self, f: Handler<DeviceStateChanged>) -> Self
-    {
-        self.data.0.on_device_state_changed = Some(f);
-        self
-    }
-}
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
