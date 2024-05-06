@@ -25,11 +25,16 @@ impl From<tungstenite::Error> for AriError {
     }
 }
 
+impl From<tungstenite::error::UrlError> for AriError {
+    fn from(err: tungstenite::error::UrlError) -> Self {
+        AriError::TungsteniteError(err.into())
+    }
+}
+
 #[derive(Debug, Display, Error)]
 pub enum AriError {
     UrlParseError(url::ParseError),
     TungsteniteError(tungstenite::Error),
-    UnsupportedScheme,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

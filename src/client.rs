@@ -7,7 +7,6 @@ use crate::channel::ChannelVarset;
 use crate::channel::StasisEnd;
 use crate::channel::StasisStart;
 use crate::device::DeviceStateChanged;
-use crate::AriError;
 use crate::Event;
 use crate::Result;
 use futures_util::future;
@@ -85,7 +84,7 @@ impl ClientBuilder<Connected> {
             "https" => "wss",
             _ => {
                 event!(Level::ERROR, "Unsupported scheme '{}'", url.scheme());
-                return Err(AriError::UnsupportedScheme);
+                return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
             }
         };
 
