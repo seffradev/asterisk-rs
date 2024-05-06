@@ -32,6 +32,11 @@ impl ClientBuilder<Disconnected> {
         self
     }
 
+    pub fn app_name(mut self, app_name: &str) -> Self {
+        self.data.app_name = app_name.to_string();
+        self
+    }
+
     pub fn connect(self) -> Result<ClientBuilder<Connected>> {
         let span = span!(Level::INFO, "connect");
         let _guard = span.enter();
