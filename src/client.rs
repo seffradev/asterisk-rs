@@ -14,11 +14,13 @@ use futures_util::pin_mut;
 use futures_util::StreamExt;
 use tokio_tungstenite::connect_async;
 use tracing::{event, span, Level};
+use url::Url;
 
 impl ClientBuilder<Disconnected> {
-    pub fn url(mut self, url: &str) -> Self {
-        self.data.url = url.to_string();
-        self
+    pub fn url(mut self, url: &str) -> Result<Self> {
+        event!(Level::INFO, "Validating URL '{}'", self.data.url);
+        self.data.url = url::Url::parse(url)?;
+        Ok(self)
     }
 
     pub fn username(mut self, username: &str) -> Self {
@@ -36,14 +38,11 @@ impl ClientBuilder<Disconnected> {
         self
     }
 
-    pub fn connect(self) -> Result<ClientBuilder<Connected>> {
+    pub fn connect(self) -> ClientBuilder<Connected> {
         let span = span!(Level::INFO, "connect");
         let _guard = span.enter();
 
-        event!(Level::INFO, "Validating URL '{}'", self.data.url);
-        url::Url::parse(&self.data.url)?;
-
-        Ok(ClientBuilder {
+        ClientBuilder {
             data: Connected(Client {
                 url: self.data.url,
                 username: self.data.username,
@@ -51,7 +50,7 @@ impl ClientBuilder<Disconnected> {
                 app_name: self.data.app_name,
                 ..Default::default()
             }),
-        })
+        }
     }
 }
 
@@ -66,8 +65,7 @@ impl ClientBuilder<Connected> {
             self.data.0.url
         );
 
-        let url = url::Url::parse(&self.data.0.url)?;
-        let host = match url.host_str() {
+        let host = match self.data.0.url.host_str() {
             Some(host) => host,
             None => {
                 event!(Level::ERROR, "No host found in URL '{}'", self.data.0.url);
@@ -76,14 +74,18 @@ impl ClientBuilder<Connected> {
         };
 
         event!(Level::TRACE, "Using host '{}'", host);
-        let port = url.port().unwrap_or(8088);
+        let port = self.data.0.url.port().unwrap_or(8088);
         event!(Level::TRACE, "Using port {}", port);
 
-        let scheme = match url.scheme() {
+        let scheme = match self.data.0.url.scheme() {
             "http" => "ws",
             "https" => "wss",
             _ => {
-                event!(Level::ERROR, "Unsupported scheme '{}'", url.scheme());
+                event!(
+                    Level::ERROR,
+                    "Unsupported scheme '{}'",
+                    self.data.0.url.scheme()
+                );
                 return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
             }
         };
@@ -113,9 +115,22 @@ pub trait State {}
 impl State for Disconnected {}
 impl State for Connected {}
 
-#[derive(Default)]
+impl Default for Disconnected {
+    fn default() -> Self {
+        Self {
+            url: match Url::parse("http://localhost:8088") {
+                Ok(url) => url,
+                Err(_) => panic!("Failed to parse URL"),
+            },
+            username: "asterisk".to_string(),
+            password: "asterisk".to_string(),
+            app_name: "ari".to_string(),
+        }
+    }
+}
+
 pub struct Disconnected {
-    url: String,
+    url: Url,
     username: String,
     password: String,
     app_name: String,
@@ -239,10 +254,36 @@ impl Client {
     }
 }
 
-#[derive(Default)]
+impl Default for Client {
+    fn default() -> Self {
+        Self {
+            url: match Url::parse("http://localhost:8088") {
+                Ok(url) => url,
+                Err(_) => panic!("Failed to parse URL"),
+            },
+            ws_url: match Url::parse("ws://localhost:8088/ari/events?app=ari&api_key=asterisk:asterisk?subscribeAll=true") {
+                Ok(url) => url,
+                Err(_) => panic!("Failed to parse URL"),
+            },
+            username: "asterisk".to_string(),
+            password: "asterisk".to_string(),
+            app_name: "ari".to_string(),
+            on_stasis_start: None,
+            on_stasis_end: None,
+            on_channel_created: None,
+            on_channel_destroyed: None,
+            on_channel_varset: None,
+            on_channel_hangup_request: None,
+            on_channel_dialplan: None,
+            on_channel_state_change: None,
+            on_device_state_changed: None,
+        }
+    }
+}
+
 pub struct Client {
-    pub url: String,
-    pub ws_url: String,
+    pub url: Url,
+    pub ws_url: Url,
     pub username: String,
     pub password: String,
     pub app_name: String,
