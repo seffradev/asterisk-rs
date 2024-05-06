@@ -144,7 +144,7 @@ impl Client {
     pub fn handle_message(&self, message: Vec<u8>) {
         let span = span!(Level::INFO, "handle_message");
         let _guard = span.enter();
-        let data = String::from_utf8(message.to_vec()).unwrap();
+        let data = String::from_utf8(message).unwrap();
 
         event!(Level::TRACE, "Parsing event");
 
