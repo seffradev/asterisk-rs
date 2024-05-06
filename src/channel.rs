@@ -1,10 +1,6 @@
 use crate::Result;
 use crate::{
-    client::{Client, ClientBuilder, Connected},
-    playback::Playback,
-    recording::Recording,
-    rtp_stat::RtpStat,
-    variable::Variable,
+    client::Client, playback::Playback, recording::Recording, rtp_stat::RtpStat, variable::Variable,
 };
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};

@@ -147,6 +147,7 @@ impl Client {
         let data = String::from_utf8(message.to_vec()).unwrap();
 
         event!(Level::TRACE, "Parsing event");
+
         let event: Event = match serde_json::from_str(&data) {
             Ok(data) => data,
             Err(e) => {
