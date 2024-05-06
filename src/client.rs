@@ -1,6 +1,9 @@
+use std::time::Duration;
+
 use crate::channel::ChannelCreated;
 use crate::channel::ChannelDestroyed;
 use crate::channel::ChannelDialplan;
+use crate::channel::ChannelDtmfReceived;
 use crate::channel::ChannelHangupRequest;
 use crate::channel::ChannelStateChange;
 use crate::channel::ChannelVarset;
@@ -9,9 +12,10 @@ use crate::channel::StasisStart;
 use crate::device::DeviceStateChanged;
 use crate::Event;
 use crate::Result;
-use futures_util::future;
-use futures_util::pin_mut;
+use futures_util::SinkExt;
 use futures_util::StreamExt;
+use rand::Rng;
+use tokio::time::interval;
 use tokio_tungstenite::connect_async;
 use tracing::{event, span, Level};
 use url::Url;
@@ -144,13 +148,84 @@ impl Client {
         }
     }
 
+    pub fn handle_message(&self, message: Vec<u8>) {
+        let data = String::from_utf8(message.to_vec()).unwrap();
+
+        let event: Event = match serde_json::from_str(&data) {
+            Ok(data) => data,
+            Err(e) => {
+                event!(Level::ERROR, "Error: {}", e);
+                event!(Level::ERROR, "Data: {}", data);
+                return;
+            }
+        };
+
+        match event {
+            Event::StasisStart(event) => {
+                if let Some(f) = &self.on_stasis_start {
+                    event!(Level::TRACE, "StasisStart: {:?}", event);
+                    f(self, event);
+                }
+            }
+            Event::StasisEnd(event) => {
+                if let Some(f) = &self.on_stasis_end {
+                    event!(Level::TRACE, "StasisEnd: {:?}", event);
+                    f(self, event);
+                }
+            }
+            Event::ChannelCreated(event) => {
+                if let Some(f) = &self.on_channel_created {
+                    event!(Level::TRACE, "ChannelCreated: {:?}", event);
+                    f(self, event);
+                }
+            }
+            Event::ChannelDestroyed(event) => {
+                if let Some(f) = &self.on_channel_destroyed {
+                    event!(Level::TRACE, "ChannelDestroyed: {:?}", event);
+                    f(self, event);
+                }
+            }
+            Event::ChannelVarset(event) => {
+                if let Some(f) = &self.on_channel_varset {
+                    event!(Level::TRACE, "ChannelVarset: {:?}", event);
+                    f(self, event);
+                }
+            }
+            Event::ChannelHangupRequest(event) => {
+                if let Some(f) = &self.on_channel_hangup_request {
+                    event!(Level::TRACE, "ChannelHangupRequest: {:?}", event);
+                    f(self, event);
+                }
+            }
+            Event::ChannelDialplan(event) => {
+                if let Some(f) = &self.on_channel_dialplan {
+                    event!(Level::TRACE, "ChannelDialplan: {:?}", event);
+                    f(self, event);
+                }
+            }
+            Event::ChannelStateChange(event) => {
+                if let Some(f) = &self.on_channel_state_change {
+                    event!(Level::TRACE, "ChannelStateChange: {:?}", event);
+                    f(self, event);
+                }
+            }
+            Event::DeviceStateChanged(event) => {
+                if let Some(f) = &self.on_device_state_changed {
+                    event!(Level::TRACE, "DeviceStateChanged: {:?}", event);
+                    f(self, event);
+                }
+            }
+            Event::Unknown => {
+                event!(Level::INFO, "Unknown event: {}", data);
+            }
+        }
+    }
+
     pub async fn run(&self) -> Result<()> {
         let span = span!(Level::INFO, "run");
         let _guard = span.enter();
 
         event!(Level::INFO, "Connecting to Asterisk");
-
-        let (_, rx) = futures_channel::mpsc::unbounded();
 
         let (ws_stream, _) = match connect_async(&self.ws_url).await {
             Ok(stream) => stream,
@@ -165,86 +240,52 @@ impl Client {
             "WebSocket handshake has been successfully completed"
         );
 
-        let (write, read) = ws_stream.split();
+        let (mut ws_sender, mut ws_receiver) = ws_stream.split();
 
-        let ws_out = rx.map(Ok).forward(write);
-        let ws_in = read.for_each(|message| async {
-            let data = message.unwrap().into_data();
+        let mut interval = interval(Duration::from_millis(5000));
 
-            let data = String::from_utf8(data.to_vec()).unwrap();
-
-            let event: Event = match serde_json::from_str(&data) {
-                Ok(data) => data,
-                Err(e) => {
-                    event!(Level::ERROR, "Error: {}", e);
-                    event!(Level::ERROR, "Data: {}", data);
-                    return;
-                }
-            };
-
-            match event {
-                Event::StasisStart(event) => {
-                    if let Some(f) = &self.on_stasis_start {
-                        event!(Level::TRACE, "StasisStart: {:?}", event);
-                        f(event);
+        loop {
+            tokio::select! {
+                message = ws_receiver.next() => {
+                    match message {
+                        Some(message) => {
+                            let message = message?;
+                            match message {
+                                tungstenite::Message::Text(_) => {
+                                    event!(Level::INFO, "Received WebSocket Text");
+                                    self.handle_message(message.into_data());
+                                }
+                                tungstenite::Message::Ping(data) => {
+                                    event!(Level::INFO, "Received WebSocket Ping, sending Pong");
+                                    ws_sender.send(tungstenite::Message::Pong(data)).await?;
+                                }
+                                tungstenite::Message::Pong(_) => {
+                                    event!(Level::INFO, "Received WebSocket Pong");
+                                },
+                                tungstenite::Message::Close(frame) => {
+                                    event!(Level::INFO, "WebSocket closed: {:?}", frame);
+                                    break;
+                                },
+                                _ => {
+                                    event!(Level::INFO, "Unknown WebSocket message");
+                                }
+                            }
+                        }
+                        None => {
+                            event!(Level::INFO, "WebSocket closed");
+                            break;
+                        }
                     }
                 }
-                Event::StasisEnd(event) => {
-                    if let Some(f) = &self.on_stasis_end {
-                        event!(Level::TRACE, "StasisEnd: {:?}", event);
-                        f(event);
-                    }
-                }
-                Event::ChannelCreated(event) => {
-                    if let Some(f) = &self.on_channel_created {
-                        event!(Level::TRACE, "ChannelCreated: {:?}", event);
-                        f(event);
-                    }
-                }
-                Event::ChannelDestroyed(event) => {
-                    if let Some(f) = &self.on_channel_destroyed {
-                        event!(Level::TRACE, "ChannelDestroyed: {:?}", event);
-                        f(event);
-                    }
-                }
-                Event::ChannelVarset(event) => {
-                    if let Some(f) = &self.on_channel_varset {
-                        event!(Level::TRACE, "ChannelVarset: {:?}", event);
-                        f(event);
-                    }
-                }
-                Event::ChannelHangupRequest(event) => {
-                    if let Some(f) = &self.on_channel_hangup_request {
-                        event!(Level::TRACE, "ChannelHangupRequest: {:?}", event);
-                        f(event);
-                    }
-                }
-                Event::ChannelDialplan(event) => {
-                    if let Some(f) = &self.on_channel_dialplan {
-                        event!(Level::TRACE, "ChannelDialplan: {:?}", event);
-                        f(event);
-                    }
-                }
-                Event::ChannelStateChange(event) => {
-                    if let Some(f) = &self.on_channel_state_change {
-                        event!(Level::TRACE, "ChannelStateChange: {:?}", event);
-                        f(event);
-                    }
-                }
-                Event::DeviceStateChanged(event) => {
-                    if let Some(f) = &self.on_device_state_changed {
-                        event!(Level::TRACE, "DeviceStateChanged: {:?}", event);
-                        f(event);
-                    }
-                }
-                Event::Unknown => {
-                    event!(Level::INFO, "Unknown event: {}", data);
+                _ = interval.tick() => {
+                    // every 5 seconds we are sending ping to keep connection alive
+                    // https://rust-lang-nursery.github.io/rust-cookbook/algorithms/randomness.html
+                    let random_bytes = rand::thread_rng().gen::<[u8; 32]>().to_vec();
+                    let _ = ws_sender.send(tungstenite::Message::Ping(random_bytes)).await;
+                    event!(Level::DEBUG, "ARI connection ping sent");
                 }
             }
-        });
-
-        pin_mut!(ws_in, ws_out);
-        future::select(ws_in, ws_out).await;
+        }
 
         Ok(())
     }
