@@ -152,7 +152,7 @@ impl Client {
 
         let (_, rx) = futures_channel::mpsc::unbounded();
 
-        let (ws_stream, _) = match connect_async(&self.url).await {
+        let (ws_stream, _) = match connect_async(&self.ws_url).await {
             Ok(stream) => stream,
             Err(e) => {
                 event!(Level::ERROR, "Failed to connect to Asterisk: {}", e);
