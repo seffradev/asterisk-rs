@@ -22,7 +22,7 @@ tokio-tungstenite = "0.21.0"
 tracing = { version = "0.1.40", features = ["attributes"] }
 tungstenite = "0.21.0"
 url = "2.5.0"
+futures-channel = "0.3.30"
 
 [dev-dependencies]
-futures-channel = "0.3.30"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
