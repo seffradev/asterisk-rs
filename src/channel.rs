@@ -178,7 +178,7 @@ pub struct ChannelVarset {
     pub timestamp: DateTime<chrono::Utc>,
     pub variable: String,
     pub value: String,
-    pub channel: Channel,
+    pub channel: Option<Channel>,
     pub asterisk_id: String,
     pub application: String,
 }
