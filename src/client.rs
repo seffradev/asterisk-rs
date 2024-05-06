@@ -149,7 +149,10 @@ impl Client {
             }
         };
 
-        event!(Level::INFO, "WebSocket handshake has been successfully completed");
+        event!(
+            Level::INFO,
+            "WebSocket handshake has been successfully completed"
+        );
 
         let (write, read) = ws_stream.split();
 
