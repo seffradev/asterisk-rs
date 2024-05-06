@@ -26,6 +26,8 @@ async fn main() -> Result<()> {
             .build()?,
     );
 
+    let client_clone = Arc::clone(&client);
+
     let join = tokio::spawn(async move {
         trace!("Starting client");
         if let Err(e) = client.run().await {
@@ -34,12 +36,16 @@ async fn main() -> Result<()> {
     });
 
     while let Some(event) = rx.recv().await {
-        trace!("Received event: {:?}", event);
         match event {
             ari_rs::Event::StasisStart(event) => {
                 debug!("Channel ID: {}", event.channel.id);
+                if let Ok(channels) = client_clone.list_channels().await {
+                    for channel in channels{
+                        debug!("Channel ID: {}", channel.id);
+                    }
+                }
             }
-            _ => debug!("Unhandled event: {:?}", event),
+            _ => debug!("Ignore unhandled event"),
         }
     }
 
