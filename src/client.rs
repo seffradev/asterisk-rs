@@ -65,11 +65,7 @@ impl ClientBuilder<Connected> {
         let host = match self.data.0.url.host_str() {
             Some(host) => host,
             None => {
-                event!(
-                    Level::ERROR,
-                    "No host found in URL '{}'",
-                    self.data.0.url
-                );
+                event!(Level::ERROR, "No host found in URL '{}'", self.data.0.url);
                 return Err(url::ParseError::EmptyHost.into());
             }
         };
@@ -93,12 +89,7 @@ impl ClientBuilder<Connected> {
 
         let ws_url = format!(
             "{}://{}:{}/ari/events?app={}&api_key={}:{}&subscribeAll=true",
-            scheme,
-            host,
-            port,
-            self.data.0.app_name,
-            self.data.0.username,
-            self.data.0.password
+            scheme, host, port, self.data.0.app_name, self.data.0.username, self.data.0.password
         );
 
         self.data.0.ws_url = Url::parse(&ws_url)?;
@@ -151,8 +142,11 @@ impl Client {
     }
 
     pub fn handle_message(&self, message: Vec<u8>) {
+        let span = span!(Level::INFO, "handle_message");
+        let _guard = span.enter();
         let data = String::from_utf8(message.to_vec()).unwrap();
 
+        event!(Level::TRACE, "Parsing event");
         let event: Event = match serde_json::from_str(&data) {
             Ok(data) => data,
             Err(e) => {
