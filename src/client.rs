@@ -1,15 +1,12 @@
-use crate::{
-    channel::{
-        ChannelCreatedHandler, ChannelDestroyedHandler, ChannelDialplanHandler,
-        ChannelDtmfReceivedHandler, ChannelHangupRequestHandler, ChannelStateChangeHandler,
-        ChannelVarsetHandler, StasisEndHandler, StasisStartHandler,
-    },
-    device::DeviceStateChangedHandler,
-    Event, Result,
+use crate::channel::{
+    ChannelCreated, ChannelDestroyed, ChannelDialplan, ChannelDtmfReceived, ChannelHangupRequest,
+    ChannelStateChange, ChannelVarset, StasisEnd, StasisStart,
 };
-use futures_util::SinkExt;
-use futures_util::StreamExt;
+use crate::device::DeviceStateChanged;
+use crate::{Event, HandlerOption, Result};
+use futures_util::{SinkExt, StreamExt};
 use rand::Rng;
+use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::interval;
 use tokio_tungstenite::connect_async;
@@ -43,11 +40,14 @@ impl ClientBuilder<Disconnected> {
         let _guard = span.enter();
 
         ClientBuilder {
-            data: Connected(Client {
-                url: self.data.url,
-                username: self.data.username,
-                password: self.data.password,
-                app_name: self.data.app_name,
+            data: Connected(ClientInner {
+                props: ClientProps {
+                    url: self.data.url,
+                    username: self.data.username,
+                    password: self.data.password,
+                    app_name: self.data.app_name,
+                    ..Default::default()
+                },
                 ..Default::default()
             }),
         }
@@ -62,29 +62,29 @@ impl ClientBuilder<Connected> {
         event!(
             Level::TRACE,
             "Using REST API server with URL '{}'",
-            self.data.0.url
+            self.data.0.props.url
         );
 
-        let host = match self.data.0.url.host_str() {
+        let host = match self.data.0.props.url.host_str() {
             Some(host) => host,
             None => {
-                event!(Level::ERROR, "No host found in URL '{}'", self.data.0.url);
+                event!(Level::ERROR, "No host found in URL '{}'", self.data.0.props.url);
                 return Err(url::ParseError::EmptyHost.into());
             }
         };
 
         event!(Level::TRACE, "Using host '{}'", host);
-        let port = self.data.0.url.port().unwrap_or(8088);
+        let port = self.data.0.props.url.port().unwrap_or(8088);
         event!(Level::TRACE, "Using port {}", port);
 
-        let scheme = match self.data.0.url.scheme() {
+        let scheme = match self.data.0.props.url.scheme() {
             "http" => "ws",
             "https" => "wss",
             _ => {
                 event!(
                     Level::ERROR,
                     "Unsupported scheme '{}'",
-                    self.data.0.url.scheme()
+                    self.data.0.props.url.scheme()
                 );
                 return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
             }
@@ -92,12 +92,12 @@ impl ClientBuilder<Connected> {
 
         let ws_url = format!(
             "{}://{}:{}/ari/events?app={}&api_key={}:{}&subscribeAll=true",
-            scheme, host, port, self.data.0.app_name, self.data.0.username, self.data.0.password
+            scheme, host, port, self.data.0.props.app_name, self.data.0.props.username, self.data.0.props.password
         );
 
-        self.data.0.ws_url = Url::parse(&ws_url)?;
+        self.data.0.props.ws_url = Url::parse(&ws_url)?;
 
-        Ok(self.data.0)
+        Ok(Client(Arc::new(self.data.0)))
     }
 }
 
@@ -132,7 +132,7 @@ pub struct Disconnected {
     app_name: String,
 }
 
-pub struct Connected(pub Client);
+pub struct Connected(pub ClientInner);
 
 impl Client {
     #[allow(clippy::new_ret_no_self)]
@@ -144,7 +144,7 @@ impl Client {
         }
     }
 
-    pub fn handle_message(&self, message: Vec<u8>) {
+    pub async fn handle_message(self, message: Vec<u8>) {
         let data = String::from_utf8(message.to_vec()).unwrap();
 
         let event: Event = match serde_json::from_str(&data) {
@@ -158,63 +158,63 @@ impl Client {
 
         match event {
             Event::StasisStart(event) => {
-                if let Some(f) = &self.on_stasis_start {
+                if let Some(f) = &self.0.handlers.on_stasis_start {
                     event!(Level::TRACE, "StasisStart: {:?}", event);
-                    f(self, event);
+                    f(self.0.props, event).await;
                 }
             }
             Event::StasisEnd(event) => {
-                if let Some(f) = &self.on_stasis_end {
+                if let Some(f) = &self.0.handlers.on_stasis_end {
                     event!(Level::TRACE, "StasisEnd: {:?}", event);
-                    f(self, event);
+                    f(self.0.props, event).await;
                 }
             }
             Event::ChannelCreated(event) => {
-                if let Some(f) = &self.on_channel_created {
+                if let Some(f) = &self.0.handlers.on_channel_created {
                     event!(Level::TRACE, "ChannelCreated: {:?}", event);
-                    f(self, event);
+                    f(self.0.props, event).await;
                 }
             }
             Event::ChannelDestroyed(event) => {
-                if let Some(f) = &self.on_channel_destroyed {
+                if let Some(f) = &self.0.handlers.on_channel_destroyed {
                     event!(Level::TRACE, "ChannelDestroyed: {:?}", event);
-                    f(self, event);
+                    f(self.0.props, event).await;
                 }
             }
             Event::ChannelVarset(event) => {
-                if let Some(f) = &self.on_channel_varset {
+                if let Some(f) = &self.0.handlers.on_channel_varset {
                     event!(Level::TRACE, "ChannelVarset: {:?}", event);
-                    f(self, event);
+                    f(self.0.props, event).await;
                 }
             }
             Event::ChannelHangupRequest(event) => {
-                if let Some(f) = &self.on_channel_hangup_request {
+                if let Some(f) = &self.0.handlers.on_channel_hangup_request {
                     event!(Level::TRACE, "ChannelHangupRequest: {:?}", event);
-                    f(self, event);
+                    f(self.0.props, event).await;
                 }
             }
             Event::ChannelDialplan(event) => {
-                if let Some(f) = &self.on_channel_dialplan {
+                if let Some(f) = &self.0.handlers.on_channel_dialplan {
                     event!(Level::TRACE, "ChannelDialplan: {:?}", event);
-                    f(self, event);
+                    f(self.0.props, event).await;
                 }
             }
             Event::ChannelStateChange(event) => {
-                if let Some(f) = &self.on_channel_state_change {
+                if let Some(f) = &self.0.handlers.on_channel_state_change {
                     event!(Level::TRACE, "ChannelStateChange: {:?}", event);
-                    f(self, event);
+                    f(self.0.props, event).await;
                 }
             }
             Event::ChannelDtmfReceived(event) => {
-                if let Some(f) = &self.on_channel_dtmf_received {
+                if let Some(f) = &self.0.handlers.on_channel_dtmf_received {
                     event!(Level::TRACE, "ChannelDtmfReceived: {:?}", event);
-                    f(self, event);
+                    f(self.0.props, event).await;
                 }
             }
             Event::DeviceStateChanged(event) => {
-                if let Some(f) = &self.on_device_state_changed {
+                if let Some(f) = &self.0.handlers.on_device_state_changed {
                     event!(Level::TRACE, "DeviceStateChanged: {:?}", event);
-                    f(self, event);
+                    f(self.0.props, event).await;
                 }
             }
             Event::Unknown => {
@@ -229,7 +229,7 @@ impl Client {
 
         event!(Level::INFO, "Connecting to Asterisk");
 
-        let (ws_stream, _) = match connect_async(&self.ws_url).await {
+        let (ws_stream, _) = match connect_async(&self.0.props.ws_url).await {
             Ok(stream) => stream,
             Err(e) => {
                 event!(Level::ERROR, "Failed to connect to Asterisk: {}", e);
@@ -255,7 +255,7 @@ impl Client {
                             match message {
                                 tungstenite::Message::Text(_) => {
                                     event!(Level::INFO, "Received WebSocket Text");
-                                    self.handle_message(message.into_data());
+                                    self.clone().handle_message(message.into_data());
                                 }
                                 tungstenite::Message::Ping(data) => {
                                     event!(Level::INFO, "Received WebSocket Ping, sending Pong");
@@ -293,7 +293,7 @@ impl Client {
     }
 }
 
-impl Default for Client {
+impl Default for ClientProps {
     fn default() -> Self {
         Self {
             url: match Url::parse("http://localhost:8088/ari") {
@@ -307,34 +307,37 @@ impl Default for Client {
             username: "asterisk".to_string(),
             password: "asterisk".to_string(),
             app_name: "ari".to_string(),
-            on_stasis_start: None,
-            on_stasis_end: None,
-            on_channel_created: None,
-            on_channel_destroyed: None,
-            on_channel_varset: None,
-            on_channel_hangup_request: None,
-            on_channel_dialplan: None,
-            on_channel_state_change: None,
-            on_channel_dtmf_received: None,
-            on_device_state_changed: None,
         }
     }
 }
 
-pub struct Client {
+#[derive(Default, Clone)]
+pub struct Client(Arc<ClientInner>);
+
+#[derive(Default)]
+pub struct ClientInner {
+    pub props: ClientProps,
+    pub handlers: ClientHandlers,
+}
+
+pub struct ClientProps {
     pub url: Url,
     pub ws_url: Url,
     pub username: String,
     pub password: String,
     pub app_name: String,
-    pub on_stasis_start: StasisStartHandler,
-    pub on_stasis_end: StasisEndHandler,
-    pub on_channel_created: ChannelCreatedHandler,
-    pub on_channel_destroyed: ChannelDestroyedHandler,
-    pub on_channel_varset: ChannelVarsetHandler,
-    pub on_channel_hangup_request: ChannelHangupRequestHandler,
-    pub on_channel_dialplan: ChannelDialplanHandler,
-    pub on_channel_state_change: ChannelStateChangeHandler,
-    pub on_channel_dtmf_received: ChannelDtmfReceivedHandler,
-    pub on_device_state_changed: DeviceStateChangedHandler,
+}
+
+#[derive(Default)]
+pub struct ClientHandlers {
+    pub on_stasis_start: HandlerOption<StasisStart>,
+    pub on_stasis_end: HandlerOption<StasisEnd>,
+    pub on_channel_created: HandlerOption<ChannelCreated>,
+    pub on_channel_destroyed: HandlerOption<ChannelDestroyed>,
+    pub on_channel_varset: HandlerOption<ChannelVarset>,
+    pub on_channel_hangup_request: HandlerOption<ChannelHangupRequest>,
+    pub on_channel_dialplan: HandlerOption<ChannelDialplan>,
+    pub on_channel_state_change: HandlerOption<ChannelStateChange>,
+    pub on_channel_dtmf_received: HandlerOption<ChannelDtmfReceived>,
+    pub on_device_state_changed: HandlerOption<DeviceStateChanged>,
 }

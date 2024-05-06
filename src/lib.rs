@@ -1,8 +1,13 @@
+use std::pin::Pin;
+
 use channel::{
-    ChannelCreated, ChannelDestroyed, ChannelDialplan, ChannelDtmfReceived, ChannelHangupRequest, ChannelStateChange, ChannelVarset, StasisEnd, StasisStart
+    ChannelCreated, ChannelDestroyed, ChannelDialplan, ChannelDtmfReceived, ChannelHangupRequest,
+    ChannelStateChange, ChannelVarset, StasisEnd, StasisStart,
 };
+use client::ClientProps;
 use derive_more::Display;
 use device::DeviceStateChanged;
+use futures_util::Future;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -11,10 +16,12 @@ pub mod client;
 pub mod device;
 pub mod playback;
 pub mod recording;
-pub mod variable;
 pub mod rtp_stat;
+pub mod variable;
 
 pub type Result<T> = std::result::Result<T, AriError>;
+pub type Handler<T> = Box<dyn Fn(ClientProps, T) -> Pin<Box<dyn Future<Output = ()>>> + 'static>;
+pub type HandlerOption<T> = Option<Handler<T>>;
 
 impl From<url::ParseError> for AriError {
     fn from(err: url::ParseError) -> Self {
