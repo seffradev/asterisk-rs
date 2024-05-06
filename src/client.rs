@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::{
     channel::{
         ChannelCreatedHandler, ChannelDestroyedHandler, ChannelDialplanHandler,
@@ -12,6 +10,7 @@ use crate::{
 use futures_util::SinkExt;
 use futures_util::StreamExt;
 use rand::Rng;
+use std::time::Duration;
 use tokio::time::interval;
 use tokio_tungstenite::connect_async;
 use tracing::{event, span, Level};

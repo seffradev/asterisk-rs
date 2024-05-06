@@ -1,7 +1,4 @@
 use crate::Result;
-use chrono::DateTime;
-use serde::{Deserialize, Serialize};
-
 use crate::{
     client::{Client, ClientBuilder, Connected},
     playback::Playback,
@@ -9,6 +6,9 @@ use crate::{
     rtp_stat::RtpStat,
     variable::Variable,
 };
+use chrono::DateTime;
+use serde::{Deserialize, Serialize};
+use std::future::Future;
 
 impl Client {
     pub async fn list_channels(&self) -> Result<Vec<Channel>> {
