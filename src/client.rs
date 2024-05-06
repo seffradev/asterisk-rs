@@ -170,40 +170,58 @@ impl Client {
 
             match event {
                 Event::StasisStart(event) => {
-                    event!(Level::TRACE, "StasisStart: {:?}", event);
-                    self.on_stasis_start.as_ref().map(|f| f(event));
+                    if let Some(f) = &self.on_stasis_start {
+                        event!(Level::TRACE, "StasisStart: {:?}", event);
+                        f(event);
+                    }
                 }
                 Event::StasisEnd(event) => {
-                    event!(Level::TRACE, "StasisEnd: {:?}", event);
-                    self.on_stasis_end.as_ref().map(|f| f(event));
+                    if let Some(f) = &self.on_stasis_end {
+                        event!(Level::TRACE, "StasisEnd: {:?}", event);
+                        f(event);
+                    }
                 }
                 Event::ChannelCreated(event) => {
-                    event!(Level::TRACE, "ChannelCreated: {:?}", event);
-                    self.on_channel_created.as_ref().map(|f| f(event));
+                    if let Some(f) = &self.on_channel_created {
+                        event!(Level::TRACE, "ChannelCreated: {:?}", event);
+                        f(event);
+                    }
                 }
                 Event::ChannelDestroyed(event) => {
-                    event!(Level::TRACE, "ChannelDestroyed: {:?}", event);
-                    self.on_channel_destroyed.as_ref().map(|f| f(event));
+                    if let Some(f) = &self.on_channel_destroyed {
+                        event!(Level::TRACE, "ChannelDestroyed: {:?}", event);
+                        f(event);
+                    }
                 }
                 Event::ChannelVarset(event) => {
-                    event!(Level::TRACE, "ChannelVarset: {:?}", event);
-                    self.on_channel_varset.as_ref().map(|f| f(event));
+                    if let Some(f) = &self.on_channel_varset {
+                        event!(Level::TRACE, "ChannelVarset: {:?}", event);
+                        f(event);
+                    }
                 }
                 Event::ChannelHangupRequest(event) => {
-                    event!(Level::TRACE, "ChannelHangupRequest: {:?}", event);
-                    self.on_channel_hangup_request.as_ref().map(|f| f(event));
+                    if let Some(f) = &self.on_channel_hangup_request {
+                        event!(Level::TRACE, "ChannelHangupRequest: {:?}", event);
+                        f(event);
+                    }
                 }
                 Event::ChannelDialplan(event) => {
-                    event!(Level::TRACE, "ChannelDialplan: {:?}", event);
-                    self.on_channel_dialplan.as_ref().map(|f| f(event));
+                    if let Some(f) = &self.on_channel_dialplan {
+                        event!(Level::TRACE, "ChannelDialplan: {:?}", event);
+                        f(event);
+                    }
                 }
                 Event::ChannelStateChange(event) => {
-                    event!(Level::TRACE, "ChannelStateChange: {:?}", event);
-                    self.on_channel_state_change.as_ref().map(|f| f(event));
+                    if let Some(f) = &self.on_channel_state_change {
+                        event!(Level::TRACE, "ChannelStateChange: {:?}", event);
+                        f(event);
+                    }
                 }
                 Event::DeviceStateChanged(event) => {
-                    event!(Level::TRACE, "DeviceStateChanged: {:?}", event);
-                    self.on_device_state_changed.as_ref().map(|f| f(event));
+                    if let Some(f) = &self.on_device_state_changed {
+                        event!(Level::TRACE, "DeviceStateChanged: {:?}", event);
+                        f(event);
+                    }
                 }
             }
         });
