@@ -11,8 +11,11 @@ use crate::{
 };
 
 impl Client {
-    pub fn list_channels(&self) -> Result<Vec<Channel>> {
-        unimplemented!()
+    pub async fn list_channels(&self) -> Result<Vec<Channel>> {
+        Ok(reqwest::get(&format!("{}/channels", self.url))
+            .await?
+            .json::<Vec<Channel>>()
+            .await?)
     }
 
     pub fn originate_channel(&self) -> Result<Channel> {

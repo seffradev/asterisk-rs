@@ -34,10 +34,17 @@ impl From<tungstenite::error::UrlError> for AriError {
     }
 }
 
+impl From<reqwest::Error> for AriError {
+    fn from(err: reqwest::Error) -> Self {
+        AriError::ReqwestError(err)
+    }
+}
+
 #[derive(Debug, Display, Error)]
 pub enum AriError {
     UrlParseError(url::ParseError),
     TungsteniteError(tungstenite::Error),
+    ReqwestError(reqwest::Error),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
