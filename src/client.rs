@@ -1,17 +1,14 @@
 use std::time::Duration;
 
-use crate::channel::ChannelCreated;
-use crate::channel::ChannelDestroyed;
-use crate::channel::ChannelDialplan;
-use crate::channel::ChannelDtmfReceived;
-use crate::channel::ChannelHangupRequest;
-use crate::channel::ChannelStateChange;
-use crate::channel::ChannelVarset;
-use crate::channel::StasisEnd;
-use crate::channel::StasisStart;
-use crate::device::DeviceStateChanged;
-use crate::Event;
-use crate::Result;
+use crate::{
+    channel::{
+        ChannelCreatedHandler, ChannelDestroyedHandler, ChannelDialplanHandler,
+        ChannelDtmfReceivedHandler, ChannelHangupRequestHandler, ChannelStateChangeHandler,
+        ChannelVarsetHandler, StasisEndHandler, StasisStartHandler,
+    },
+    device::DeviceStateChangedHandler,
+    Event, Result,
+};
 use futures_util::SinkExt;
 use futures_util::StreamExt;
 use rand::Rng;
@@ -331,14 +328,14 @@ pub struct Client {
     pub username: String,
     pub password: String,
     pub app_name: String,
-    pub on_stasis_start: Option<Box<dyn Fn(&Client, StasisStart)>>,
-    pub on_stasis_end: Option<Box<dyn Fn(&Client, StasisEnd)>>,
-    pub on_channel_created: Option<Box<dyn Fn(&Client, ChannelCreated)>>,
-    pub on_channel_destroyed: Option<Box<dyn Fn(&Client, ChannelDestroyed)>>,
-    pub on_channel_varset: Option<Box<dyn Fn(&Client, ChannelVarset)>>,
-    pub on_channel_hangup_request: Option<Box<dyn Fn(&Client, ChannelHangupRequest)>>,
-    pub on_channel_dialplan: Option<Box<dyn Fn(&Client, ChannelDialplan)>>,
-    pub on_channel_state_change: Option<Box<dyn Fn(&Client, ChannelStateChange)>>,
-    pub on_channel_dtmf_received: Option<Box<dyn Fn(&Client, ChannelDtmfReceived)>>,
-    pub on_device_state_changed: Option<Box<dyn Fn(&Client, DeviceStateChanged)>>,
+    pub on_stasis_start: StasisStartHandler,
+    pub on_stasis_end: StasisEndHandler,
+    pub on_channel_created: ChannelCreatedHandler,
+    pub on_channel_destroyed: ChannelDestroyedHandler,
+    pub on_channel_varset: ChannelVarsetHandler,
+    pub on_channel_hangup_request: ChannelHangupRequestHandler,
+    pub on_channel_dialplan: ChannelDialplanHandler,
+    pub on_channel_state_change: ChannelStateChangeHandler,
+    pub on_channel_dtmf_received: ChannelDtmfReceivedHandler,
+    pub on_device_state_changed: DeviceStateChangedHandler,
 }

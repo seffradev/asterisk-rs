@@ -28,3 +28,5 @@ pub struct DeviceState {
     pub name: String,
     pub state: String,
 }
+
+pub type DeviceStateChangedHandler = Option<Box<dyn Fn(&Client, DeviceStateChanged)>>;

@@ -325,3 +325,13 @@ pub struct Dialplan {
     pub app_name: String,
     pub app_data: String,
 }
+
+pub type StasisStartHandler = Option<Box<dyn Fn(&Client, StasisStart)>>;
+pub type StasisEndHandler = Option<Box<dyn Fn(&Client, StasisEnd)>>;
+pub type ChannelCreatedHandler = Option<Box<dyn Fn(&Client, ChannelCreated)>>;
+pub type ChannelDestroyedHandler = Option<Box<dyn Fn(&Client, ChannelDestroyed)>>;
+pub type ChannelVarsetHandler = Option<Box<dyn Fn(&Client, ChannelVarset)>>;
+pub type ChannelHangupRequestHandler = Option<Box<dyn Fn(&Client, ChannelHangupRequest)>>;
+pub type ChannelDialplanHandler = Option<Box<dyn Fn(&Client, ChannelDialplan)>>;
+pub type ChannelStateChangeHandler = Option<Box<dyn Fn(&Client, ChannelStateChange)>>;
+pub type ChannelDtmfReceivedHandler = Option<Box<dyn Fn(&Client, ChannelDtmfReceived)>>;
