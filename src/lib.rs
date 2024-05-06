@@ -49,4 +49,6 @@ pub enum Event {
     ChannelDialplan(ChannelDialplan),
     ChannelStateChange(ChannelStateChange),
     DeviceStateChanged(DeviceStateChanged),
+    #[serde(other)]
+    Unknown,
 }

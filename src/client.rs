@@ -226,6 +226,9 @@ impl Client {
                         f(event);
                     }
                 }
+                Event::Unknown => {
+                    event!(Level::INFO, "Unknown event: {}", data);
+                }
             }
         });
 

@@ -80,6 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 ari_rs::Event::ChannelStateChange(x) => {
                     println!("ChannelStateChange, {}", x.timestamp)
                 }
+                ari_rs::Event::Unknown => println!("Unknown"),
             }
         })
     };
