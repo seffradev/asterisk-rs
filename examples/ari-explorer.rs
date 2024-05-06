@@ -53,7 +53,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         read.for_each(|message| async {
             let data = message.unwrap().into_data();
 
-            let data = data.as_slice();
             let data = String::from_utf8(data.to_vec()).unwrap();
 
             let event: ari_rs::Event = match serde_json::from_str(&data) {
