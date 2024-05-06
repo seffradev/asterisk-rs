@@ -1,9 +1,13 @@
+use std::collections::HashMap;
+
 use crate::Result;
 use crate::{
     client::Client, playback::Playback, recording::Recording, rtp_stat::RtpStat, variable::Variable,
 };
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
+use tracing::{event, span, Level};
 
 impl Client {
     pub async fn list_channels(&self) -> Result<Vec<Channel>> {
@@ -16,8 +20,109 @@ impl Client {
         Ok(channels)
     }
 
-    pub fn originate_channel(&self) -> Result<Channel> {
-        unimplemented!()
+    pub async fn originate_channel(
+        &self,
+        endpoint: String,
+        params: Option<OriginateParams>,
+        caller_id: Option<String>,
+        timeout: Option<u32>,
+        channel_id: Option<String>,
+        other_channel_id: Option<String>,
+        originator: Option<String>,
+        formats: Vec<String>,
+        variables: Option<HashMap<String, String>>,
+    ) -> Result<Channel> {
+        let span = span!(Level::INFO, "originate_channel");
+        let _guard = span.enter();
+
+        let mut url = format!(
+            "{}/channels?api_key={}:{}&endpoint={}",
+            self.url, self.username, self.password, endpoint
+        );
+
+        event!(Level::INFO, "Originate channel: {}", endpoint);
+
+        if !formats.is_empty() {
+            let formats = formats.join(",");
+            event!(Level::INFO, "Formats: {}", formats);
+            url.push_str(&format!("&formats={}", formats));
+        }
+
+        if let Some(params) = params {
+            match params {
+                OriginateParams::Extension {
+                    extension,
+                    context,
+                    priority,
+                    label,
+                } => {
+                    if let Some(extension) = extension {
+                        url.push_str(&format!("&extension={}", extension));
+                    }
+                    if let Some(context) = context {
+                        url.push_str(&format!("&context={}", context));
+                    }
+                    if let Some(priority) = priority {
+                        url.push_str(&format!("&priority={}", priority));
+                    }
+                    if let Some(label) = label {
+                        url.push_str(&format!("&label={}", label));
+                    }
+                }
+                OriginateParams::Application { app, app_args } => {
+                    url.push_str(&format!("&app={}", app));
+                    if !app_args.is_empty() {
+                        let app_args = app_args.join(",");
+                        url.push_str(&format!("&app_args={}", app_args));
+                    }
+                }
+            }
+        }
+
+        event!(Level::INFO, "Caller ID: {:?}", caller_id);
+        if let Some(caller_id) = caller_id {
+            url.push_str(&format!("&caller_id={}", caller_id));
+        }
+
+        event!(Level::INFO, "Timeout: {:?}", timeout);
+        if let Some(timeout) = timeout {
+            url.push_str(&format!("&timeout={}", timeout));
+        } else {
+            url.push_str("&timeout=30");
+        }
+    
+        event!(Level::INFO, "Channel ID: {:?}", channel_id);
+        if let Some(channel_id) = channel_id {
+            url.push_str(&format!("&channel_id={}", channel_id));
+        }
+
+        event!(Level::INFO, "Other Channel ID: {:?}", other_channel_id);
+        if let Some(other_channel_id) = other_channel_id {
+            url.push_str(&format!("&other_channel_id={}", other_channel_id));
+        }
+
+        event!(Level::INFO, "Originator: {:?}", originator);
+        if let Some(originator) = originator {
+            url.push_str(&format!("&originator={}", originator));
+        }
+
+        event!(Level::INFO, "Variables: {:?}", variables);
+        let body = json!({
+            "variables": variables
+        });
+
+        event!(Level::INFO, "URL: {}", url);
+
+        let channel = reqwest::Client::new()
+            .post(&url)
+            .json(&body)
+            .send()
+            .await?
+            .json::<Channel>()
+            .await?;
+
+        event!(Level::INFO, "Channel ID: {}", channel.id);
+        Ok(channel)
     }
 
     pub fn create_channel(&self) -> Result<Channel> {
@@ -127,6 +232,20 @@ impl Client {
     pub fn start_external_media(&self, _channel_id: &str) -> Result<Channel> {
         unimplemented!()
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum OriginateParams {
+    Extension {
+        extension: Option<String>,
+        context: Option<String>,
+        priority: Option<i32>,
+        label: Option<String>,
+    },
+    Application {
+        app: String,
+        app_args: Vec<String>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Debug)]
