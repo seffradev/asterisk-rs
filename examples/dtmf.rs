@@ -10,11 +10,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with(EnvFilter::from_default_env())
         .init();
 
-    let (tx, mut rx) = tokio::sync::mpsc::channel(100);
+    let (tx, mut rx) = tokio::sync::mpsc::channel(1024);
     let dtmf_buffer = Arc::new(Mutex::new(String::new()));
 
     let client = Client::new()
-        .url("http://localhost:8088")?
+        .url("http://localhost:8088/ari/")?
         .username("asterisk")
         .password("asterisk")
         .app_name("ari")
@@ -29,20 +29,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     while let Some(event) = rx.recv().await {
         match event {
-            Event::StasisStart(_) => {
-                debug!("Stasis started, resetting DTMF buffer");
-                dtmf_buffer.lock().unwrap().clear();
-            }
-            Event::StasisEnd(_) => {
-                debug!("Stasis ended, DTMF buffer: {}", dtmf_buffer.lock().unwrap());
-            }
             Event::ChannelDtmfReceived(event) => {
                 debug!("Received DTMF: {}", event.digit);
                 dtmf_buffer.lock().unwrap().push_str(&event.digit);
             }
-            _ => {
-                debug!("Unhandled event: {:?}", event);
+            Event::StasisEnd(_) => {
+                debug!("Stasis ended, DTMF buffer: {}", dtmf_buffer.lock().unwrap());
+                dtmf_buffer.lock().unwrap().clear();
             }
+            _ => {}
         }
     }
 
