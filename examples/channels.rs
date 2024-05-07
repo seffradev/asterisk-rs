@@ -35,7 +35,7 @@ async fn main() -> Result<()> {
         }
     });
 
-    if let Ok(channel) = client_clone.originate_channel("PJSIP/1".to_string(), None, None, None, None, None, None, vec!["ulaw".to_string()], None).await {
+    if let Ok(channel) = client_clone.originate_channel("PJSIP/1000".to_string(), None, None, None, None, None, None, vec!["ulaw".to_string()], None).await {
         debug!("Channel ID: {}", channel.id);
     } else {
         error!("Error originating channel");
