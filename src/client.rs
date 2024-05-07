@@ -45,11 +45,7 @@ impl ClientBuilder<Disconnected> {
             "http" => "ws",
             "https" => "wss",
             _ => {
-                event!(
-                    Level::ERROR,
-                    "Unsupported scheme '{}'",
-                    ws_url.scheme()
-                );
+                event!(Level::ERROR, "Unsupported scheme '{}'", ws_url.scheme());
                 return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
             }
         };
@@ -58,9 +54,13 @@ impl ClientBuilder<Disconnected> {
             return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
         }
 
-        ws_url.query_pairs_mut()
+        ws_url
+            .query_pairs_mut()
             .append_pair("app", &self.data.app_name)
-            .append_pair("api_key", &format!("{}:{}", self.data.username, self.data.password))
+            .append_pair(
+                "api_key",
+                &format!("{}:{}", self.data.username, self.data.password),
+            )
             .append_pair("subscribeAll", "true");
 
         Ok(ClientBuilder {
