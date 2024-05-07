@@ -35,7 +35,20 @@ async fn main() -> Result<()> {
         }
     });
 
-    if let Ok(channel) = client_clone.originate_channel("PJSIP/1000".to_string(), None, None, None, None, None, None, vec!["ulaw".to_string()], None).await {
+    if let Ok(channel) = client_clone
+        .originate_channel(
+            "PJSIP/1000".to_string(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+            vec!["ulaw".to_string()],
+            None,
+        )
+        .await
+    {
         debug!("Channel ID: {}", channel.id);
     } else {
         error!("Error originating channel");
@@ -46,7 +59,7 @@ async fn main() -> Result<()> {
             arirs::Event::StasisStart(event) => {
                 debug!("Channel ID: {}", event.channel.id);
                 if let Ok(channels) = client_clone.list_channels().await {
-                    for channel in channels{
+                    for channel in channels {
                         debug!("Channel ID: {}", channel.id);
                     }
                 }

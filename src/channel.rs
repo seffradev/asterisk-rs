@@ -90,7 +90,7 @@ impl Client {
         } else {
             url.push_str("&timeout=30");
         }
-    
+
         event!(Level::INFO, "Channel ID: {:?}", channel_id);
         if let Some(channel_id) = channel_id {
             url.push_str(&format!("&channel_id={}", channel_id));
