@@ -39,14 +39,14 @@ async fn main() -> Result<()> {
 
     if let Ok(channel) = client_clone
         .originate_channel(
-            "PJSIP/1000".to_string(),
+            "PJSIP/1000",
             Some(OriginateParams::Application { app: app_name, app_args: vec![] }),
             None,
             None,
             None,
             None,
             None,
-            vec!["ulaw".to_string()],
+            vec!["ulaw"],
             None,
         )
         .await

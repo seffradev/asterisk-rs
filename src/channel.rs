@@ -28,15 +28,15 @@ impl Client {
 
     pub async fn originate_channel(
         &self,
-        endpoint: String,
+        endpoint: &str,
         params: Option<OriginateParams>,
-        caller_id: Option<String>,
+        caller_id: Option<&str>,
         timeout: Option<u32>,
-        channel_id: Option<String>,
-        other_channel_id: Option<String>,
-        originator: Option<String>,
-        formats: Vec<String>,
-        variables: Option<HashMap<String, String>>,
+        channel_id: Option<&str>,
+        other_channel_id: Option<&str>,
+        originator: Option<&str>,
+        formats: Vec<&str>,
+        variables: Option<HashMap<&str, &str>>,
     ) -> Result<Channel> {
         let span = span!(Level::INFO, "originate_channel");
         let _guard = span.enter();
