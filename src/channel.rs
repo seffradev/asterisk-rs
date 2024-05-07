@@ -26,10 +26,10 @@ impl Client {
         Ok(channels)
     }
 
-    pub async fn originate_channel(
+    pub async fn originate_channel<'a>(
         &self,
         endpoint: &str,
-        params: Option<OriginateParams>,
+        params: OriginateParams<'a>,
         caller_id: Option<&str>,
         timeout: Option<u32>,
         channel_id: Option<&str>,
@@ -55,34 +55,30 @@ impl Client {
             url.append_pair("formats", &formats);
         }
 
-        if let Some(params) = params {
-            match params {
-                OriginateParams::Extension {
-                    extension,
-                    context,
-                    priority,
-                    label,
-                } => {
-                    if let Some(extension) = extension {
-                        url.append_pair("extension", &extension);
-                    }
-                    if let Some(context) = context {
-                        url.append_pair("context", &context);
-                    }
-                    if let Some(priority) = priority {
-                        url.append_pair("priority", &priority.to_string());
-                    }
-                    if let Some(label) = label {
-                        url.append_pair("label", &label);
-                    }
+        match params {
+            OriginateParams::Extension {
+                extension,
+                context,
+                priority,
+                label,
+            } => {
+                url.append_pair("extension", &extension);
+                if let Some(context) = context {
+                    url.append_pair("context", &context);
                 }
-                OriginateParams::Application { app, app_args } => {
-                    url.append_pair("app", &app);
-                    if !app_args.is_empty() {
-                        let app_args = app_args.join(",");
-                        event!(Level::INFO, "App args: {}", app_args);
-                        url.append_pair("app_args", &app_args);
-                    }
+                if let Some(priority) = priority {
+                    url.append_pair("priority", &priority.to_string());
+                }
+                if let Some(label) = label {
+                    url.append_pair("label", &label);
+                }
+            }
+            OriginateParams::Application { app, app_args } => {
+                url.append_pair("app", &app);
+                if !app_args.is_empty() {
+                    let app_args = app_args.join(",");
+                    event!(Level::INFO, "App args: {}", app_args);
+                    url.append_pair("app_args", &app_args);
                 }
             }
         }
@@ -294,16 +290,16 @@ impl Client {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum OriginateParams {
+pub enum OriginateParams<'a> {
     Extension {
-        extension: Option<String>,
-        context: Option<String>,
+        extension: &'a str,
+        context: Option<&'a str>,
         priority: Option<i32>,
-        label: Option<String>,
+        label: Option<&'a str>,
     },
     Application {
-        app: String,
-        app_args: Vec<String>,
+        app: &'a str,
+        app_args: Vec<&'a str>,
     },
 }
 
