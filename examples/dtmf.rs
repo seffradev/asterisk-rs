@@ -1,6 +1,6 @@
 use arirs::{client::Client, Event};
 use std::sync::{Arc, Mutex};
-use tracing::debug;
+use tracing::{debug, error};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[tokio::main]
@@ -23,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tokio::spawn(async move {
         if let Err(e) = client.run().await {
-            eprintln!("Error: {}", e);
+            error!("Error: {}", e);
         }
     });
 

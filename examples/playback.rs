@@ -1,6 +1,6 @@
 use arirs::{client::Client, Event};
 use std::sync::Arc;
-use tracing::level_filters::LevelFilter;
+use tracing::{error, level_filters::LevelFilter};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 const APP_NAME: &str = "ari";
@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client_clone = client.clone();
     tokio::spawn(async move {
         if let Err(e) = client_clone.run().await {
-            eprintln!("Error: {}", e);
+            error!("Error: {}", e);
         }
     });
 
