@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use arirs::{channel::OriginateParams, client::Client};
 use arirs::Result;
+use arirs::{channel::OriginateParams, client::Client};
 use tokio::sync::mpsc;
 use tracing::{debug, error, trace};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -40,7 +40,10 @@ async fn main() -> Result<()> {
     if let Ok(channel) = client_clone
         .originate_channel(
             "PJSIP/1000",
-            Some(OriginateParams::Application { app: app_name, app_args: vec![] }),
+            Some(OriginateParams::Application {
+                app: app_name,
+                app_args: vec![],
+            }),
             None,
             None,
             None,
@@ -64,6 +67,22 @@ async fn main() -> Result<()> {
                     for channel in channels {
                         debug!("Channel ID: {}", channel.id);
                     }
+                }
+
+                if let Ok(_) = client_clone
+                    .play_media(
+                        &event.channel.id,
+                        "sound:you-entered",
+                        Some("en"),
+                        None,
+                        None,
+                        None,
+                    )
+                    .await
+                {
+                    debug!("Playing media");
+                } else {
+                    error!("Error playing media");
                 }
             }
             _ => debug!("Ignore unhandled event"),
