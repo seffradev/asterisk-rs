@@ -8,34 +8,38 @@ use tokio_tungstenite::connect_async;
 use tracing::{event, span, Level};
 use url::Url;
 
-impl ClientBuilder<Disconnected> {
+impl ClientBuilder {
     pub fn url(mut self, url: &str) -> Result<Self> {
-        event!(Level::INFO, "Validating URL '{}'", self.data.url);
-        self.data.url = url::Url::parse(url)?;
+        self.0.url = url::Url::parse(url)?;
         Ok(self)
     }
 
     pub fn username(mut self, username: &str) -> Self {
-        self.data.username = username.to_string();
+        self.0.username = username.to_string();
         self
     }
 
     pub fn password(mut self, password: &str) -> Self {
-        self.data.password = password.to_string();
+        self.0.password = password.to_string();
         self
     }
 
     pub fn app_name(mut self, app_name: &str) -> Self {
-        self.data.app_name = app_name.to_string();
+        self.0.app_name = app_name.to_string();
         self
     }
 
-    pub fn connect(self) -> Result<ClientBuilder<Connected>> {
-        let span = span!(Level::INFO, "connect");
+    pub fn handler(mut self, tx: Sender<Event>) -> Self {
+        self.0.ws_channel = Some(tx);
+        self
+    }
+
+    pub fn build(self) -> Result<Client> {
+        let span = span!(Level::INFO, "build");
         let _guard = span.enter();
 
-        let mut ws_url = self.data.url.clone();
-        if let Err(_) = ws_url.set_port(self.data.url.port()) {
+        let mut ws_url = self.0.url.clone();
+        if let Err(_) = ws_url.set_port(self.0.url.port()) {
             return Err(url::ParseError::InvalidPort.into());
         }
 
@@ -56,93 +60,43 @@ impl ClientBuilder<Disconnected> {
 
         ws_url
             .query_pairs_mut()
-            .append_pair("app", &self.data.app_name)
+            .append_pair("app", &self.0.app_name)
             .append_pair(
                 "api_key",
-                &format!("{}:{}", self.data.username, self.data.password),
+                &format!("{}:{}", self.0.username, self.0.password),
             )
             .append_pair("subscribeAll", "true");
-
-        Ok(ClientBuilder {
-            data: Connected(Client {
-                url: self.data.url,
-                username: self.data.username,
-                password: self.data.password,
-                app_name: self.data.app_name,
-                ws_url,
-                ..Default::default()
-            }),
-        })
-    }
-}
-
-impl ClientBuilder<Connected> {
-    pub fn handler(mut self, tx: Sender<Event>) -> Self {
-        self.data.0.ws_channel = Some(tx);
-        self
-    }
-
-    pub fn build(self) -> Result<Client> {
-        let span = span!(Level::INFO, "build");
-        let _guard = span.enter();
 
         event!(
             Level::TRACE,
             "Using REST API server with URL '{}'",
-            self.data.0.url
+            self.0.url
         );
 
         event!(
             Level::TRACE,
             "Using WebSocket server with URL '{}'",
-            self.data.0.ws_url
+            self.0.ws_url
         );
 
-        Ok(self.data.0)
+        Ok(Client {
+            url: self.0.url,
+            ws_url,
+            username: self.0.username,
+            password: self.0.password,
+            app_name: self.0.app_name,
+            ws_channel: self.0.ws_channel,
+        })
     }
 }
 
 #[derive(Debug, Default)]
-pub struct ClientBuilder<T: State = Disconnected> {
-    pub data: T,
-}
-
-pub trait State {}
-
-impl State for Disconnected {}
-impl State for Connected {}
-
-impl Default for Disconnected {
-    fn default() -> Self {
-        Self {
-            url: match Url::parse("http://localhost:8088/") {
-                Ok(url) => url,
-                Err(_) => panic!("Failed to parse URL"),
-            },
-            username: "asterisk".to_string(),
-            password: "asterisk".to_string(),
-            app_name: "ari".to_string(),
-        }
-    }
-}
-
-pub struct Disconnected {
-    url: Url,
-    username: String,
-    password: String,
-    app_name: String,
-}
-
-pub struct Connected(pub Client);
+pub struct ClientBuilder(Client);
 
 impl Client {
     #[allow(clippy::new_ret_no_self)]
-    pub fn new() -> ClientBuilder<Disconnected> {
-        ClientBuilder {
-            data: Disconnected {
-                ..Default::default()
-            },
-        }
+    pub fn new() -> ClientBuilder {
+        ClientBuilder(Client::default())
     }
 
     pub fn handle_message(&self, message: Vec<u8>) {
@@ -260,6 +214,7 @@ impl Default for Client {
     }
 }
 
+#[derive(Debug)]
 pub struct Client {
     pub url: Url,
     pub ws_url: Url,
