@@ -15,7 +15,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .url("http://localhost:8080")?
         .username("admin")
         .password("password")
-        .connect()
+        .connect()?
         .build();
 
     Ok(())

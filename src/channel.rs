@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::Result;
 use crate::{
     client::Client, playback::Playback, recording::Recording, rtp_stat::RtpStat, variable::Variable,
@@ -7,15 +5,23 @@ use crate::{
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use std::collections::HashMap;
 use tracing::{event, span, Level};
+use url::Url;
 
 impl Client {
     pub async fn list_channels(&self) -> Result<Vec<Channel>> {
-        let url = format!(
-            "{}/channels?api_key={}:{}",
-            self.url, self.username, self.password
-        );
-        let channels = reqwest::get(&url).await?;
+        let span = span!(Level::INFO, "list_channels");
+        let _guard = span.enter();
+        let url: Url = self
+            .url
+            .join("/ari/channels")?
+            .query_pairs_mut()
+            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .finish()
+            .to_owned();
+
+        let channels = reqwest::get(url).await?;
         let channels = channels.json::<Vec<Channel>>().await?;
         Ok(channels)
     }
@@ -35,17 +41,18 @@ impl Client {
         let span = span!(Level::INFO, "originate_channel");
         let _guard = span.enter();
 
-        let mut url = format!(
-            "{}/channels?api_key={}:{}&endpoint={}",
-            self.url, self.username, self.password, endpoint
-        );
+        let mut url = self.url.join("/ari/channels")?;
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .append_pair("endpoint", &endpoint);
 
         event!(Level::INFO, "Originate channel: {}", endpoint);
 
         if !formats.is_empty() {
             let formats = formats.join(",");
             event!(Level::INFO, "Formats: {}", formats);
-            url.push_str(&format!("&formats={}", formats));
+            url.append_pair("formats", &formats);
         }
 
         if let Some(params) = params {
@@ -57,23 +64,24 @@ impl Client {
                     label,
                 } => {
                     if let Some(extension) = extension {
-                        url.push_str(&format!("&extension={}", extension));
+                        url.append_pair("extension", &extension);
                     }
                     if let Some(context) = context {
-                        url.push_str(&format!("&context={}", context));
+                        url.append_pair("context", &context);
                     }
                     if let Some(priority) = priority {
-                        url.push_str(&format!("&priority={}", priority));
+                        url.append_pair("priority", &priority.to_string());
                     }
                     if let Some(label) = label {
-                        url.push_str(&format!("&label={}", label));
+                        url.append_pair("label", &label);
                     }
                 }
                 OriginateParams::Application { app, app_args } => {
-                    url.push_str(&format!("&app={}", app));
+                    url.append_pair("app", &app);
                     if !app_args.is_empty() {
                         let app_args = app_args.join(",");
-                        url.push_str(&format!("&app_args={}", app_args));
+                        event!(Level::INFO, "App args: {}", app_args);
+                        url.append_pair("app_args", &app_args);
                     }
                 }
             }
@@ -81,29 +89,29 @@ impl Client {
 
         event!(Level::INFO, "Caller ID: {:?}", caller_id);
         if let Some(caller_id) = caller_id {
-            url.push_str(&format!("&caller_id={}", caller_id));
+            url.append_pair("caller_id", &caller_id);
         }
 
         event!(Level::INFO, "Timeout: {:?}", timeout);
         if let Some(timeout) = timeout {
-            url.push_str(&format!("&timeout={}", timeout));
+            url.append_pair("timeout", &timeout.to_string());
         } else {
-            url.push_str("&timeout=30");
+            url.append_pair("timeout", "30");
         }
 
         event!(Level::INFO, "Channel ID: {:?}", channel_id);
         if let Some(channel_id) = channel_id {
-            url.push_str(&format!("&channel_id={}", channel_id));
+            url.append_pair("channel_id", &channel_id);
         }
 
         event!(Level::INFO, "Other Channel ID: {:?}", other_channel_id);
         if let Some(other_channel_id) = other_channel_id {
-            url.push_str(&format!("&other_channel_id={}", other_channel_id));
+            url.append_pair("other_channel_id", &other_channel_id);
         }
 
         event!(Level::INFO, "Originator: {:?}", originator);
         if let Some(originator) = originator {
-            url.push_str(&format!("&originator={}", originator));
+            url.append_pair("originator", &originator);
         }
 
         event!(Level::INFO, "Variables: {:?}", variables);
@@ -111,10 +119,12 @@ impl Client {
             "variables": variables
         });
 
+        let url = url.finish().to_owned();
+
         event!(Level::INFO, "URL: {}", url);
 
         let channel = reqwest::Client::new()
-            .post(&url)
+            .post(url)
             .json(&body)
             .send()
             .await?

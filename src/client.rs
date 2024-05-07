@@ -30,19 +30,49 @@ impl ClientBuilder<Disconnected> {
         self
     }
 
-    pub fn connect(self) -> ClientBuilder<Connected> {
+    pub fn connect(self) -> Result<ClientBuilder<Connected>> {
         let span = span!(Level::INFO, "connect");
         let _guard = span.enter();
 
-        ClientBuilder {
+        let mut ws_url = self.data.url.clone();
+        if let Err(_) = ws_url.set_port(self.data.url.port()) {
+            return Err(url::ParseError::InvalidPort.into());
+        }
+
+        ws_url.set_path("/ari/events");
+
+        let scheme = match ws_url.scheme() {
+            "http" => "ws",
+            "https" => "wss",
+            _ => {
+                event!(
+                    Level::ERROR,
+                    "Unsupported scheme '{}'",
+                    ws_url.scheme()
+                );
+                return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
+            }
+        };
+
+        if let Err(_) = ws_url.set_scheme(scheme) {
+            return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
+        }
+
+        ws_url.query_pairs_mut()
+            .append_pair("app", &self.data.app_name)
+            .append_pair("api_key", &format!("{}:{}", self.data.username, self.data.password))
+            .append_pair("subscribeAll", "true");
+
+        Ok(ClientBuilder {
             data: Connected(Client {
                 url: self.data.url,
                 username: self.data.username,
                 password: self.data.password,
                 app_name: self.data.app_name,
+                ws_url,
                 ..Default::default()
             }),
-        }
+        })
     }
 }
 
@@ -52,7 +82,7 @@ impl ClientBuilder<Connected> {
         self
     }
 
-    pub fn build(mut self) -> Result<Client> {
+    pub fn build(self) -> Result<Client> {
         let span = span!(Level::INFO, "build");
         let _guard = span.enter();
 
@@ -62,37 +92,11 @@ impl ClientBuilder<Connected> {
             self.data.0.url
         );
 
-        let host = match self.data.0.url.host_str() {
-            Some(host) => host,
-            None => {
-                event!(Level::ERROR, "No host found in URL '{}'", self.data.0.url);
-                return Err(url::ParseError::EmptyHost.into());
-            }
-        };
-
-        event!(Level::TRACE, "Using host '{}'", host);
-        let port = self.data.0.url.port().unwrap_or(8088);
-        event!(Level::TRACE, "Using port {}", port);
-
-        let scheme = match self.data.0.url.scheme() {
-            "http" => "ws",
-            "https" => "wss",
-            _ => {
-                event!(
-                    Level::ERROR,
-                    "Unsupported scheme '{}'",
-                    self.data.0.url.scheme()
-                );
-                return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
-            }
-        };
-
-        let ws_url = format!(
-            "{}://{}:{}/ari/events?app={}&api_key={}:{}&subscribeAll=true",
-            scheme, host, port, self.data.0.app_name, self.data.0.username, self.data.0.password
+        event!(
+            Level::TRACE,
+            "Using WebSocket server with URL '{}'",
+            self.data.0.ws_url
         );
-
-        self.data.0.ws_url = Url::parse(&ws_url)?;
 
         Ok(self.data.0)
     }
@@ -111,7 +115,7 @@ impl State for Connected {}
 impl Default for Disconnected {
     fn default() -> Self {
         Self {
-            url: match Url::parse("http://localhost:8088") {
+            url: match Url::parse("http://localhost:8088/") {
                 Ok(url) => url,
                 Err(_) => panic!("Failed to parse URL"),
             },
@@ -240,7 +244,7 @@ impl Client {
 impl Default for Client {
     fn default() -> Self {
         Self {
-            url: match Url::parse("http://localhost:8088/ari") {
+            url: match Url::parse("http://localhost:8088/") {
                 Ok(url) => url,
                 Err(_) => panic!("Failed to parse URL"),
             },

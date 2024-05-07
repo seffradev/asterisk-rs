@@ -18,7 +18,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .username("asterisk")
         .password("asterisk")
         .app_name("ari")
-        .connect()
+        .connect()?
         .handler(tx)
         .build()?;
 

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use arirs::client::Client;
+use arirs::{channel::OriginateParams, client::Client};
 use arirs::Result;
 use tokio::sync::mpsc;
 use tracing::{debug, error, trace};
@@ -15,13 +15,15 @@ async fn main() -> Result<()> {
 
     let (tx, mut rx) = mpsc::channel(1024);
 
+    let app_name = String::from("ari");
+
     let client = Arc::new(
         Client::new()
-            .url("http://localhost:8088/ari")?
+            .url("http://localhost:8088/")?
             .username("asterisk")
             .password("asterisk")
-            .app_name("ari")
-            .connect()
+            .app_name(&app_name)
+            .connect()?
             .handler(tx)
             .build()?,
     );
@@ -38,7 +40,7 @@ async fn main() -> Result<()> {
     if let Ok(channel) = client_clone
         .originate_channel(
             "PJSIP/1000".to_string(),
-            None,
+            Some(OriginateParams::Application { app: app_name, app_args: vec![] }),
             None,
             None,
             None,
