@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use ari_rs::client::Client;
-use ari_rs::Result;
+use arirs::client::Client;
+use arirs::Result;
 use tokio::sync::mpsc;
 use tracing::{debug, error, trace};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -43,7 +43,7 @@ async fn main() -> Result<()> {
 
     while let Some(event) = rx.recv().await {
         match event {
-            ari_rs::Event::StasisStart(event) => {
+            arirs::Event::StasisStart(event) => {
                 debug!("Channel ID: {}", event.channel.id);
                 if let Ok(channels) = client_clone.list_channels().await {
                     for channel in channels{

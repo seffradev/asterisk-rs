@@ -1,4 +1,4 @@
-use ari_rs::client::Client;
+use arirs::client::Client;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[tokio::main]

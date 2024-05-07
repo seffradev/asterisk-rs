@@ -1,4 +1,4 @@
-use ari_rs::{client::Client, Event};
+use arirs::{client::Client, Event};
 use std::sync::{Arc, Mutex};
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};

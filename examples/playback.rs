@@ -1,4 +1,4 @@
-use ari_rs::Client;
+use arirs::client::Client;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -12,10 +12,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing::info!("Hello, world!");
 
     let client = Client::new()
-        .url("http://localhost:8080")
+        .url("http://localhost:8080")?
         .username("admin")
         .password("password")
-        .connect()?
+        .connect()
         .build();
 
     Ok(())

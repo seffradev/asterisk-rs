@@ -55,7 +55,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let data = String::from_utf8(data.to_vec()).unwrap();
 
-            let event: ari_rs::Event = match serde_json::from_str(&data) {
+            let event: arirs::Event = match serde_json::from_str(&data) {
                 Ok(data) => data,
                 Err(e) => {
                     println!("Error: {}", e);
@@ -65,25 +65,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             };
 
             match event {
-                ari_rs::Event::StasisStart(x) => println!("StasisStart, {}", x.timestamp),
-                ari_rs::Event::ChannelCreated(x) => println!("ChannelCreated, {}", x.timestamp),
-                ari_rs::Event::ChannelDestroyed(x) => println!("ChannelDestroyed, {}", x.timestamp),
-                ari_rs::Event::ChannelVarset(x) => println!("ChannelVarset, {}", x.timestamp),
-                ari_rs::Event::ChannelHangupRequest(x) => {
+                arirs::Event::StasisStart(x) => println!("StasisStart, {}", x.timestamp),
+                arirs::Event::ChannelCreated(x) => println!("ChannelCreated, {}", x.timestamp),
+                arirs::Event::ChannelDestroyed(x) => println!("ChannelDestroyed, {}", x.timestamp),
+                arirs::Event::ChannelVarset(x) => println!("ChannelVarset, {}", x.timestamp),
+                arirs::Event::ChannelHangupRequest(x) => {
                     println!("ChannelHangupRequest, {}", x.timestamp)
                 }
-                ari_rs::Event::ChannelDialplan(x) => println!("ChannelDialplan, {}", x.timestamp),
-                ari_rs::Event::DeviceStateChanged(x) => {
+                arirs::Event::ChannelDialplan(x) => println!("ChannelDialplan, {}", x.timestamp),
+                arirs::Event::DeviceStateChanged(x) => {
                     println!("DeviceStateChanged, {}", x.timestamp)
                 }
-                ari_rs::Event::StasisEnd(x) => println!("StasisEnd, {}", x.timestamp),
-                ari_rs::Event::ChannelStateChange(x) => {
+                arirs::Event::StasisEnd(x) => println!("StasisEnd, {}", x.timestamp),
+                arirs::Event::ChannelStateChange(x) => {
                     println!("ChannelStateChange, {}", x.timestamp)
                 }
-                ari_rs::Event::ChannelDtmfReceived(x) => {
+                arirs::Event::ChannelDtmfReceived(x) => {
                     println!("ChannelDtmfReceived, {}", x.timestamp)
                 }
-                ari_rs::Event::Unknown => println!("Unknown"),
+                arirs::Event::Unknown => println!("Unknown"),
             }
         })
     };
