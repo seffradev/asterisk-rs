@@ -6,6 +6,7 @@ use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
+use std::fmt::Display;
 use tracing::{event, span, Level};
 use url::Url;
 
@@ -230,8 +231,34 @@ impl Client {
         unimplemented!()
     }
 
-    pub fn hangup_channel(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
+    pub async fn hangup_channel(&self, channel_id: &str, reason: Reason) -> Result<()> {
+        let span = span!(Level::INFO, "hangup_channel");
+        let _guard = span.enter();
+
+        let mut url = self.url.join(&format!("/ari/channels/{}", channel_id))?;
+
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair("api_key", &format!("{}:{}", self.username, self.password));
+
+        match reason {
+            Reason::Code(_) => url.append_pair("reason_code", &format!("{}", reason)),
+            _ => url.append_pair("reason", &format!("{}", reason)),
+        };
+
+        let url = url.finish().to_owned();
+
+        let response = reqwest::Client::new().delete(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to hang up channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not hang up channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully hung up channel");
+        Ok(())
     }
 
     pub fn continue_in_dialplan(&self, _channel_id: &str) -> Result<()> {
@@ -392,6 +419,47 @@ pub enum OriginateParams<'a> {
         app: &'a str,
         app_args: Vec<&'a str>,
     },
+}
+
+impl Display for Reason {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let res = match self {
+            Reason::Code(code) => format!("{}", code),
+            Reason::Normal => String::from("normal"),
+            Reason::Busy => String::from("busy"),
+            Reason::Congestion => String::from("congestion"),
+            Reason::NoAnswer => String::from("no_answer"),
+            Reason::Timeout => String::from("timeout"),
+            Reason::Rejected => String::from("rejected"),
+            Reason::Unallocated => String::from("unallocated"),
+            Reason::NormalUnspecified => String::from("normal_unspecified"),
+            Reason::NumberIncomplete => String::from("number_incomplete"),
+            Reason::CodecMismatch => String::from("codec_mismatch"),
+            Reason::Interworking => String::from("interworking"),
+            Reason::Failure => String::from("failure"),
+            Reason::AnsweredElsewhere => String::from("answered_elsewhere"),
+        };
+
+        write!(f, "{}", res)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum Reason {
+    Code(u16),
+    Normal,
+    Busy,
+    Congestion,
+    NoAnswer,
+    Timeout,
+    Rejected,
+    Unallocated,
+    NormalUnspecified,
+    NumberIncomplete,
+    CodecMismatch,
+    Interworking,
+    Failure,
+    AnsweredElsewhere,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
