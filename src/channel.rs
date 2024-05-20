@@ -1,7 +1,7 @@
-use crate::Result;
 use crate::{
     client::Client, playback::Playback, recording::Recording, rtp_stat::RtpStat, variable::Variable,
 };
+use crate::{AriError, Result};
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -21,8 +21,18 @@ impl Client {
             .finish()
             .to_owned();
 
-        let channels = reqwest::get(url).await?;
-        let channels = channels.json::<Vec<Channel>>().await?;
+        let response = reqwest::get(url).await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to list channels");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not list channels"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully received channels");
+        let channels = response.json::<Vec<Channel>>().await?;
+
         Ok(channels)
     }
 
@@ -119,13 +129,17 @@ impl Client {
 
         event!(Level::INFO, "URL: {}", url);
 
-        let channel = reqwest::Client::new()
-            .post(url)
-            .json(&body)
-            .send()
-            .await?
-            .json::<Channel>()
-            .await?;
+        let response = reqwest::Client::new().post(url).json(&body).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to create channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not create channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully created channel");
+        let channel = response.json::<Channel>().await?;
 
         event!(Level::INFO, "Channel ID: {}", channel.id);
         Ok(channel)
@@ -242,12 +256,16 @@ impl Client {
 
         let url = url.finish().to_owned();
 
-        let playback = reqwest::Client::new()
-            .post(url)
-            .send()
-            .await?
-            .json::<Playback>()
-            .await?;
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to play media");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not play media"),
+            ));
+        }
+
+        let playback = response.json::<Playback>().await?;
 
         Ok(playback)
     }
