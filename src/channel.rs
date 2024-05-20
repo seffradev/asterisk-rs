@@ -731,8 +731,45 @@ impl Client {
         unimplemented!()
     }
 
-    pub fn dial(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
+    pub async fn dial(
+        &self,
+        channel_id: &str,
+        caller_id: Option<&str>,
+        timeout: Option<u32>,
+    ) -> Result<()> {
+        let span = span!(Level::INFO, "dial");
+        let _guard = span.enter();
+
+        let mut url = self
+            .url
+            .join(&format!("/ari/channels/{}/dial", channel_id))?;
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair("api_key", &format!("{}:{}", self.username, self.password));
+
+        if let Some(caller_id) = caller_id {
+            event!(Level::INFO, "Caller ID: {}", caller_id);
+            url.append_pair("callerId", &caller_id);
+        }
+
+        if let Some(timeout) = timeout {
+            event!(Level::INFO, "Timeout: {}", timeout);
+            url.append_pair("timeout", &timeout.to_string());
+        }
+
+        let url = url.finish().to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to dial channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not dial channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully dialed channel");
+        Ok(())
     }
 
     pub fn get_rtp_stat(&self, _channel_id: &str) -> Result<RtpStat> {
