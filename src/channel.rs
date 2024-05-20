@@ -250,8 +250,106 @@ impl Client {
         Ok(channel)
     }
 
-    pub fn originate_channel_with_id(&self, _channel_id: &str) -> Result<Channel> {
-        unimplemented!()
+    pub async fn originate_channel_with_id<'a>(
+        &self,
+        channel_id: &str,
+        endpoint: &str,
+        params: OriginateParams<'a>,
+        caller_id: Option<&str>,
+        timeout: Option<u32>,
+        other_channel_id: Option<&str>,
+        originator: Option<&str>,
+        formats: Vec<&str>,
+        variables: Option<HashMap<&str, &str>>,
+    ) -> Result<Channel> {
+        let span = span!(Level::INFO, "originate_channel_with_id");
+        let _guard = span.enter();
+
+        let mut url = self.url.join(&format!("/ari/channels/{}", channel_id))?;
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .append_pair("endpoint", endpoint);
+
+        if !formats.is_empty() {
+            let formats = formats.join(",");
+            event!(Level::INFO, "Formats: {}", formats);
+            url.append_pair("formats", &formats);
+        }
+
+        match params {
+            OriginateParams::Extension {
+                extension,
+                context,
+                priority,
+                label,
+            } => {
+                url.append_pair("extension", &extension);
+                if let Some(context) = context {
+                    url.append_pair("context", &context);
+                }
+                if let Some(priority) = priority {
+                    url.append_pair("priority", &priority.to_string());
+                }
+                if let Some(label) = label {
+                    url.append_pair("label", &label);
+                }
+            }
+            OriginateParams::Application { app, app_args } => {
+                url.append_pair("app", &app);
+                if !app_args.is_empty() {
+                    let app_args = app_args.join(",");
+                    event!(Level::INFO, "App args: {}", app_args);
+                    url.append_pair("app_args", &app_args);
+                }
+            }
+        }
+
+        event!(Level::INFO, "Caller ID: {:?}", caller_id);
+        if let Some(caller_id) = caller_id {
+            url.append_pair("callerId", &caller_id);
+        }
+
+        event!(Level::INFO, "Timeout: {:?}", timeout);
+        if let Some(timeout) = timeout {
+            url.append_pair("timeout", &timeout.to_string());
+        } else {
+            url.append_pair("timeout", "30");
+        }
+
+        event!(Level::INFO, "Other Channel ID: {:?}", other_channel_id);
+        if let Some(other_channel_id) = other_channel_id {
+            url.append_pair("otherChannelId", &other_channel_id);
+        }
+
+        event!(Level::INFO, "Originator: {:?}", originator);
+        if let Some(originator) = originator {
+            url.append_pair("originator", &originator);
+        }
+
+        event!(Level::INFO, "Variables: {:?}", variables);
+        let body = json!({
+            "variables": variables
+        });
+
+        let url = url.finish().to_owned();
+
+        event!(Level::INFO, "URL: {}", url);
+
+        let response = reqwest::Client::new().post(url).json(&body).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to create channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not create channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully created channel");
+        let channel = response.json::<Channel>().await?;
+
+        event!(Level::INFO, "Channel ID: {}", channel.id);
+        Ok(channel)
     }
 
     pub async fn hangup_channel(&self, channel_id: &str, reason: Reason) -> Result<()> {
