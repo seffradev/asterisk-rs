@@ -415,8 +415,29 @@ impl Client {
         Ok(())
     }
 
-    pub fn ring_channel(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
+    pub async fn ring_channel(&self, channel_id: &str) -> Result<()> {
+        let span = span!(Level::INFO, "ring_channel");
+        let _guard = span.enter();
+
+        let url = self
+            .url
+            .join(&format!("/ari/channels/{}/ring", channel_id))?
+            .query_pairs_mut()
+            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .finish()
+            .to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to ring channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not ring channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully rang channel");
+        Ok(())
     }
 
     pub fn send_dtmf(&self, _channel_id: &str) -> Result<()> {
