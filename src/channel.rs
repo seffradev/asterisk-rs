@@ -469,8 +469,30 @@ impl Client {
         unimplemented!()
     }
 
-    pub fn mute_channel(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
+    pub async fn mute_channel(&self, channel_id: &str, direction: Direction) -> Result<()> {
+        let span = span!(Level::INFO, "mute_channel");
+        let _guard = span.enter();
+
+        let url = self
+            .url
+            .join(&format!("/ari/channels/{}/mute", channel_id))?
+            .query_pairs_mut()
+            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .append_pair("direction", &format!("{}", direction))
+            .finish()
+            .to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to mute channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not mute channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully muted channel");
+        Ok(())
     }
 
     pub fn unmute_channel(&self, _channel_id: &str) -> Result<()> {
@@ -648,6 +670,25 @@ pub enum Reason {
     Interworking,
     Failure,
     AnsweredElsewhere,
+}
+
+impl Display for Direction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let res = match self {
+            Direction::In => String::from("in"),
+            Direction::Out => String::from("out"),
+            Direction::Both => String::from("both"),
+        };
+
+        write!(f, "{}", res)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum Direction {
+    In,
+    Out,
+    Both,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
