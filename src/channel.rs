@@ -440,6 +440,31 @@ impl Client {
         Ok(())
     }
 
+    pub async fn ring_stop_channel(&self, channel_id: &str) -> Result<()> {
+        let span = span!(Level::INFO, "ring_stop_channel");
+        let _guard = span.enter();
+
+        let url = self
+            .url
+            .join(&format!("/ari/channels/{}/ring", channel_id))?
+            .query_pairs_mut()
+            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .finish()
+            .to_owned();
+
+        let response = reqwest::Client::new().delete(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to stop ringing channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not stop ringing channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully stopped ringing channel");
+        Ok(())
+    }
+
     pub fn send_dtmf(&self, _channel_id: &str) -> Result<()> {
         unimplemented!()
     }
