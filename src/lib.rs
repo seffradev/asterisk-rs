@@ -61,6 +61,9 @@ impl Display for AriError {
             AriError::TungsteniteError(err) => write!(f, "TungsteniteError: {}", err),
             AriError::ReqwestError(err) => write!(f, "ReqwestError: {}", err),
             AriError::JoinError(err) => write!(f, "JoinError: {}", err),
+            AriError::HttpError(status, body) => {
+                write!(f, "HttpError: {} - {}", status, body)
+            }
             AriError::Unknown(err) => write!(f, "Unknown: {}", err),
         }
     }
@@ -72,6 +75,7 @@ pub enum AriError {
     TungsteniteError(tungstenite::Error),
     ReqwestError(reqwest::Error),
     JoinError(JoinError),
+    HttpError(reqwest::StatusCode, String),
     Unknown(String),
 }
 
