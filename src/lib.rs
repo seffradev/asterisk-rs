@@ -8,6 +8,7 @@ use std::fmt::Display;
 use thiserror::Error;
 use tokio::task::JoinError;
 
+pub mod bridge;
 pub mod channel;
 pub mod client;
 pub mod device;
