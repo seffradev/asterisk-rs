@@ -223,8 +223,31 @@ impl Client {
         Ok(channel)
     }
 
-    pub fn get_channel(&self, _channel_id: &str) -> Result<Channel> {
-        unimplemented!()
+    pub async fn get_channel(&self, channel_id: &str) -> Result<Channel> {
+        let span = span!(Level::INFO, "get_channel");
+        let _guard = span.enter();
+
+        let url = self
+            .url
+            .join(&format!("/ari/channels/{}", channel_id))?
+            .query_pairs_mut()
+            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .finish()
+            .to_owned();
+
+        let response = reqwest::get(url).await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to get channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not get channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully received channel");
+        let channel = response.json::<Channel>().await?;
+
+        Ok(channel)
     }
 
     pub fn originate_channel_with_id(&self, _channel_id: &str) -> Result<Channel> {
