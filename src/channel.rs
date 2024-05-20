@@ -602,13 +602,22 @@ impl Client {
         Ok(playback)
     }
 
-    pub async fn play_media_with_id(&self, channel_id: &str, playback_id: &str, media: Vec<&str>, lang: Option<&str>, offset_ms: Option<u32>, skip_ms: Option<u32>) -> Result<Playback> {
+    pub async fn play_media_with_id(
+        &self,
+        channel_id: &str,
+        playback_id: &str,
+        media: Vec<&str>,
+        lang: Option<&str>,
+        offset_ms: Option<u32>,
+        skip_ms: Option<u32>,
+    ) -> Result<Playback> {
         let span = span!(Level::INFO, "play_media_with_id");
         let _guard = span.enter();
 
-        let mut url = self
-            .url
-            .join(&format!("/ari/channels/{}/play/{}/media", channel_id, playback_id))?;
+        let mut url = self.url.join(&format!(
+            "/ari/channels/{}/play/{}/media",
+            channel_id, playback_id
+        ))?;
 
         let mut url = url.query_pairs_mut();
 
@@ -648,8 +657,62 @@ impl Client {
         Ok(playback)
     }
 
-    pub fn record_channel(&self, _channel_id: &str) -> Result<Recording> {
-        unimplemented!()
+    pub async fn record_channel(
+        &self,
+        channel_id: &str,
+        name: &str,
+        format: &str,
+        max_duration_seconds: Option<u32>,
+        max_silence_seconds: Option<u32>,
+        if_exists: RecordingAction,
+        beep: bool,
+        terminate_on: RecordingTermination,
+    ) -> Result<Recording> {
+        let span = span!(Level::INFO, "record_channel");
+        let _guard = span.enter();
+
+        let mut url = self
+            .url
+            .join(&format!("/ari/channels/{}/record", channel_id))?;
+
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .append_pair("name", name)
+            .append_pair("format", format);
+
+        if let Some(max_duration_seconds) = max_duration_seconds {
+            event!(Level::INFO, "Max duration: {}", max_duration_seconds);
+            url.append_pair("max_duration_seconds", &max_duration_seconds.to_string());
+        }
+
+        if let Some(max_silence_seconds) = max_silence_seconds {
+            event!(Level::INFO, "Max silence: {}", max_silence_seconds);
+            url.append_pair("max_silence_seconds", &max_silence_seconds.to_string());
+        }
+
+        event!(Level::INFO, "If exists: {}", if_exists);
+        url.append_pair("if_exists", &format!("{}", if_exists));
+
+        event!(Level::INFO, "Beep: {}", beep);
+        url.append_pair("beep", &beep.to_string());
+
+        event!(Level::INFO, "Terminate on: {}", terminate_on);
+        url.append_pair("terminate_on", &format!("{}", terminate_on));
+
+        let url = url.finish().to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to record channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not record channel"),
+            ));
+        }
+
+        let recording = response.json::<Recording>().await?;
+        Ok(recording)
     }
 
     pub fn get_channel_variable(&self, _channel_id: &str) -> Result<Variable> {
@@ -753,6 +816,46 @@ pub enum Direction {
     In,
     Out,
     Both,
+}
+
+impl Display for RecordingAction {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let res = match self {
+            RecordingAction::Overwrite => String::from("overwrite"),
+            RecordingAction::Append => String::from("append"),
+            RecordingAction::Fail => String::from("fail"),
+        };
+
+        write!(f, "{}", res)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum RecordingAction {
+    Overwrite,
+    Append,
+    Fail,
+}
+
+impl Display for RecordingTermination {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let res = match self {
+            RecordingTermination::None => String::from("none"),
+            RecordingTermination::Any => String::from("any"),
+            RecordingTermination::Asterisk => String::from("*"),
+            RecordingTermination::Octothorpe => String::from("#"),
+        };
+
+        write!(f, "{}", res)
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum RecordingTermination {
+    None,
+    Any,
+    Asterisk,
+    Octothorpe,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
