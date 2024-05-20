@@ -145,8 +145,81 @@ impl Client {
         Ok(channel)
     }
 
-    pub fn create_channel(&self) -> Result<Channel> {
-        unimplemented!()
+    pub async fn create_channel(
+        &self,
+        endpoint: &str,
+        app: &str,
+        app_args: Option<Vec<&str>>,
+        channel_id: Option<&str>,
+        other_channel_id: Option<&str>,
+        originator: Option<&str>,
+        formats: Vec<&str>,
+        variables: Option<HashMap<&str, &str>>,
+    ) -> Result<Channel> {
+        let span = span!(Level::INFO, "create_channel");
+        let _guard = span.enter();
+
+        let mut url = self.url.join("/ari/channels")?;
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .append_pair("endpoint", &endpoint);
+
+        event!(Level::INFO, "Originate channel: {}", endpoint);
+
+        if !formats.is_empty() {
+            let formats = formats.join(",");
+            event!(Level::INFO, "Formats: {}", formats);
+            url.append_pair("formats", &formats);
+        }
+
+        url.append_pair("app", &app);
+        if let Some(app_args) = app_args {
+            if !app_args.is_empty() {
+                let app_args = app_args.join(",");
+                event!(Level::INFO, "App args: {}", app_args);
+                url.append_pair("app_args", &app_args);
+            }
+        }
+
+        event!(Level::INFO, "Channel ID: {:?}", channel_id);
+        if let Some(channel_id) = channel_id {
+            url.append_pair("channel_id", &channel_id);
+        }
+
+        event!(Level::INFO, "Other Channel ID: {:?}", other_channel_id);
+        if let Some(other_channel_id) = other_channel_id {
+            url.append_pair("other_channel_id", &other_channel_id);
+        }
+
+        event!(Level::INFO, "Originator: {:?}", originator);
+        if let Some(originator) = originator {
+            url.append_pair("originator", &originator);
+        }
+
+        event!(Level::INFO, "Variables: {:?}", variables);
+        let body = json!({
+            "variables": variables
+        });
+
+        let url = url.finish().to_owned();
+
+        event!(Level::INFO, "URL: {}", url);
+
+        let response = reqwest::Client::new().post(url).json(&body).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to create channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not create channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully created channel");
+        let channel = response.json::<Channel>().await?;
+
+        event!(Level::INFO, "Channel ID: {}", channel.id);
+        Ok(channel)
     }
 
     pub fn get_channel(&self, _channel_id: &str) -> Result<Channel> {
