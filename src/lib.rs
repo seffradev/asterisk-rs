@@ -48,6 +48,12 @@ impl From<JoinError> for AriError {
     }
 }
 
+impl From<String> for AriError {
+    fn from(err: String) -> Self {
+        AriError::Unknown(err)
+    }
+}
+
 impl Display for AriError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
@@ -55,6 +61,7 @@ impl Display for AriError {
             AriError::TungsteniteError(err) => write!(f, "TungsteniteError: {}", err),
             AriError::ReqwestError(err) => write!(f, "ReqwestError: {}", err),
             AriError::JoinError(err) => write!(f, "JoinError: {}", err),
+            AriError::Unknown(err) => write!(f, "Unknown: {}", err),
         }
     }
 }
@@ -65,6 +72,7 @@ pub enum AriError {
     TungsteniteError(tungstenite::Error),
     ReqwestError(reqwest::Error),
     JoinError(JoinError),
+    Unknown(String),
 }
 
 #[derive(Serialize, Deserialize, Debug)]
