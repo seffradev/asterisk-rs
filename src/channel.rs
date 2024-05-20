@@ -10,6 +10,429 @@ use std::fmt::Display;
 use tracing::{event, span, Level};
 use url::Url;
 
+impl Channel {
+    pub async fn hangup(self, client: &Client, reason: Reason) -> Result<()> {
+        let span = span!(Level::INFO, "hangup");
+        let _guard = span.enter();
+
+        let mut url = client.url.join(&format!("/ari/channels/{}", self.id))?;
+
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair(
+            "api_key",
+            &format!("{}:{}", client.username, client.password),
+        );
+
+        match reason {
+            Reason::Code(_) => url.append_pair("reason_code", &format!("{}", reason)),
+            _ => url.append_pair("reason", &format!("{}", reason)),
+        };
+
+        let url = url.finish().to_owned();
+
+        let response = reqwest::Client::new().delete(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to hang up channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not hang up channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully hung up channel");
+        Ok(())
+    }
+
+    pub fn continue_in_dialplan(self, _client: &Client) -> Result<()> {
+        unimplemented!()
+    }
+
+    /// Transfer the channel to another ARI application.
+    /// Same as `move` in Asterisk
+    pub fn transfer(self, _client: &Client) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub async fn answer(&self, client: &Client) -> Result<()> {
+        let span = span!(Level::INFO, "answer");
+        let _guard = span.enter();
+
+        let url = client
+            .url
+            .join(&format!("/ari/channels/{}/answer", self.id))?
+            .query_pairs_mut()
+            .append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .finish()
+            .to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to answer channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not answer channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully answered channel");
+        Ok(())
+    }
+
+    pub async fn start_ringing(&self, client: &Client) -> Result<()> {
+        let span = span!(Level::INFO, "start_ringing");
+        let _guard = span.enter();
+
+        let url = client
+            .url
+            .join(&format!("/ari/channels/{}/ring", self.id))?
+            .query_pairs_mut()
+            .append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .finish()
+            .to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to ring channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not ring channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully rang channel");
+        Ok(())
+    }
+
+    pub async fn stop_ringing(&self, client: &Client) -> Result<()> {
+        let span = span!(Level::INFO, "stop_ringing");
+        let _guard = span.enter();
+
+        let url = client
+            .url
+            .join(&format!("/ari/channels/{}/ring", self.id))?
+            .query_pairs_mut()
+            .append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .finish()
+            .to_owned();
+
+        let response = reqwest::Client::new().delete(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to stop ringing channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not stop ringing channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully stopped ringing channel");
+        Ok(())
+    }
+
+    pub fn send_dtmf(&self, _client: &Client) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub async fn mute(&self, client: &Client, direction: Direction) -> Result<()> {
+        let span = span!(Level::INFO, "mute");
+        let _guard = span.enter();
+
+        let url = client
+            .url
+            .join(&format!("/ari/channels/{}/mute", self.id))?
+            .query_pairs_mut()
+            .append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .append_pair("direction", &format!("{}", direction))
+            .finish()
+            .to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to mute channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not mute channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully muted channel");
+        Ok(())
+    }
+
+    pub async fn unmute(&self, client: &Client, direction: Direction) -> Result<()> {
+        let span = span!(Level::INFO, "unmute");
+        let _guard = span.enter();
+
+        let url = client
+            .url
+            .join(&format!("/ari/channels/{}/mute", self.id))?
+            .query_pairs_mut()
+            .append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .append_pair("direction", &format!("{}", direction))
+            .finish()
+            .to_owned();
+
+        let response = reqwest::Client::new().delete(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to unmute channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not unmute channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully unmuted channel");
+        Ok(())
+    }
+
+    pub fn hold(&self, _client: &Client) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn unhold(&self, _client: &Client) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn start_moh(&self, _client: &Client) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn stop_moh(&self, _client: &Client) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn start_silence(&self, _client: &Client) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn stop_silence(&self, _client: &Client) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub async fn play_media(
+        &self,
+        client: &Client,
+        media: &str,
+        lang: Option<&str>,
+        offset_ms: Option<u32>,
+        skip_ms: Option<u32>,
+        playback_id: Option<&str>,
+    ) -> Result<Playback> {
+        let span = span!(Level::INFO, "play_media");
+        let _guard = span.enter();
+
+        let mut url = client
+            .url
+            .join(&format!("/ari/channels/{}/play", self.id))?;
+
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .append_pair("media", &media);
+
+        if let Some(lang) = lang {
+            event!(Level::INFO, "Lang: {}", lang);
+            url.append_pair("lang", &lang);
+        }
+
+        if let Some(offset_ms) = offset_ms {
+            event!(Level::INFO, "Offset: {}", offset_ms);
+            url.append_pair("offset_ms", &offset_ms.to_string());
+        }
+
+        if let Some(skip_ms) = skip_ms {
+            event!(Level::INFO, "Skip: {}", skip_ms);
+            url.append_pair("skip_ms", &skip_ms.to_string());
+        }
+
+        if let Some(playback_id) = playback_id {
+            event!(Level::INFO, "Playback ID: {}", playback_id);
+            url.append_pair("playback_id", &playback_id);
+        }
+
+        let url = url.finish().to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to play media");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not play media"),
+            ));
+        }
+
+        let playback = response.json::<Playback>().await?;
+
+        Ok(playback)
+    }
+
+    pub async fn play_media_with_id(
+        &self,
+        client: &Client,
+        playback_id: &str,
+        media: Vec<&str>,
+        lang: Option<&str>,
+        offset_ms: Option<u32>,
+        skip_ms: Option<u32>,
+    ) -> Result<Playback> {
+        let span = span!(Level::INFO, "play_media_with_id");
+        let _guard = span.enter();
+
+        let mut url = client.url.join(&format!(
+            "/ari/channels/{}/play/{}/media",
+            self.id, playback_id
+        ))?;
+
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair("api_key", &format!("{}:{}", client.username, client.password));
+
+        let media = media.join(",");
+        event!(Level::INFO, "Media: {}", media);
+        url.append_pair("media", &media);
+
+        if let Some(lang) = lang {
+            event!(Level::INFO, "Lang: {}", lang);
+            url.append_pair("lang", &lang);
+        }
+
+        if let Some(offset_ms) = offset_ms {
+            event!(Level::INFO, "Offset: {}", offset_ms);
+            url.append_pair("offset_ms", &offset_ms.to_string());
+        }
+
+        if let Some(skip_ms) = skip_ms {
+            event!(Level::INFO, "Skip: {}", skip_ms);
+            url.append_pair("skip_ms", &skip_ms.to_string());
+        }
+
+        let url = url.finish().to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to play media");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not play media"),
+            ));
+        }
+
+        let playback = response.json::<Playback>().await?;
+        Ok(playback)
+    }
+
+    pub async fn record(
+        &self,
+        client: &Client,
+        name: &str,
+        format: &str,
+        max_duration_seconds: Option<u32>,
+        max_silence_seconds: Option<u32>,
+        if_exists: RecordingAction,
+        beep: bool,
+        terminate_on: RecordingTermination,
+    ) -> Result<Recording> {
+        let span = span!(Level::INFO, "record");
+        let _guard = span.enter();
+
+        let mut url = client
+            .url
+            .join(&format!("/ari/channels/{}/record", self.id))?;
+
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .append_pair("name", name)
+            .append_pair("format", format);
+
+        if let Some(max_duration_seconds) = max_duration_seconds {
+            event!(Level::INFO, "Max duration: {}", max_duration_seconds);
+            url.append_pair("max_duration_seconds", &max_duration_seconds.to_string());
+        }
+
+        if let Some(max_silence_seconds) = max_silence_seconds {
+            event!(Level::INFO, "Max silence: {}", max_silence_seconds);
+            url.append_pair("max_silence_seconds", &max_silence_seconds.to_string());
+        }
+
+        event!(Level::INFO, "If exists: {}", if_exists);
+        url.append_pair("if_exists", &format!("{}", if_exists));
+
+        event!(Level::INFO, "Beep: {}", beep);
+        url.append_pair("beep", &beep.to_string());
+
+        event!(Level::INFO, "Terminate on: {}", terminate_on);
+        url.append_pair("terminate_on", &format!("{}", terminate_on));
+
+        let url = url.finish().to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to record channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not record channel"),
+            ));
+        }
+
+        let recording = response.json::<Recording>().await?;
+        Ok(recording)
+    }
+
+    pub fn get_variable(&self, _client: &Client) -> Result<Variable> {
+        unimplemented!()
+    }
+
+    pub fn set_variable(&self, _client: &Client) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub async fn dial(
+        &self,
+        client: &Client,
+        caller_id: Option<&str>,
+        timeout: Option<u32>,
+    ) -> Result<()> {
+        let span = span!(Level::INFO, "dial");
+        let _guard = span.enter();
+
+        let mut url = client
+            .url
+            .join(&format!("/ari/channels/{}/dial", self.id))?;
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair("api_key", &format!("{}:{}", client.username, client.password));
+
+        if let Some(caller_id) = caller_id {
+            event!(Level::INFO, "Caller ID: {}", caller_id);
+            url.append_pair("callerId", &caller_id);
+        }
+
+        if let Some(timeout) = timeout {
+            event!(Level::INFO, "Timeout: {}", timeout);
+            url.append_pair("timeout", &timeout.to_string());
+        }
+
+        let url = url.finish().to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to dial channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not dial channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully dialed channel");
+        Ok(())
+    }
+
+    pub fn get_rtp_stat(&self, _client: &Client) -> Result<RtpStat> {
+        unimplemented!()
+    }
+}
+
 impl Client {
     pub async fn list_channels(&self) -> Result<Vec<Channel>> {
         let span = span!(Level::INFO, "list_channels");
@@ -352,427 +775,11 @@ impl Client {
         Ok(channel)
     }
 
-    pub async fn hangup_channel(&self, channel_id: &str, reason: Reason) -> Result<()> {
-        let span = span!(Level::INFO, "hangup_channel");
-        let _guard = span.enter();
-
-        let mut url = self.url.join(&format!("/ari/channels/{}", channel_id))?;
-
-        let mut url = url.query_pairs_mut();
-
-        url.append_pair("api_key", &format!("{}:{}", self.username, self.password));
-
-        match reason {
-            Reason::Code(_) => url.append_pair("reason_code", &format!("{}", reason)),
-            _ => url.append_pair("reason", &format!("{}", reason)),
-        };
-
-        let url = url.finish().to_owned();
-
-        let response = reqwest::Client::new().delete(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to hang up channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not hang up channel"),
-            ));
-        }
-
-        event!(Level::INFO, "Successfully hung up channel");
-        Ok(())
-    }
-
-    pub fn continue_in_dialplan(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub fn move_channel(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub async fn answer_channel(&self, channel_id: &str) -> Result<()> {
-        let span = span!(Level::INFO, "answer_channel");
-        let _guard = span.enter();
-
-        let url = self
-            .url
-            .join(&format!("/ari/channels/{}/answer", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .finish()
-            .to_owned();
-
-        let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to answer channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not answer channel"),
-            ));
-        }
-
-        event!(Level::INFO, "Successfully answered channel");
-        Ok(())
-    }
-
-    pub async fn ring_channel(&self, channel_id: &str) -> Result<()> {
-        let span = span!(Level::INFO, "ring_channel");
-        let _guard = span.enter();
-
-        let url = self
-            .url
-            .join(&format!("/ari/channels/{}/ring", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .finish()
-            .to_owned();
-
-        let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to ring channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not ring channel"),
-            ));
-        }
-
-        event!(Level::INFO, "Successfully rang channel");
-        Ok(())
-    }
-
-    pub async fn ring_stop_channel(&self, channel_id: &str) -> Result<()> {
-        let span = span!(Level::INFO, "ring_stop_channel");
-        let _guard = span.enter();
-
-        let url = self
-            .url
-            .join(&format!("/ari/channels/{}/ring", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .finish()
-            .to_owned();
-
-        let response = reqwest::Client::new().delete(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to stop ringing channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not stop ringing channel"),
-            ));
-        }
-
-        event!(Level::INFO, "Successfully stopped ringing channel");
-        Ok(())
-    }
-
-    pub fn send_dtmf(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub async fn mute_channel(&self, channel_id: &str, direction: Direction) -> Result<()> {
-        let span = span!(Level::INFO, "mute_channel");
-        let _guard = span.enter();
-
-        let url = self
-            .url
-            .join(&format!("/ari/channels/{}/mute", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .append_pair("direction", &format!("{}", direction))
-            .finish()
-            .to_owned();
-
-        let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to mute channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not mute channel"),
-            ));
-        }
-
-        event!(Level::INFO, "Successfully muted channel");
-        Ok(())
-    }
-
-    pub async fn unmute_channel(&self, channel_id: &str, direction: Direction) -> Result<()> {
-        let span = span!(Level::INFO, "unmute_channel");
-        let _guard = span.enter();
-
-        let url = self
-            .url
-            .join(&format!("/ari/channels/{}/mute", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .append_pair("direction", &format!("{}", direction))
-            .finish()
-            .to_owned();
-
-        let response = reqwest::Client::new().delete(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to unmute channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not unmute channel"),
-            ));
-        }
-
-        event!(Level::INFO, "Successfully unmuted channel");
-        Ok(())
-    }
-
-    pub fn hold_channel(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub fn unhold_channel(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub fn start_moh(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub fn stop_moh(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub fn start_silence(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub fn stop_silence(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub async fn play_media(
-        &self,
-        channel_id: &str,
-        media: &str,
-        lang: Option<&str>,
-        offset_ms: Option<u32>,
-        skip_ms: Option<u32>,
-        playback_id: Option<&str>,
-    ) -> Result<Playback> {
-        let span = span!(Level::INFO, "play_media");
-        let _guard = span.enter();
-
-        let mut url = self
-            .url
-            .join(&format!("/ari/channels/{}/play", channel_id))?;
-
-        let mut url = url.query_pairs_mut();
-
-        url.append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .append_pair("media", &media);
-
-        if let Some(lang) = lang {
-            event!(Level::INFO, "Lang: {}", lang);
-            url.append_pair("lang", &lang);
-        }
-
-        if let Some(offset_ms) = offset_ms {
-            event!(Level::INFO, "Offset: {}", offset_ms);
-            url.append_pair("offset_ms", &offset_ms.to_string());
-        }
-
-        if let Some(skip_ms) = skip_ms {
-            event!(Level::INFO, "Skip: {}", skip_ms);
-            url.append_pair("skip_ms", &skip_ms.to_string());
-        }
-
-        if let Some(playback_id) = playback_id {
-            event!(Level::INFO, "Playback ID: {}", playback_id);
-            url.append_pair("playback_id", &playback_id);
-        }
-
-        let url = url.finish().to_owned();
-
-        let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to play media");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not play media"),
-            ));
-        }
-
-        let playback = response.json::<Playback>().await?;
-
-        Ok(playback)
-    }
-
-    pub async fn play_media_with_id(
-        &self,
-        channel_id: &str,
-        playback_id: &str,
-        media: Vec<&str>,
-        lang: Option<&str>,
-        offset_ms: Option<u32>,
-        skip_ms: Option<u32>,
-    ) -> Result<Playback> {
-        let span = span!(Level::INFO, "play_media_with_id");
-        let _guard = span.enter();
-
-        let mut url = self.url.join(&format!(
-            "/ari/channels/{}/play/{}/media",
-            channel_id, playback_id
-        ))?;
-
-        let mut url = url.query_pairs_mut();
-
-        url.append_pair("api_key", &format!("{}:{}", self.username, self.password));
-
-        let media = media.join(",");
-        event!(Level::INFO, "Media: {}", media);
-        url.append_pair("media", &media);
-
-        if let Some(lang) = lang {
-            event!(Level::INFO, "Lang: {}", lang);
-            url.append_pair("lang", &lang);
-        }
-
-        if let Some(offset_ms) = offset_ms {
-            event!(Level::INFO, "Offset: {}", offset_ms);
-            url.append_pair("offset_ms", &offset_ms.to_string());
-        }
-
-        if let Some(skip_ms) = skip_ms {
-            event!(Level::INFO, "Skip: {}", skip_ms);
-            url.append_pair("skip_ms", &skip_ms.to_string());
-        }
-
-        let url = url.finish().to_owned();
-
-        let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to play media");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not play media"),
-            ));
-        }
-
-        let playback = response.json::<Playback>().await?;
-        Ok(playback)
-    }
-
-    pub async fn record_channel(
-        &self,
-        channel_id: &str,
-        name: &str,
-        format: &str,
-        max_duration_seconds: Option<u32>,
-        max_silence_seconds: Option<u32>,
-        if_exists: RecordingAction,
-        beep: bool,
-        terminate_on: RecordingTermination,
-    ) -> Result<Recording> {
-        let span = span!(Level::INFO, "record_channel");
-        let _guard = span.enter();
-
-        let mut url = self
-            .url
-            .join(&format!("/ari/channels/{}/record", channel_id))?;
-
-        let mut url = url.query_pairs_mut();
-
-        url.append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .append_pair("name", name)
-            .append_pair("format", format);
-
-        if let Some(max_duration_seconds) = max_duration_seconds {
-            event!(Level::INFO, "Max duration: {}", max_duration_seconds);
-            url.append_pair("max_duration_seconds", &max_duration_seconds.to_string());
-        }
-
-        if let Some(max_silence_seconds) = max_silence_seconds {
-            event!(Level::INFO, "Max silence: {}", max_silence_seconds);
-            url.append_pair("max_silence_seconds", &max_silence_seconds.to_string());
-        }
-
-        event!(Level::INFO, "If exists: {}", if_exists);
-        url.append_pair("if_exists", &format!("{}", if_exists));
-
-        event!(Level::INFO, "Beep: {}", beep);
-        url.append_pair("beep", &beep.to_string());
-
-        event!(Level::INFO, "Terminate on: {}", terminate_on);
-        url.append_pair("terminate_on", &format!("{}", terminate_on));
-
-        let url = url.finish().to_owned();
-
-        let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to record channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not record channel"),
-            ));
-        }
-
-        let recording = response.json::<Recording>().await?;
-        Ok(recording)
-    }
-
-    pub fn get_channel_variable(&self, _channel_id: &str) -> Result<Variable> {
-        unimplemented!()
-    }
-
-    pub fn set_channel_variable(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
     pub fn snoop(&self, _channel_id: &str) -> Result<Channel> {
         unimplemented!()
     }
 
     pub fn snoop_with_id(&self, _channel_id: &str) -> Result<Channel> {
-        unimplemented!()
-    }
-
-    pub async fn dial(
-        &self,
-        channel_id: &str,
-        caller_id: Option<&str>,
-        timeout: Option<u32>,
-    ) -> Result<()> {
-        let span = span!(Level::INFO, "dial");
-        let _guard = span.enter();
-
-        let mut url = self
-            .url
-            .join(&format!("/ari/channels/{}/dial", channel_id))?;
-        let mut url = url.query_pairs_mut();
-
-        url.append_pair("api_key", &format!("{}:{}", self.username, self.password));
-
-        if let Some(caller_id) = caller_id {
-            event!(Level::INFO, "Caller ID: {}", caller_id);
-            url.append_pair("callerId", &caller_id);
-        }
-
-        if let Some(timeout) = timeout {
-            event!(Level::INFO, "Timeout: {}", timeout);
-            url.append_pair("timeout", &timeout.to_string());
-        }
-
-        let url = url.finish().to_owned();
-
-        let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to dial channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not dial channel"),
-            ));
-        }
-
-        event!(Level::INFO, "Successfully dialed channel");
-        Ok(())
-    }
-
-    pub fn get_rtp_stat(&self, _channel_id: &str) -> Result<RtpStat> {
         unimplemented!()
     }
 

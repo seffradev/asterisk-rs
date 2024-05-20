@@ -34,15 +34,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     while let Some(event) = rx.recv().await {
         match event {
             Event::StasisStart(e) => {
-                client
-                    .play_media(
-                        &e.channel.id,
-                        "sound:hello",
-                        Some("en"),
-                        None,
-                        None,
-                        None,
-                    )
+                let channel = e.channel;
+                channel
+                    .play_media(&client, "sound:hello", Some("en"), None, None, None)
                     .await?;
             }
             _ => {}
