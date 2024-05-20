@@ -1,5 +1,5 @@
 use crate::Result;
-use crate::{client::Client, playback::Playback, recording::Recording};
+use crate::{client::Client, playback::Playback, recording::LiveRecording};
 use serde::{Deserialize, Serialize};
 
 impl Bridge {
@@ -44,7 +44,7 @@ impl Bridge {
         unimplemented!()
     }
 
-    pub async fn start_recording(&self, _client: &Client, _recording: &Recording) -> Result<()> {
+    pub async fn start_recording(&self, _client: &Client, _recording: &LiveRecording) -> Result<()> {
         unimplemented!()
     }
 }

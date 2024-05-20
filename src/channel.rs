@@ -1,5 +1,5 @@
 use crate::{
-    client::Client, playback::Playback, recording::Recording, rtp_stat::RtpStat, variable::Variable,
+    client::Client, playback::Playback, recording::LiveRecording, rtp_stat::RtpStat, variable::Variable,
 };
 use crate::{AriError, Result};
 use chrono::DateTime;
@@ -332,7 +332,7 @@ impl Channel {
         if_exists: RecordingAction,
         beep: bool,
         terminate_on: RecordingTermination,
-    ) -> Result<Recording> {
+    ) -> Result<LiveRecording> {
         let span = span!(Level::INFO, "record");
         let _guard = span.enter();
 
@@ -376,7 +376,7 @@ impl Channel {
             ));
         }
 
-        let recording = response.json::<Recording>().await?;
+        let recording = response.json::<LiveRecording>().await?;
         Ok(recording)
     }
 
