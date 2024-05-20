@@ -602,8 +602,50 @@ impl Client {
         Ok(playback)
     }
 
-    pub fn play_media_with_id(&self, _channel_id: &str) -> Result<Playback> {
-        unimplemented!()
+    pub async fn play_media_with_id(&self, channel_id: &str, playback_id: &str, media: Vec<&str>, lang: Option<&str>, offset_ms: Option<u32>, skip_ms: Option<u32>) -> Result<Playback> {
+        let span = span!(Level::INFO, "play_media_with_id");
+        let _guard = span.enter();
+
+        let mut url = self
+            .url
+            .join(&format!("/ari/channels/{}/play/{}/media", channel_id, playback_id))?;
+
+        let mut url = url.query_pairs_mut();
+
+        url.append_pair("api_key", &format!("{}:{}", self.username, self.password));
+
+        let media = media.join(",");
+        event!(Level::INFO, "Media: {}", media);
+        url.append_pair("media", &media);
+
+        if let Some(lang) = lang {
+            event!(Level::INFO, "Lang: {}", lang);
+            url.append_pair("lang", &lang);
+        }
+
+        if let Some(offset_ms) = offset_ms {
+            event!(Level::INFO, "Offset: {}", offset_ms);
+            url.append_pair("offset_ms", &offset_ms.to_string());
+        }
+
+        if let Some(skip_ms) = skip_ms {
+            event!(Level::INFO, "Skip: {}", skip_ms);
+            url.append_pair("skip_ms", &skip_ms.to_string());
+        }
+
+        let url = url.finish().to_owned();
+
+        let response = reqwest::Client::new().post(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to play media");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not play media"),
+            ));
+        }
+
+        let playback = response.json::<Playback>().await?;
+        Ok(playback)
     }
 
     pub fn record_channel(&self, _channel_id: &str) -> Result<Recording> {
