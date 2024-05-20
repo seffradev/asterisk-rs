@@ -495,8 +495,30 @@ impl Client {
         Ok(())
     }
 
-    pub fn unmute_channel(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
+    pub async fn unmute_channel(&self, channel_id: &str, direction: Direction) -> Result<()> {
+        let span = span!(Level::INFO, "unmute_channel");
+        let _guard = span.enter();
+
+        let url = self
+            .url
+            .join(&format!("/ari/channels/{}/mute", channel_id))?
+            .query_pairs_mut()
+            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .append_pair("direction", &format!("{}", direction))
+            .finish()
+            .to_owned();
+
+        let response = reqwest::Client::new().delete(url).send().await?;
+        if !response.status().is_success() {
+            event!(Level::ERROR, "Failed to unmute channel");
+            return Err(AriError::HttpError(
+                response.status(),
+                String::from("Could not unmute channel"),
+            ));
+        }
+
+        event!(Level::INFO, "Successfully unmuted channel");
+        Ok(())
     }
 
     pub fn hold_channel(&self, _channel_id: &str) -> Result<()> {
