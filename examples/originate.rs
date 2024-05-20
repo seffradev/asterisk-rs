@@ -1,3 +1,4 @@
+use arirs::channel::Channel;
 use arirs::Result;
 use arirs::{channel::OriginateParams, client::Client};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -18,22 +19,22 @@ async fn main() -> Result<()> {
         .app_name(APP_NAME)
         .build()?;
 
-    client
-        .originate_channel(
-            "PJSIP/1000",
-            OriginateParams::Application {
-                app: APP_NAME,
-                app_args: vec![],
-            },
-            None,
-            None,
-            None,
-            None,
-            None,
-            vec!["alaw,ulaw"],
-            None,
-        )
-        .await?;
+    Channel::originate(
+        &client,
+        "PJSIP/1000",
+        OriginateParams::Application {
+            app: APP_NAME,
+            app_args: vec![],
+        },
+        None,
+        None,
+        None,
+        None,
+        None,
+        vec!["alaw,ulaw"],
+        None,
+    )
+    .await?;
 
     Ok(())
 }

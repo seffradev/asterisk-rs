@@ -1,11 +1,19 @@
-use std::fmt::Display;
-
-use serde::{Deserialize, Serialize};
-
 use crate::client::Client;
 use crate::Result;
+use serde::{Deserialize, Serialize};
+use std::fmt::Display;
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct Playback {
+    pub id: String,
+}
 
 impl Playback {
+    pub async fn get_playback(_client: &Client, _playback_id: &str) -> Result<Playback> {
+        unimplemented!()
+    }
+
     pub async fn control(&self, _client: &Client, _operation: Operation) -> Result<()> {
         unimplemented!()
     }
@@ -15,16 +23,14 @@ impl Playback {
     }
 }
 
-impl Client {
-    pub async fn get_playback(&self, _playback_id: &str) -> Result<Playback> {
-        unimplemented!()
-    }
-}
-
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
-pub struct Playback {
-    pub id: String,
+pub enum Operation {
+    Restart,
+    Pause,
+    Unpause,
+    Reverse,
+    Forward,
 }
 
 impl Display for Operation {
@@ -37,14 +43,4 @@ impl Display for Operation {
             Operation::Forward => write!(f, "forward"),
         }
     }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub enum Operation {
-    Restart,
-    Pause,
-    Unpause,
-    Reverse,
-    Forward,
 }

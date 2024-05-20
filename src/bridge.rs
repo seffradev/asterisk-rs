@@ -2,6 +2,11 @@ use crate::Result;
 use crate::{client::Client, playback::Playback, recording::LiveRecording};
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Bridge {
+    pub id: String,
+}
+
 impl Bridge {
     pub async fn destroy(&self, _client: &Client) -> Result<()> {
         unimplemented!()
@@ -44,34 +49,31 @@ impl Bridge {
         unimplemented!()
     }
 
-    pub async fn start_recording(&self, _client: &Client, _recording: &LiveRecording) -> Result<()> {
-        unimplemented!()
-    }
-}
-
-impl Client {
-    pub async fn list_bridges(&self) -> Result<Vec<Bridge>> {
+    pub async fn start_recording(
+        &self,
+        _client: &Client,
+        _recording: &LiveRecording,
+    ) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn create_bridge(&self, _bridge_id: &str) -> Result<Bridge> {
+    pub async fn list_bridges(_client: &Client) -> Result<Vec<Bridge>> {
+        unimplemented!()
+    }
+
+    pub async fn create_bridge(_client: &Client, _bridge_id: &str) -> Result<Bridge> {
         unimplemented!()
     }
 
     pub async fn create_bridge_with_id(
-        &self,
+        _client: &Client,
         _bridge_id: &str,
         _bridge: &Bridge,
     ) -> Result<Bridge> {
         unimplemented!()
     }
 
-    pub async fn get_bridge(&self, _bridge_id: &str) -> Result<Bridge> {
+    pub async fn get_bridge(_client: &Client, _bridge_id: &str) -> Result<Bridge> {
         unimplemented!()
     }
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Bridge {
-    pub id: String,
 }

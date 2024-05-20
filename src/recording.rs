@@ -1,9 +1,19 @@
-use serde::{Deserialize, Serialize};
-
 use crate::client::Client;
 use crate::Result;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct LiveRecording {
+    pub id: String,
+    pub name: String,
+}
 
 impl LiveRecording {
+    pub async fn get(_recording_name: &str) -> Result<LiveRecording> {
+        unimplemented!()
+    }
+
     pub async fn discard(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
@@ -30,7 +40,22 @@ impl LiveRecording {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct StoredRecording {
+    pub id: String,
+    pub format: String,
+}
+
 impl StoredRecording {
+    pub async fn list(_client: &Client) -> Result<Vec<StoredRecording>> {
+        unimplemented!()
+    }
+
+    pub async fn get(_recording_name: &str) -> Result<StoredRecording> {
+        unimplemented!()
+    }
+
     pub async fn delete(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
@@ -38,32 +63,4 @@ impl StoredRecording {
     pub async fn download(&self, _client: &Client) -> Result<&[u8]> {
         unimplemented!()
     }
-}
-
-impl Client {
-    pub async fn list_stored_recordings(&self) -> Result<Vec<StoredRecording>> {
-        unimplemented!()
-    }
-
-    pub async fn get_stored_recording(&self, _recording_name: &str) -> Result<StoredRecording> {
-        unimplemented!()
-    }
-
-    pub async fn get_live_recording(&self, _recording_name: &str) -> Result<LiveRecording> {
-        unimplemented!()
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct LiveRecording {
-    pub id: String,
-    pub name: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct StoredRecording {
-    pub id: String,
-    pub format: String,
 }

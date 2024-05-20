@@ -1,5 +1,5 @@
-use arirs::client::Client;
 use arirs::Result;
+use arirs::{channel::Channel, client::Client};
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -17,7 +17,7 @@ async fn main() -> Result<()> {
         .app_name("ari")
         .build()?;
 
-    for channel in client.list_channels().await? {
+    for channel in Channel::list(&client).await? {
         debug!("Channel ID: {}", channel.id);
     }
 

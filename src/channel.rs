@@ -1,5 +1,6 @@
 use crate::{
-    client::Client, playback::Playback, recording::LiveRecording, rtp_stat::RtpStat, variable::Variable,
+    client::Client, playback::Playback, recording::LiveRecording, rtp_stat::RtpStat,
+    variable::Variable,
 };
 use crate::{AriError, Result};
 use chrono::DateTime;
@@ -9,6 +10,21 @@ use std::collections::HashMap;
 use std::fmt::Display;
 use tracing::{event, span, Level};
 use url::Url;
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct Channel {
+    pub id: String,
+    pub name: String,
+    pub state: String,
+    pub protocol_id: String,
+    pub caller: Caller,
+    pub connected: Caller,
+    pub accountcode: String,
+    pub dialplan: Dialplan,
+    pub creationtime: String,
+    pub language: String,
+}
 
 impl Channel {
     pub async fn hangup(self, client: &Client, reason: Reason) -> Result<()> {
@@ -62,7 +78,10 @@ impl Channel {
             .url
             .join(&format!("/ari/channels/{}/answer", self.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .append_pair(
+                "api_key",
+                &format!("{}:{}", client.username, client.password),
+            )
             .finish()
             .to_owned();
 
@@ -87,7 +106,10 @@ impl Channel {
             .url
             .join(&format!("/ari/channels/{}/ring", self.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .append_pair(
+                "api_key",
+                &format!("{}:{}", client.username, client.password),
+            )
             .finish()
             .to_owned();
 
@@ -112,7 +134,10 @@ impl Channel {
             .url
             .join(&format!("/ari/channels/{}/ring", self.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .append_pair(
+                "api_key",
+                &format!("{}:{}", client.username, client.password),
+            )
             .finish()
             .to_owned();
 
@@ -141,7 +166,10 @@ impl Channel {
             .url
             .join(&format!("/ari/channels/{}/mute", self.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .append_pair(
+                "api_key",
+                &format!("{}:{}", client.username, client.password),
+            )
             .append_pair("direction", &format!("{}", direction))
             .finish()
             .to_owned();
@@ -167,7 +195,10 @@ impl Channel {
             .url
             .join(&format!("/ari/channels/{}/mute", self.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", client.username, client.password))
+            .append_pair(
+                "api_key",
+                &format!("{}:{}", client.username, client.password),
+            )
             .append_pair("direction", &format!("{}", direction))
             .finish()
             .to_owned();
@@ -227,8 +258,11 @@ impl Channel {
 
         let mut url = url.query_pairs_mut();
 
-        url.append_pair("api_key", &format!("{}:{}", client.username, client.password))
-            .append_pair("media", media);
+        url.append_pair(
+            "api_key",
+            &format!("{}:{}", client.username, client.password),
+        )
+        .append_pair("media", media);
 
         if let Some(lang) = lang {
             event!(Level::INFO, "Lang: {}", lang);
@@ -285,7 +319,10 @@ impl Channel {
 
         let mut url = url.query_pairs_mut();
 
-        url.append_pair("api_key", &format!("{}:{}", client.username, client.password));
+        url.append_pair(
+            "api_key",
+            &format!("{}:{}", client.username, client.password),
+        );
 
         let media = media.join(",");
         event!(Level::INFO, "Media: {}", media);
@@ -342,9 +379,12 @@ impl Channel {
 
         let mut url = url.query_pairs_mut();
 
-        url.append_pair("api_key", &format!("{}:{}", client.username, client.password))
-            .append_pair("name", name)
-            .append_pair("format", format);
+        url.append_pair(
+            "api_key",
+            &format!("{}:{}", client.username, client.password),
+        )
+        .append_pair("name", name)
+        .append_pair("format", format);
 
         if let Some(max_duration_seconds) = max_duration_seconds {
             event!(Level::INFO, "Max duration: {}", max_duration_seconds);
@@ -402,7 +442,10 @@ impl Channel {
             .join(&format!("/ari/channels/{}/dial", self.id))?;
         let mut url = url.query_pairs_mut();
 
-        url.append_pair("api_key", &format!("{}:{}", client.username, client.password));
+        url.append_pair(
+            "api_key",
+            &format!("{}:{}", client.username, client.password),
+        );
 
         if let Some(caller_id) = caller_id {
             event!(Level::INFO, "Caller ID: {}", caller_id);
@@ -432,17 +475,18 @@ impl Channel {
     pub fn get_rtp_stat(&self, _client: &Client) -> Result<RtpStat> {
         unimplemented!()
     }
-}
 
-impl Client {
-    pub async fn list_channels(&self) -> Result<Vec<Channel>> {
+    pub async fn list(client: &Client) -> Result<Vec<Channel>> {
         let span = span!(Level::INFO, "list_channels");
         let _guard = span.enter();
-        let url: Url = self
+        let url: Url = client
             .url
             .join("/ari/channels")?
             .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .append_pair(
+                "api_key",
+                &format!("{}:{}", client.username, client.password),
+            )
             .finish()
             .to_owned();
 
@@ -462,8 +506,8 @@ impl Client {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub async fn originate_channel<'a>(
-        &self,
+    pub async fn originate<'a>(
+        client: &Client,
         endpoint: &str,
         params: OriginateParams<'a>,
         caller_id: Option<&str>,
@@ -477,11 +521,14 @@ impl Client {
         let span = span!(Level::INFO, "originate_channel");
         let _guard = span.enter();
 
-        let mut url = self.url.join("/ari/channels")?;
+        let mut url = client.url.join("/ari/channels")?;
         let mut url = url.query_pairs_mut();
 
-        url.append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .append_pair("endpoint", endpoint);
+        url.append_pair(
+            "api_key",
+            &format!("{}:{}", client.username, client.password),
+        )
+        .append_pair("endpoint", endpoint);
 
         event!(Level::INFO, "Originate channel: {}", endpoint);
 
@@ -572,8 +619,8 @@ impl Client {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub async fn create_channel(
-        &self,
+    pub async fn create(
+        client: &Client,
         endpoint: &str,
         app: &str,
         app_args: Option<Vec<&str>>,
@@ -586,11 +633,14 @@ impl Client {
         let span = span!(Level::INFO, "create_channel");
         let _guard = span.enter();
 
-        let mut url = self.url.join("/ari/channels")?;
+        let mut url = client.url.join("/ari/channels")?;
         let mut url = url.query_pairs_mut();
 
-        url.append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .append_pair("endpoint", endpoint);
+        url.append_pair(
+            "api_key",
+            &format!("{}:{}", client.username, client.password),
+        )
+        .append_pair("endpoint", endpoint);
 
         event!(Level::INFO, "Originate channel: {}", endpoint);
 
@@ -649,15 +699,18 @@ impl Client {
         Ok(channel)
     }
 
-    pub async fn get_channel(&self, channel_id: &str) -> Result<Channel> {
+    pub async fn get(client: &Client, channel_id: &str) -> Result<Channel> {
         let span = span!(Level::INFO, "get_channel");
         let _guard = span.enter();
 
-        let url = self
+        let url = client
             .url
             .join(&format!("/ari/channels/{}", channel_id))?
             .query_pairs_mut()
-            .append_pair("api_key", &format!("{}:{}", self.username, self.password))
+            .append_pair(
+                "api_key",
+                &format!("{}:{}", client.username, client.password),
+            )
             .finish()
             .to_owned();
 
@@ -677,8 +730,8 @@ impl Client {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub async fn originate_channel_with_id<'a>(
-        &self,
+    pub async fn originate_with_id<'a>(
+        client: &Client,
         channel_id: &str,
         endpoint: &str,
         params: OriginateParams<'a>,
@@ -692,11 +745,14 @@ impl Client {
         let span = span!(Level::INFO, "originate_channel_with_id");
         let _guard = span.enter();
 
-        let mut url = self.url.join(&format!("/ari/channels/{}", channel_id))?;
+        let mut url = client.url.join(&format!("/ari/channels/{}", channel_id))?;
         let mut url = url.query_pairs_mut();
 
-        url.append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .append_pair("endpoint", endpoint);
+        url.append_pair(
+            "api_key",
+            &format!("{}:{}", client.username, client.password),
+        )
+        .append_pair("endpoint", endpoint);
 
         if !formats.is_empty() {
             let formats = formats.join(",");
@@ -806,6 +862,24 @@ pub enum OriginateParams<'a> {
     },
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub enum Reason {
+    Code(u16),
+    Normal,
+    Busy,
+    Congestion,
+    NoAnswer,
+    Timeout,
+    Rejected,
+    Unallocated,
+    NormalUnspecified,
+    NumberIncomplete,
+    CodecMismatch,
+    Interworking,
+    Failure,
+    AnsweredElsewhere,
+}
+
 impl Display for Reason {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let res = match self {
@@ -830,21 +904,10 @@ impl Display for Reason {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum Reason {
-    Code(u16),
-    Normal,
-    Busy,
-    Congestion,
-    NoAnswer,
-    Timeout,
-    Rejected,
-    Unallocated,
-    NormalUnspecified,
-    NumberIncomplete,
-    CodecMismatch,
-    Interworking,
-    Failure,
-    AnsweredElsewhere,
+pub enum Direction {
+    In,
+    Out,
+    Both,
 }
 
 impl Display for Direction {
@@ -860,10 +923,10 @@ impl Display for Direction {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum Direction {
-    In,
-    Out,
-    Both,
+pub enum RecordingAction {
+    Overwrite,
+    Append,
+    Fail,
 }
 
 impl Display for RecordingAction {
@@ -879,10 +942,11 @@ impl Display for RecordingAction {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum RecordingAction {
-    Overwrite,
-    Append,
-    Fail,
+pub enum RecordingTermination {
+    None,
+    Any,
+    Asterisk,
+    Octothorpe,
 }
 
 impl Display for RecordingTermination {
@@ -896,14 +960,6 @@ impl Display for RecordingTermination {
 
         write!(f, "{}", res)
     }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum RecordingTermination {
-    None,
-    Any,
-    Asterisk,
-    Octothorpe,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -996,21 +1052,6 @@ pub struct ChannelDtmfReceived {
     pub channel: Channel,
     pub asterisk_id: String,
     pub application: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct Channel {
-    pub id: String,
-    pub name: String,
-    pub state: String,
-    pub protocol_id: String,
-    pub caller: Caller,
-    pub connected: Caller,
-    pub accountcode: String,
-    pub dialplan: Dialplan,
-    pub creationtime: String,
-    pub language: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
