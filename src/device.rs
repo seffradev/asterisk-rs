@@ -1,4 +1,3 @@
-use crate::client::Client;
 use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 
@@ -17,5 +16,3 @@ pub struct DeviceState {
     pub name: String,
     pub state: String,
 }
-
-pub type DeviceStateChangedHandler = Option<Box<dyn Fn(&Client, DeviceStateChanged)>>;
