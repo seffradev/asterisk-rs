@@ -2,9 +2,9 @@ use channel::{
     ChannelCreated, ChannelDestroyed, ChannelDialplan, ChannelDtmfReceived, ChannelHangupRequest,
     ChannelStateChange, ChannelVarset, StasisEnd, StasisStart,
 };
-use derive_more::Display;
 use device::DeviceStateChanged;
 use serde::{Deserialize, Serialize};
+use std::fmt::Display;
 use thiserror::Error;
 use tokio::task::JoinError;
 
@@ -48,7 +48,18 @@ impl From<JoinError> for AriError {
     }
 }
 
-#[derive(Debug, Display, Error)]
+impl Display for AriError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            AriError::UrlParseError(err) => write!(f, "UrlParseError: {}", err),
+            AriError::TungsteniteError(err) => write!(f, "TungsteniteError: {}", err),
+            AriError::ReqwestError(err) => write!(f, "ReqwestError: {}", err),
+            AriError::JoinError(err) => write!(f, "JoinError: {}", err),
+        }
+    }
+}
+
+#[derive(Debug, Error)]
 pub enum AriError {
     UrlParseError(url::ParseError),
     TungsteniteError(tungstenite::Error),
