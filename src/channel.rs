@@ -228,11 +228,11 @@ impl Channel {
         let mut url = url.query_pairs_mut();
 
         url.append_pair("api_key", &format!("{}:{}", client.username, client.password))
-            .append_pair("media", &media);
+            .append_pair("media", media);
 
         if let Some(lang) = lang {
             event!(Level::INFO, "Lang: {}", lang);
-            url.append_pair("lang", &lang);
+            url.append_pair("lang", lang);
         }
 
         if let Some(offset_ms) = offset_ms {
@@ -247,7 +247,7 @@ impl Channel {
 
         if let Some(playback_id) = playback_id {
             event!(Level::INFO, "Playback ID: {}", playback_id);
-            url.append_pair("playback_id", &playback_id);
+            url.append_pair("playback_id", playback_id);
         }
 
         let url = url.finish().to_owned();
@@ -293,7 +293,7 @@ impl Channel {
 
         if let Some(lang) = lang {
             event!(Level::INFO, "Lang: {}", lang);
-            url.append_pair("lang", &lang);
+            url.append_pair("lang", lang);
         }
 
         if let Some(offset_ms) = offset_ms {
@@ -321,6 +321,7 @@ impl Channel {
         Ok(playback)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn record(
         &self,
         client: &Client,
@@ -405,7 +406,7 @@ impl Channel {
 
         if let Some(caller_id) = caller_id {
             event!(Level::INFO, "Caller ID: {}", caller_id);
-            url.append_pair("callerId", &caller_id);
+            url.append_pair("callerId", caller_id);
         }
 
         if let Some(timeout) = timeout {
@@ -460,6 +461,7 @@ impl Client {
         Ok(channels)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn originate_channel<'a>(
         &self,
         endpoint: &str,
@@ -479,7 +481,7 @@ impl Client {
         let mut url = url.query_pairs_mut();
 
         url.append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .append_pair("endpoint", &endpoint);
+            .append_pair("endpoint", endpoint);
 
         event!(Level::INFO, "Originate channel: {}", endpoint);
 
@@ -496,19 +498,19 @@ impl Client {
                 priority,
                 label,
             } => {
-                url.append_pair("extension", &extension);
+                url.append_pair("extension", extension);
                 if let Some(context) = context {
-                    url.append_pair("context", &context);
+                    url.append_pair("context", context);
                 }
                 if let Some(priority) = priority {
                     url.append_pair("priority", &priority.to_string());
                 }
                 if let Some(label) = label {
-                    url.append_pair("label", &label);
+                    url.append_pair("label", label);
                 }
             }
             OriginateParams::Application { app, app_args } => {
-                url.append_pair("app", &app);
+                url.append_pair("app", app);
                 if !app_args.is_empty() {
                     let app_args = app_args.join(",");
                     event!(Level::INFO, "App args: {}", app_args);
@@ -519,7 +521,7 @@ impl Client {
 
         event!(Level::INFO, "Caller ID: {:?}", caller_id);
         if let Some(caller_id) = caller_id {
-            url.append_pair("callerId", &caller_id);
+            url.append_pair("callerId", caller_id);
         }
 
         event!(Level::INFO, "Timeout: {:?}", timeout);
@@ -531,17 +533,17 @@ impl Client {
 
         event!(Level::INFO, "Channel ID: {:?}", channel_id);
         if let Some(channel_id) = channel_id {
-            url.append_pair("channel_id", &channel_id);
+            url.append_pair("channel_id", channel_id);
         }
 
         event!(Level::INFO, "Other Channel ID: {:?}", other_channel_id);
         if let Some(other_channel_id) = other_channel_id {
-            url.append_pair("other_channel_id", &other_channel_id);
+            url.append_pair("other_channel_id", other_channel_id);
         }
 
         event!(Level::INFO, "Originator: {:?}", originator);
         if let Some(originator) = originator {
-            url.append_pair("originator", &originator);
+            url.append_pair("originator", originator);
         }
 
         event!(Level::INFO, "Variables: {:?}", variables);
@@ -569,6 +571,7 @@ impl Client {
         Ok(channel)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn create_channel(
         &self,
         endpoint: &str,
@@ -587,7 +590,7 @@ impl Client {
         let mut url = url.query_pairs_mut();
 
         url.append_pair("api_key", &format!("{}:{}", self.username, self.password))
-            .append_pair("endpoint", &endpoint);
+            .append_pair("endpoint", endpoint);
 
         event!(Level::INFO, "Originate channel: {}", endpoint);
 
@@ -597,7 +600,7 @@ impl Client {
             url.append_pair("formats", &formats);
         }
 
-        url.append_pair("app", &app);
+        url.append_pair("app", app);
         if let Some(app_args) = app_args {
             if !app_args.is_empty() {
                 let app_args = app_args.join(",");
@@ -608,17 +611,17 @@ impl Client {
 
         event!(Level::INFO, "Channel ID: {:?}", channel_id);
         if let Some(channel_id) = channel_id {
-            url.append_pair("channel_id", &channel_id);
+            url.append_pair("channel_id", channel_id);
         }
 
         event!(Level::INFO, "Other Channel ID: {:?}", other_channel_id);
         if let Some(other_channel_id) = other_channel_id {
-            url.append_pair("other_channel_id", &other_channel_id);
+            url.append_pair("other_channel_id", other_channel_id);
         }
 
         event!(Level::INFO, "Originator: {:?}", originator);
         if let Some(originator) = originator {
-            url.append_pair("originator", &originator);
+            url.append_pair("originator", originator);
         }
 
         event!(Level::INFO, "Variables: {:?}", variables);
@@ -673,6 +676,7 @@ impl Client {
         Ok(channel)
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn originate_channel_with_id<'a>(
         &self,
         channel_id: &str,
@@ -707,19 +711,19 @@ impl Client {
                 priority,
                 label,
             } => {
-                url.append_pair("extension", &extension);
+                url.append_pair("extension", extension);
                 if let Some(context) = context {
-                    url.append_pair("context", &context);
+                    url.append_pair("context", context);
                 }
                 if let Some(priority) = priority {
                     url.append_pair("priority", &priority.to_string());
                 }
                 if let Some(label) = label {
-                    url.append_pair("label", &label);
+                    url.append_pair("label", label);
                 }
             }
             OriginateParams::Application { app, app_args } => {
-                url.append_pair("app", &app);
+                url.append_pair("app", app);
                 if !app_args.is_empty() {
                     let app_args = app_args.join(",");
                     event!(Level::INFO, "App args: {}", app_args);
@@ -730,7 +734,7 @@ impl Client {
 
         event!(Level::INFO, "Caller ID: {:?}", caller_id);
         if let Some(caller_id) = caller_id {
-            url.append_pair("callerId", &caller_id);
+            url.append_pair("callerId", caller_id);
         }
 
         event!(Level::INFO, "Timeout: {:?}", timeout);
@@ -742,12 +746,12 @@ impl Client {
 
         event!(Level::INFO, "Other Channel ID: {:?}", other_channel_id);
         if let Some(other_channel_id) = other_channel_id {
-            url.append_pair("otherChannelId", &other_channel_id);
+            url.append_pair("otherChannelId", other_channel_id);
         }
 
         event!(Level::INFO, "Originator: {:?}", originator);
         if let Some(originator) = originator {
-            url.append_pair("originator", &originator);
+            url.append_pair("originator", originator);
         }
 
         event!(Level::INFO, "Variables: {:?}", variables);

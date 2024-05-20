@@ -39,7 +39,8 @@ impl ClientBuilder {
         let _guard = span.enter();
 
         let mut ws_url = self.0.url.clone();
-        if let Err(_) = ws_url.set_port(self.0.url.port()) {
+
+        if ws_url.set_port(self.0.url.port()).is_err() {
             return Err(url::ParseError::InvalidPort.into());
         }
 
@@ -54,7 +55,7 @@ impl ClientBuilder {
             }
         };
 
-        if let Err(_) = ws_url.set_scheme(scheme) {
+        if ws_url.set_scheme(scheme).is_err() {
             return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
         }
 
