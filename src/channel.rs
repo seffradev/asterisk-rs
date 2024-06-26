@@ -4,12 +4,12 @@ use crate::{
 };
 use crate::{AriError, Result};
 use chrono::DateTime;
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
 use tracing::{event, span, Level};
 use url::Url;
-use derive_more::Display;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
@@ -24,6 +24,193 @@ pub struct Channel {
     pub dialplan: Dialplan,
     pub creationtime: String,
     pub language: String,
+}
+
+#[derive(Debug)]
+pub enum OriginateParams<'a> {
+    Extension {
+        extension: &'a str,
+        context: Option<&'a str>,
+        priority: Option<i32>,
+        label: Option<&'a str>,
+    },
+    Application {
+        app: &'a str,
+        app_args: Vec<&'a str>,
+    },
+}
+
+#[derive(Debug, Display)]
+pub enum Reason {
+    #[display(fmt = "{}", _0)]
+    Code(u16),
+    #[display(fmt = "normal")]
+    Normal,
+    #[display(fmt = "busy")]
+    Busy,
+    #[display(fmt = "congestion")]
+    Congestion,
+    #[display(fmt = "no_answer")]
+    NoAnswer,
+    #[display(fmt = "timeout")]
+    Timeout,
+    #[display(fmt = "rejected")]
+    Rejected,
+    #[display(fmt = "unallocated")]
+    Unallocated,
+    #[display(fmt = "normal_unspecified")]
+    NormalUnspecified,
+    #[display(fmt = "number_incomplete")]
+    NumberIncomplete,
+    #[display(fmt = "codec_mismatch")]
+    CodecMismatch,
+    #[display(fmt = "interworking")]
+    Interworking,
+    #[display(fmt = "failure")]
+    Failure,
+    #[display(fmt = "answered_elsewhere")]
+    AnsweredElsewhere,
+}
+
+#[derive(Debug, Display)]
+pub enum Direction {
+    #[display(fmt = "in")]
+    In,
+    #[display(fmt = "out")]
+    Out,
+    #[display(fmt = "both")]
+    Both,
+}
+
+#[derive(Debug, Display)]
+pub enum RecordingAction {
+    #[display(fmt = "overwrite")]
+    Overwrite,
+    #[display(fmt = "append")]
+    Append,
+    #[display(fmt = "fail")]
+    Fail,
+}
+
+#[derive(Debug, Display)]
+pub enum RecordingTermination {
+    #[display(fmt = "none")]
+    None,
+    #[display(fmt = "any")]
+    Any,
+    #[display(fmt = "*")]
+    Asterisk,
+    #[display(fmt = "#")]
+    Octothorpe,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct StasisStart {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub args: Vec<String>,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct StasisEnd {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelCreated {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub channel: Option<Channel>,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelDestroyed {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub cause: i32,
+    pub cause_txt: String,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelVarset {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub variable: String,
+    pub value: String,
+    pub channel: Option<Channel>,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelHangupRequest {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub soft: Option<bool>,
+    pub cause: i32,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelDialplan {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub dialplan_app: String,
+    pub dialplan_app_data: String,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelStateChange {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelDtmfReceived {
+    pub timestamp: DateTime<chrono::Utc>,
+    pub digit: String,
+    pub duration_ms: i32,
+    pub channel: Channel,
+    pub asterisk_id: String,
+    pub application: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct Caller {
+    pub name: String,
+    pub number: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "snake_case")]
+pub struct Dialplan {
+    pub context: String,
+    pub exten: String,
+    pub priority: i32,
+    pub app_name: String,
+    pub app_data: String,
 }
 
 impl Channel {
@@ -844,191 +1031,4 @@ impl Channel {
     pub fn start_external_media(&self, _channel_id: &str) -> Result<Channel> {
         unimplemented!()
     }
-}
-
-#[derive(Debug)]
-pub enum OriginateParams<'a> {
-    Extension {
-        extension: &'a str,
-        context: Option<&'a str>,
-        priority: Option<i32>,
-        label: Option<&'a str>,
-    },
-    Application {
-        app: &'a str,
-        app_args: Vec<&'a str>,
-    },
-}
-
-#[derive(Debug, Display)]
-pub enum Reason {
-    #[display(fmt = "{}", _0)]
-    Code(u16),
-    #[display(fmt = "normal")]
-    Normal,
-    #[display(fmt = "busy")]
-    Busy,
-    #[display(fmt = "congestion")]
-    Congestion,
-    #[display(fmt = "no_answer")]
-    NoAnswer,
-    #[display(fmt = "timeout")]
-    Timeout,
-    #[display(fmt = "rejected")]
-    Rejected,
-    #[display(fmt = "unallocated")]
-    Unallocated,
-    #[display(fmt = "normal_unspecified")]
-    NormalUnspecified,
-    #[display(fmt = "number_incomplete")]
-    NumberIncomplete,
-    #[display(fmt = "codec_mismatch")]
-    CodecMismatch,
-    #[display(fmt = "interworking")]
-    Interworking,
-    #[display(fmt = "failure")]
-    Failure,
-    #[display(fmt = "answered_elsewhere")]
-    AnsweredElsewhere,
-}
-
-#[derive(Debug, Display)]
-pub enum Direction {
-    #[display(fmt = "in")]
-    In,
-    #[display(fmt = "out")]
-    Out,
-    #[display(fmt = "both")]
-    Both,
-}
-
-#[derive(Debug, Display)]
-pub enum RecordingAction {
-    #[display(fmt = "overwrite")]
-    Overwrite,
-    #[display(fmt = "append")]
-    Append,
-    #[display(fmt = "fail")]
-    Fail,
-}
-
-#[derive(Debug, Display)]
-pub enum RecordingTermination {
-    #[display(fmt = "none")]
-    None,
-    #[display(fmt = "any")]
-    Any,
-    #[display(fmt = "*")]
-    Asterisk,
-    #[display(fmt = "#")]
-    Octothorpe,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct StasisStart {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub args: Vec<String>,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct StasisEnd {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct ChannelCreated {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub channel: Option<Channel>,
-    pub asterisk_id: String,
-    pub application: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct ChannelDestroyed {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub cause: i32,
-    pub cause_txt: String,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct ChannelVarset {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub variable: String,
-    pub value: String,
-    pub channel: Option<Channel>,
-    pub asterisk_id: String,
-    pub application: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct ChannelHangupRequest {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub soft: Option<bool>,
-    pub cause: i32,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct ChannelDialplan {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub dialplan_app: String,
-    pub dialplan_app_data: String,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct ChannelStateChange {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct ChannelDtmfReceived {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub digit: String,
-    pub duration_ms: i32,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct Caller {
-    pub name: String,
-    pub number: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct Dialplan {
-    pub context: String,
-    pub exten: String,
-    pub priority: i32,
-    pub app_name: String,
-    pub app_data: String,
 }
