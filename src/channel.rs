@@ -217,11 +217,8 @@ impl Channel {
     pub async fn hangup(self, client: &Client, reason: Reason) -> Result<()> {
         let span = span!(Level::INFO, "hangup");
         let _guard = span.enter();
-
         let mut url = client.url.join(&format!("/ari/channels/{}", self.id))?;
-
         let mut url = url.query_pairs_mut();
-
         client.add_api_key(&mut url);
 
         match reason {
@@ -230,9 +227,7 @@ impl Channel {
         };
 
         let url = url.finish().to_owned();
-
         reqwest::Client::new().delete(url).send().await?;
-
         event!(Level::INFO, "Successfully hung up channel");
         Ok(())
     }
@@ -260,7 +255,6 @@ impl Channel {
             .to_owned();
 
         reqwest::Client::new().post(url).send().await?;
-
         event!(Level::INFO, "Successfully answered channel");
         Ok(())
     }
@@ -278,7 +272,6 @@ impl Channel {
             .to_owned();
 
         reqwest::Client::new().post(url).send().await?;
-
         event!(Level::INFO, "Successfully rang channel");
         Ok(())
     }
@@ -299,7 +292,6 @@ impl Channel {
             .to_owned();
 
         reqwest::Client::new().delete(url).send().await?;
-
         event!(Level::INFO, "Successfully stopped ringing channel");
         Ok(())
     }
@@ -322,7 +314,6 @@ impl Channel {
             .to_owned();
 
         reqwest::Client::new().post(url).send().await?;
-
         event!(Level::INFO, "Successfully muted channel");
         Ok(())
     }
@@ -341,7 +332,6 @@ impl Channel {
             .to_owned();
 
         reqwest::Client::new().delete(url).send().await?;
-
         event!(Level::INFO, "Successfully unmuted channel");
         Ok(())
     }
@@ -411,11 +401,8 @@ impl Channel {
         }
 
         let url = url.finish().to_owned();
-
         let response = reqwest::Client::new().post(url).send().await?;
-
         let playback = response.json::<Playback>().await?;
-
         Ok(playback)
     }
 
@@ -438,7 +425,6 @@ impl Channel {
 
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
-
         let media = media.join(",");
         event!(Level::INFO, "Media: {}", media);
         url.append_pair("media", &media);
@@ -459,9 +445,7 @@ impl Channel {
         }
 
         let url = url.finish().to_owned();
-
         let response = reqwest::Client::new().post(url).send().await?;
-
         let playback = response.json::<Playback>().await?;
         Ok(playback)
     }
@@ -486,9 +470,7 @@ impl Channel {
             .join(&format!("/ari/channels/{}/record", self.id))?;
 
         let mut url = url.query_pairs_mut();
-
         client.add_api_key(&mut url);
-
         url.append_pair("name", name).append_pair("format", format);
 
         if let Some(max_duration_seconds) = max_duration_seconds {
@@ -503,17 +485,12 @@ impl Channel {
 
         event!(Level::INFO, "If exists: {}", if_exists);
         url.append_pair("if_exists", &format!("{}", if_exists));
-
         event!(Level::INFO, "Beep: {}", beep);
         url.append_pair("beep", &beep.to_string());
-
         event!(Level::INFO, "Terminate on: {}", terminate_on);
         url.append_pair("terminate_on", &format!("{}", terminate_on));
-
         let url = url.finish().to_owned();
-
         let response = reqwest::Client::new().post(url).send().await?;
-
         let recording = response.json::<LiveRecording>().await?;
         Ok(recording)
     }
@@ -540,7 +517,6 @@ impl Channel {
             .join(&format!("/ari/channels/{}/dial", self.id))?;
 
         let mut url = url.query_pairs_mut();
-
         client.add_api_key(&mut url);
 
         if let Some(caller_id) = caller_id {
@@ -554,9 +530,7 @@ impl Channel {
         }
 
         let url = url.finish().to_owned();
-
         reqwest::Client::new().post(url).send().await?;
-
         event!(Level::INFO, "Successfully dialed channel");
         Ok(())
     }
@@ -568,6 +542,7 @@ impl Channel {
     pub async fn list(client: &Client) -> Result<Vec<Channel>> {
         let span = span!(Level::INFO, "list_channels");
         let _guard = span.enter();
+
         let url: Url = client
             .url
             .join("/ari/channels")?
@@ -577,10 +552,8 @@ impl Channel {
             .to_owned();
 
         let response = reqwest::get(url).await?;
-
         event!(Level::INFO, "Successfully received channels");
         let channels = response.json::<Vec<Channel>>().await?;
-
         Ok(channels)
     }
 
@@ -599,14 +572,10 @@ impl Channel {
     ) -> Result<Channel> {
         let span = span!(Level::INFO, "originate_channel");
         let _guard = span.enter();
-
         let mut url = client.url.join("/ari/channels")?;
         let mut url = url.query_pairs_mut();
-
         client.add_api_key(&mut url);
-
         url.append_pair("endpoint", endpoint);
-
         event!(Level::INFO, "Originate channel: {}", endpoint);
 
         if !formats.is_empty() {
@@ -676,14 +645,10 @@ impl Channel {
         });
 
         let url = url.finish().to_owned();
-
         event!(Level::INFO, "URL: {}", url);
-
         let response = reqwest::Client::new().post(url).json(&body).send().await?;
-
         event!(Level::INFO, "Successfully created channel");
         let channel = response.json::<Channel>().await?;
-
         event!(Level::INFO, "Channel ID: {}", channel.id);
         Ok(channel)
     }
@@ -702,13 +667,10 @@ impl Channel {
     ) -> Result<Channel> {
         let span = span!(Level::INFO, "create_channel");
         let _guard = span.enter();
-
         let mut url = client.url.join("/ari/channels")?;
         let mut url = url.query_pairs_mut();
-
         client.add_api_key(&mut url);
         url.append_pair("endpoint", endpoint);
-
         event!(Level::INFO, "Create channel: {}", endpoint);
 
         if !formats.is_empty() {
@@ -745,14 +707,10 @@ impl Channel {
         });
 
         let url = url.finish().to_owned();
-
         event!(Level::INFO, "URL: {}", url);
-
         let response = reqwest::Client::new().post(url).json(&body).send().await?;
-
         event!(Level::INFO, "Successfully created channel");
         let channel = response.json::<Channel>().await?;
-
         event!(Level::INFO, "Channel ID: {}", channel.id);
         Ok(channel)
     }
@@ -770,10 +728,8 @@ impl Channel {
             .to_owned();
 
         let response = reqwest::get(url).await?;
-
         event!(Level::INFO, "Successfully received channel");
         let channel = response.json::<Channel>().await?;
-
         Ok(channel)
     }
 
@@ -792,10 +748,8 @@ impl Channel {
     ) -> Result<Channel> {
         let span = span!(Level::INFO, "originate_channel_with_id");
         let _guard = span.enter();
-
         let mut url = client.url.join(&format!("/ari/channels/{}", channel_id))?;
         let mut url = url.query_pairs_mut();
-
         client.add_api_key(&mut url);
         url.append_pair("endpoint", endpoint);
 
@@ -861,14 +815,10 @@ impl Channel {
         });
 
         let url = url.finish().to_owned();
-
         event!(Level::INFO, "URL: {}", url);
-
         let response = reqwest::Client::new().post(url).json(&body).send().await?;
-
         event!(Level::INFO, "Successfully created channel");
         let channel = response.json::<Channel>().await?;
-
         event!(Level::INFO, "Channel ID: {}", channel.id);
         Ok(channel)
     }
