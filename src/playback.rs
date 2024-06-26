@@ -11,17 +11,17 @@ pub struct Playback {
 }
 
 impl Playback {
-    #[instrument]
+    #[instrument(level = "debug")]
     pub async fn get_playback(_client: &Client, _playback_id: &str) -> Result<Playback> {
         unimplemented!()
     }
 
-    #[instrument]
+    #[instrument(level = "debug")]
     pub async fn control(&self, _client: &Client, _operation: Operation) -> Result<()> {
         unimplemented!()
     }
 
-    #[instrument]
+    #[instrument(level = "debug")]
     pub async fn stop(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }

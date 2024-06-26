@@ -34,7 +34,7 @@ impl ClientBuilder {
         self
     }
 
-    #[instrument]
+    #[instrument(level = "debug")]
     pub fn build(self) -> Result<Client> {
         let mut ws_url = self.0.url.join("events")?;
 
@@ -92,7 +92,7 @@ impl Client {
         ClientBuilder(Client::default())
     }
 
-    #[instrument]
+    #[instrument(level = "debug")]
     pub fn handle_message(&self, message: Vec<u8>) {
         let data = String::from_utf8(message).unwrap();
 
@@ -117,7 +117,7 @@ impl Client {
         }
     }
 
-    #[instrument]
+    #[instrument(level = "debug")]
     pub async fn run(&self) -> Result<()> {
         event!(Level::INFO, "Connecting to Asterisk");
 
