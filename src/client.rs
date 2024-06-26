@@ -36,13 +36,7 @@ impl ClientBuilder {
 
     #[instrument]
     pub fn build(self) -> Result<Client> {
-        let mut ws_url = self.0.url.clone();
-
-        if ws_url.set_port(self.0.url.port()).is_err() {
-            return Err(url::ParseError::InvalidPort.into());
-        }
-
-        let mut ws_url = ws_url.join("events")?;
+        let mut ws_url = self.0.url.join("events")?;
 
         let scheme = match ws_url.scheme() {
             "http" => "ws",
@@ -75,7 +69,7 @@ impl ClientBuilder {
         event!(
             Level::TRACE,
             "Using WebSocket server with URL '{}'",
-            self.0.ws_url
+            ws_url
         );
 
         Ok(Client {
@@ -141,7 +135,6 @@ impl Client {
         );
 
         let (mut ws_sender, mut ws_receiver) = ws_stream.split();
-
         let mut interval = interval(Duration::from_millis(5000));
 
         loop {
