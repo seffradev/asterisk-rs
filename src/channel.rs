@@ -846,7 +846,7 @@ impl Channel {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 pub enum OriginateParams<'a> {
     Extension {
         extension: &'a str,
@@ -860,7 +860,7 @@ pub enum OriginateParams<'a> {
     },
 }
 
-#[derive(Serialize, Deserialize, Debug, Display)]
+#[derive(Debug, Display)]
 pub enum Reason {
     #[display(fmt = "{}", _0)]
     Code(u16),
@@ -892,7 +892,7 @@ pub enum Reason {
     AnsweredElsewhere,
 }
 
-#[derive(Serialize, Deserialize, Debug, Display)]
+#[derive(Debug, Display)]
 pub enum Direction {
     #[display(fmt = "in")]
     In,
@@ -902,7 +902,7 @@ pub enum Direction {
     Both,
 }
 
-#[derive(Serialize, Deserialize, Debug, Display)]
+#[derive(Debug, Display)]
 pub enum RecordingAction {
     #[display(fmt = "overwrite")]
     Overwrite,
@@ -912,7 +912,7 @@ pub enum RecordingAction {
     Fail,
 }
 
-#[derive(Serialize, Deserialize, Debug, Display)]
+#[derive(Debug, Display)]
 pub enum RecordingTermination {
     #[display(fmt = "none")]
     None,
