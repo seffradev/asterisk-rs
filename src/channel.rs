@@ -793,7 +793,7 @@ impl Channel {
         client.add_api_key(&mut url);
         url.append_pair("endpoint", endpoint);
 
-        event!(Level::INFO, "Originate channel: {}", endpoint);
+        event!(Level::INFO, "Create channel: {}", endpoint);
 
         if !formats.is_empty() {
             let formats = formats.join(",");
