@@ -7,9 +7,9 @@ use chrono::DateTime;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
-use std::fmt::Display;
 use tracing::{event, span, Level};
 use url::Url;
+use derive_more::Display;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
@@ -651,12 +651,10 @@ impl Channel {
         }
 
         url.append_pair("app", app);
-        if let Some(app_args) = app_args {
-            if !app_args.is_empty() {
-                let app_args = app_args.join(",");
-                event!(Level::INFO, "App args: {}", app_args);
-                url.append_pair("app_args", &app_args);
-            }
+        if !app_args.is_empty() {
+            let app_args = app_args.join(",");
+            event!(Level::INFO, "App args: {}", app_args);
+            url.append_pair("app_args", &app_args);
         }
 
         event!(Level::INFO, "Channel ID: {:?}", channel_id);
@@ -862,104 +860,68 @@ pub enum OriginateParams<'a> {
     },
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Display)]
 pub enum Reason {
+    #[display(fmt = "{}", _0)]
     Code(u16),
+    #[display(fmt = "normal")]
     Normal,
+    #[display(fmt = "busy")]
     Busy,
+    #[display(fmt = "congestion")]
     Congestion,
+    #[display(fmt = "no_answer")]
     NoAnswer,
+    #[display(fmt = "timeout")]
     Timeout,
+    #[display(fmt = "rejected")]
     Rejected,
+    #[display(fmt = "unallocated")]
     Unallocated,
+    #[display(fmt = "normal_unspecified")]
     NormalUnspecified,
+    #[display(fmt = "number_incomplete")]
     NumberIncomplete,
+    #[display(fmt = "codec_mismatch")]
     CodecMismatch,
+    #[display(fmt = "interworking")]
     Interworking,
+    #[display(fmt = "failure")]
     Failure,
+    #[display(fmt = "answered_elsewhere")]
     AnsweredElsewhere,
 }
 
-impl Display for Reason {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let res = match self {
-            Reason::Code(code) => format!("{}", code),
-            Reason::Normal => String::from("normal"),
-            Reason::Busy => String::from("busy"),
-            Reason::Congestion => String::from("congestion"),
-            Reason::NoAnswer => String::from("no_answer"),
-            Reason::Timeout => String::from("timeout"),
-            Reason::Rejected => String::from("rejected"),
-            Reason::Unallocated => String::from("unallocated"),
-            Reason::NormalUnspecified => String::from("normal_unspecified"),
-            Reason::NumberIncomplete => String::from("number_incomplete"),
-            Reason::CodecMismatch => String::from("codec_mismatch"),
-            Reason::Interworking => String::from("interworking"),
-            Reason::Failure => String::from("failure"),
-            Reason::AnsweredElsewhere => String::from("answered_elsewhere"),
-        };
-
-        write!(f, "{}", res)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Display)]
 pub enum Direction {
+    #[display(fmt = "in")]
     In,
+    #[display(fmt = "out")]
     Out,
+    #[display(fmt = "both")]
     Both,
 }
 
-impl Display for Direction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let res = match self {
-            Direction::In => String::from("in"),
-            Direction::Out => String::from("out"),
-            Direction::Both => String::from("both"),
-        };
-
-        write!(f, "{}", res)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Display)]
 pub enum RecordingAction {
+    #[display(fmt = "overwrite")]
     Overwrite,
+    #[display(fmt = "append")]
     Append,
+    #[display(fmt = "fail")]
     Fail,
 }
 
-impl Display for RecordingAction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let res = match self {
-            RecordingAction::Overwrite => String::from("overwrite"),
-            RecordingAction::Append => String::from("append"),
-            RecordingAction::Fail => String::from("fail"),
-        };
-
-        write!(f, "{}", res)
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Display)]
 pub enum RecordingTermination {
+    #[display(fmt = "none")]
     None,
+    #[display(fmt = "any")]
     Any,
+    #[display(fmt = "*")]
     Asterisk,
+    #[display(fmt = "#")]
     Octothorpe,
-}
-
-impl Display for RecordingTermination {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let res = match self {
-            RecordingTermination::None => String::from("none"),
-            RecordingTermination::Any => String::from("any"),
-            RecordingTermination::Asterisk => String::from("*"),
-            RecordingTermination::Octothorpe => String::from("#"),
-        };
-
-        write!(f, "{}", res)
-    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
