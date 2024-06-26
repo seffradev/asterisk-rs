@@ -439,10 +439,7 @@ impl Channel {
         skip_ms: Option<u32>,
         playback_id: Option<&str>,
     ) -> Result<Playback> {
-        let mut url = client
-            .url
-            .join(&format!("channels/{}/play", self.id))?;
-
+        let mut url = client.url.join(&format!("channels/{}/play", self.id))?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
         url.append_pair("media", media);
@@ -490,10 +487,9 @@ impl Channel {
         offset_ms: Option<u32>,
         skip_ms: Option<u32>,
     ) -> Result<Playback> {
-        let mut url = client.url.join(&format!(
-            "channels/{}/play/{}/media",
-            self.id, playback_id
-        ))?;
+        let mut url = client
+            .url
+            .join(&format!("channels/{}/play/{}/media", self.id, playback_id))?;
 
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -542,13 +538,15 @@ impl Channel {
         beep: bool,
         terminate_on: RecordingTermination,
     ) -> Result<LiveRecording> {
-        let mut url = client
-            .url
-            .join(&format!("channels/{}/record", self.id))?;
-
+        let mut url = client.url.join(&format!("channels/{}/record", self.id))?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
-        url.append_pair("name", name).append_pair("format", format);
+
+        url.append_pair("name", name)
+            .append_pair("format", format)
+            .append_pair("if_exists", &format!("{}", if_exists))
+            .append_pair("beep", &beep.to_string())
+            .append_pair("terminate_on", &format!("{}", terminate_on));
 
         if let Some(max_duration_seconds) = max_duration_seconds {
             url.append_pair("max_duration_seconds", &max_duration_seconds.to_string());
@@ -557,10 +555,6 @@ impl Channel {
         if let Some(max_silence_seconds) = max_silence_seconds {
             url.append_pair("max_silence_seconds", &max_silence_seconds.to_string());
         }
-
-        url.append_pair("if_exists", &format!("{}", if_exists));
-        url.append_pair("beep", &beep.to_string());
-        url.append_pair("terminate_on", &format!("{}", terminate_on));
 
         let recording = reqwest::Client::new()
             .post(url.finish().to_owned())
@@ -596,10 +590,7 @@ impl Channel {
         caller_id: Option<&str>,
         timeout: Option<u32>,
     ) -> Result<()> {
-        let mut url = client
-            .url
-            .join(&format!("channels/{}/dial", self.id))?;
-
+        let mut url = client.url.join(&format!("channels/{}/dial", self.id))?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
 
@@ -641,99 +632,8 @@ impl Channel {
     }
 
     #[allow(clippy::too_many_arguments)]
-    pub async fn originate<'a>(
     #[instrument(level = "debug")]
-        client: &Client,
-        endpoint: &str,
-        params: OriginateParams<'a>,
-        caller_id: Option<&str>,
-        timeout: Option<u32>,
-        channel_id: Option<&str>,
-        other_channel_id: Option<&str>,
-        originator: Option<&str>,
-        formats: Vec<&str>,
-        variables: HashMap<&str, &str>,
-    ) -> Result<Channel> {
-        let mut url = client.url.join("channels")?;
-        let mut url = url.query_pairs_mut();
-        client.add_api_key(&mut url);
-        url.append_pair("endpoint", endpoint);
-
-        if !formats.is_empty() {
-            let formats = formats.join(",");
-            url.append_pair("formats", &formats);
-        }
-
-        match params {
-            OriginateParams::Extension {
-                extension,
-                context,
-                priority,
-                label,
-            } => {
-                url.append_pair("extension", extension);
-                if let Some(context) = context {
-                    url.append_pair("context", context);
-                }
-                if let Some(priority) = priority {
-                    url.append_pair("priority", &priority.to_string());
-                }
-                if let Some(label) = label {
-                    url.append_pair("label", label);
-                }
-            }
-            OriginateParams::Application { app, app_args } => {
-                url.append_pair("app", app);
-                if !app_args.is_empty() {
-                    let app_args = app_args.join(",");
-                    url.append_pair("app_args", &app_args);
-                }
-            }
-        }
-
-        if let Some(caller_id) = caller_id {
-            url.append_pair("callerId", caller_id);
-        }
-
-        if let Some(timeout) = timeout {
-            url.append_pair("timeout", &timeout.to_string());
-        } else {
-            url.append_pair("timeout", "30");
-        }
-
-        if let Some(channel_id) = channel_id {
-            url.append_pair("channel_id", channel_id);
-        }
-
-        if let Some(other_channel_id) = other_channel_id {
-            url.append_pair("other_channel_id", other_channel_id);
-        }
-
-        if let Some(originator) = originator {
-            url.append_pair("originator", originator);
-        }
-
-        let body = json!({
-            "variables": variables
-        });
-
-        let channel = reqwest::Client::new()
-            .post(url.finish().to_owned())
-            .json(&body)
-            .send()
-            .await?
-            .json::<Channel>()
-            .await?;
-
-        event!(Level::INFO, "created channel with id {}", channel.id);
-    #[instrument(level = "debug")]
-        event!(Level::INFO, "received channel with id {}", channel.id);
-        Ok(channel)
-    }
-
-    #[allow(clippy::too_many_arguments)]
     pub async fn create(
-    #[instrument(level = "debug")]
         client: &Client,
         endpoint: &str,
         app: &str,
@@ -747,15 +647,14 @@ impl Channel {
         let mut url = client.url.join("channels")?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
-        url.append_pair("endpoint", endpoint);
-
+        url.append_pair("endpoint", endpoint)
+            .append_pair("app", app);
 
         if !formats.is_empty() {
             let formats = formats.join(",");
             url.append_pair("formats", &formats);
         }
 
-        url.append_pair("app", app);
         if !app_args.is_empty() {
             let app_args = app_args.join(",");
             url.append_pair("app_args", &app_args);
@@ -785,9 +684,11 @@ impl Channel {
             .json::<Channel>()
             .await?;
 
+        event!(Level::INFO, "created channel with id {}", channel.id);
         Ok(channel)
     }
 
+    #[instrument(level = "debug")]
     pub async fn get(client: &Client, channel_id: &str) -> Result<Channel> {
         let url = client
             .url
@@ -798,6 +699,95 @@ impl Channel {
             .to_owned();
 
         let channel = reqwest::get(url).await?.json::<Channel>().await?;
+        event!(Level::INFO, "received channel with id {}", channel.id);
+        Ok(channel)
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    #[instrument(level = "debug")]
+    pub async fn originate<'a>(
+        client: &Client,
+        endpoint: &str,
+        params: OriginateParams<'a>,
+        caller_id: Option<&str>,
+        timeout: Option<u32>,
+        channel_id: Option<&str>,
+        other_channel_id: Option<&str>,
+        originator: Option<&str>,
+        formats: Vec<&str>,
+        variables: HashMap<&str, &str>,
+    ) -> Result<Channel> {
+        let mut url = client.url.join("channels")?;
+        let mut url = url.query_pairs_mut();
+        client.add_api_key(&mut url);
+
+        url.append_pair("endpoint", endpoint)
+            .append_pair("timeout", &timeout.unwrap_or(30).to_string());
+
+        if !formats.is_empty() {
+            let formats = formats.join(",");
+            url.append_pair("formats", &formats);
+        }
+
+        match params {
+            OriginateParams::Extension {
+                extension,
+                context,
+                priority,
+                label,
+            } => {
+                url.append_pair("extension", extension);
+
+                if let Some(context) = context {
+                    url.append_pair("context", context);
+                }
+
+                if let Some(priority) = priority {
+                    url.append_pair("priority", &priority.to_string());
+                }
+
+                if let Some(label) = label {
+                    url.append_pair("label", label);
+                }
+            }
+            OriginateParams::Application { app, app_args } => {
+                url.append_pair("app", app);
+
+                if !app_args.is_empty() {
+                    let app_args = app_args.join(",");
+                    url.append_pair("app_args", &app_args);
+                }
+            }
+        }
+
+        if let Some(caller_id) = caller_id {
+            url.append_pair("callerId", caller_id);
+        }
+
+        if let Some(channel_id) = channel_id {
+            url.append_pair("channel_id", channel_id);
+        }
+
+        if let Some(other_channel_id) = other_channel_id {
+            url.append_pair("other_channel_id", other_channel_id);
+        }
+
+        if let Some(originator) = originator {
+            url.append_pair("originator", originator);
+        }
+
+        let body = json!({
+            "variables": variables
+        });
+
+        let channel = reqwest::Client::new()
+            .post(url.finish().to_owned())
+            .json(&body)
+            .send()
+            .await?
+            .json::<Channel>()
+            .await?;
+
         event!(Level::INFO, "originated channel with id {}", channel.id);
         Ok(channel)
     }
@@ -819,7 +809,9 @@ impl Channel {
         let mut url = client.url.join(&format!("channels/{}", channel_id))?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
-        url.append_pair("endpoint", endpoint);
+
+        url.append_pair("endpoint", endpoint)
+            .append_pair("timeout", &timeout.unwrap_or(30).to_string());
 
         if !formats.is_empty() {
             let formats = formats.join(",");
@@ -834,18 +826,22 @@ impl Channel {
                 label,
             } => {
                 url.append_pair("extension", extension);
+
                 if let Some(context) = context {
                     url.append_pair("context", context);
                 }
+
                 if let Some(priority) = priority {
                     url.append_pair("priority", &priority.to_string());
                 }
+
                 if let Some(label) = label {
                     url.append_pair("label", label);
                 }
             }
             OriginateParams::Application { app, app_args } => {
                 url.append_pair("app", app);
+
                 if !app_args.is_empty() {
                     let app_args = app_args.join(",");
                     url.append_pair("app_args", &app_args);
@@ -857,11 +853,6 @@ impl Channel {
             url.append_pair("callerId", caller_id);
         }
 
-        if let Some(timeout) = timeout {
-            url.append_pair("timeout", &timeout.to_string());
-        } else {
-            url.append_pair("timeout", "30");
-        }
         if let Some(other_channel_id) = other_channel_id {
             url.append_pair("otherChannelId", other_channel_id);
         }
