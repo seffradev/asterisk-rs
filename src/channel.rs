@@ -379,9 +379,19 @@ impl Channel {
         Ok(())
     }
 
-    pub fn hold(&self, _client: &Client) -> Result<()> {
-        unimplemented!()
     #[instrument(level = "debug")]
+    pub async fn hold(&self, client: &Client) -> Result<()> {
+        let url = client
+            .url
+            .join(&format!("channels/{}/hold", self.id))?
+            .query_pairs_mut()
+            .append_pair("api_key", &client.get_api_key())
+            .finish()
+            .to_owned();
+
+        reqwest::Client::new().post(url).send().await?;
+        event!(Level::INFO, "started hold on channel with id {}", self.id);
+        Ok(())
     }
 
     pub fn unhold(&self, _client: &Client) -> Result<()> {
