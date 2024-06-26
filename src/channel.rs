@@ -1,8 +1,8 @@
+use crate::Result;
 use crate::{
     client::Client, playback::Playback, recording::LiveRecording, rtp_stat::RtpStat,
     variable::Variable,
 };
-use crate::{AriError, Result};
 use chrono::DateTime;
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
@@ -231,14 +231,7 @@ impl Channel {
 
         let url = url.finish().to_owned();
 
-        let response = reqwest::Client::new().delete(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to hang up channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not hang up channel"),
-            ));
-        }
+        reqwest::Client::new().delete(url).send().await?;
 
         event!(Level::INFO, "Successfully hung up channel");
         Ok(())
@@ -266,14 +259,7 @@ impl Channel {
             .finish()
             .to_owned();
 
-        let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to answer channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not answer channel"),
-            ));
-        }
+        reqwest::Client::new().post(url).send().await?;
 
         event!(Level::INFO, "Successfully answered channel");
         Ok(())
@@ -291,14 +277,7 @@ impl Channel {
             .finish()
             .to_owned();
 
-        let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to ring channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not ring channel"),
-            ));
-        }
+        reqwest::Client::new().post(url).send().await?;
 
         event!(Level::INFO, "Successfully rang channel");
         Ok(())
@@ -319,14 +298,7 @@ impl Channel {
             .finish()
             .to_owned();
 
-        let response = reqwest::Client::new().delete(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to stop ringing channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not stop ringing channel"),
-            ));
-        }
+        reqwest::Client::new().delete(url).send().await?;
 
         event!(Level::INFO, "Successfully stopped ringing channel");
         Ok(())
@@ -349,14 +321,7 @@ impl Channel {
             .finish()
             .to_owned();
 
-        let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to mute channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not mute channel"),
-            ));
-        }
+        reqwest::Client::new().post(url).send().await?;
 
         event!(Level::INFO, "Successfully muted channel");
         Ok(())
@@ -375,14 +340,7 @@ impl Channel {
             .finish()
             .to_owned();
 
-        let response = reqwest::Client::new().delete(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to unmute channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not unmute channel"),
-            ));
-        }
+        reqwest::Client::new().delete(url).send().await?;
 
         event!(Level::INFO, "Successfully unmuted channel");
         Ok(())
@@ -455,13 +413,6 @@ impl Channel {
         let url = url.finish().to_owned();
 
         let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to play media");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not play media"),
-            ));
-        }
 
         let playback = response.json::<Playback>().await?;
 
@@ -510,13 +461,6 @@ impl Channel {
         let url = url.finish().to_owned();
 
         let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to play media");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not play media"),
-            ));
-        }
 
         let playback = response.json::<Playback>().await?;
         Ok(playback)
@@ -569,13 +513,6 @@ impl Channel {
         let url = url.finish().to_owned();
 
         let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to record channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not record channel"),
-            ));
-        }
 
         let recording = response.json::<LiveRecording>().await?;
         Ok(recording)
@@ -618,14 +555,7 @@ impl Channel {
 
         let url = url.finish().to_owned();
 
-        let response = reqwest::Client::new().post(url).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to dial channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not dial channel"),
-            ));
-        }
+        reqwest::Client::new().post(url).send().await?;
 
         event!(Level::INFO, "Successfully dialed channel");
         Ok(())
@@ -647,13 +577,6 @@ impl Channel {
             .to_owned();
 
         let response = reqwest::get(url).await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to list channels");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not list channels"),
-            ));
-        }
 
         event!(Level::INFO, "Successfully received channels");
         let channels = response.json::<Vec<Channel>>().await?;
@@ -757,13 +680,6 @@ impl Channel {
         event!(Level::INFO, "URL: {}", url);
 
         let response = reqwest::Client::new().post(url).json(&body).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to create channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not create channel"),
-            ));
-        }
 
         event!(Level::INFO, "Successfully created channel");
         let channel = response.json::<Channel>().await?;
@@ -833,13 +749,6 @@ impl Channel {
         event!(Level::INFO, "URL: {}", url);
 
         let response = reqwest::Client::new().post(url).json(&body).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to create channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not create channel"),
-            ));
-        }
 
         event!(Level::INFO, "Successfully created channel");
         let channel = response.json::<Channel>().await?;
@@ -861,13 +770,6 @@ impl Channel {
             .to_owned();
 
         let response = reqwest::get(url).await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to get channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not get channel"),
-            ));
-        }
 
         event!(Level::INFO, "Successfully received channel");
         let channel = response.json::<Channel>().await?;
@@ -963,13 +865,6 @@ impl Channel {
         event!(Level::INFO, "URL: {}", url);
 
         let response = reqwest::Client::new().post(url).json(&body).send().await?;
-        if !response.status().is_success() {
-            event!(Level::ERROR, "Failed to create channel");
-            return Err(AriError::HttpError(
-                response.status(),
-                String::from("Could not create channel"),
-            ));
-        }
 
         event!(Level::INFO, "Successfully created channel");
         let channel = response.json::<Channel>().await?;
