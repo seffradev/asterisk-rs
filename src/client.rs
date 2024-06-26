@@ -42,7 +42,7 @@ impl ClientBuilder {
             return Err(url::ParseError::InvalidPort.into());
         }
 
-        ws_url.set_path("/ari/events");
+        let mut ws_url = ws_url.join("events")?;
 
         let scheme = match ws_url.scheme() {
             "http" => "ws",

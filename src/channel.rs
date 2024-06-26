@@ -216,7 +216,7 @@ pub struct Dialplan {
 impl Channel {
     #[instrument]
     pub async fn hangup(self, client: &Client, reason: Reason) -> Result<()> {
-        let mut url = client.url.join(&format!("/ari/channels/{}", self.id))?;
+        let mut url = client.url.join(&format!("channels/{}", self.id))?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
 
@@ -250,7 +250,7 @@ impl Channel {
     pub async fn answer(&self, client: &Client) -> Result<()> {
         let url = client
             .url
-            .join(&format!("/ari/channels/{}/answer", self.id))?
+            .join(&format!("channels/{}/answer", self.id))?
             .query_pairs_mut()
             .append_pair("api_key", &client.get_api_key())
             .finish()
@@ -265,7 +265,7 @@ impl Channel {
     pub async fn start_ringing(&self, client: &Client) -> Result<()> {
         let url = client
             .url
-            .join(&format!("/ari/channels/{}/ring", self.id))?
+            .join(&format!("channels/{}/ring", self.id))?
             .query_pairs_mut()
             .append_pair("api_key", &client.get_api_key())
             .finish()
@@ -280,7 +280,7 @@ impl Channel {
     pub async fn stop_ringing(&self, client: &Client) -> Result<()> {
         let url = client
             .url
-            .join(&format!("/ari/channels/{}/ring", self.id))?
+            .join(&format!("channels/{}/ring", self.id))?
             .query_pairs_mut()
             .append_pair(
                 "api_key",
@@ -303,7 +303,7 @@ impl Channel {
     pub async fn mute(&self, client: &Client, direction: Direction) -> Result<()> {
         let url = client
             .url
-            .join(&format!("/ari/channels/{}/mute", self.id))?
+            .join(&format!("channels/{}/mute", self.id))?
             .query_pairs_mut()
             .append_pair("api_key", &client.get_api_key())
             .append_pair("direction", &format!("{}", direction))
@@ -319,7 +319,7 @@ impl Channel {
     pub async fn unmute(&self, client: &Client, direction: Direction) -> Result<()> {
         let url = client
             .url
-            .join(&format!("/ari/channels/{}/mute", self.id))?
+            .join(&format!("channels/{}/mute", self.id))?
             .query_pairs_mut()
             .append_pair("api_key", &client.get_api_key())
             .append_pair("direction", &format!("{}", direction))
@@ -373,7 +373,7 @@ impl Channel {
     ) -> Result<Playback> {
         let mut url = client
             .url
-            .join(&format!("/ari/channels/{}/play", self.id))?;
+            .join(&format!("channels/{}/play", self.id))?;
 
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -425,7 +425,7 @@ impl Channel {
         skip_ms: Option<u32>,
     ) -> Result<Playback> {
         let mut url = client.url.join(&format!(
-            "/ari/channels/{}/play/{}/media",
+            "channels/{}/play/{}/media",
             self.id, playback_id
         ))?;
 
@@ -480,7 +480,7 @@ impl Channel {
     ) -> Result<LiveRecording> {
         let mut url = client
             .url
-            .join(&format!("/ari/channels/{}/record", self.id))?;
+            .join(&format!("channels/{}/record", self.id))?;
 
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -534,7 +534,7 @@ impl Channel {
     ) -> Result<()> {
         let mut url = client
             .url
-            .join(&format!("/ari/channels/{}/dial", self.id))?;
+            .join(&format!("channels/{}/dial", self.id))?;
 
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -567,7 +567,7 @@ impl Channel {
     pub async fn list(client: &Client) -> Result<Vec<Channel>> {
         let url: Url = client
             .url
-            .join("/ari/channels")?
+            .join("channels")?
             .query_pairs_mut()
             .append_pair("api_key", &client.get_api_key())
             .finish()
@@ -592,7 +592,7 @@ impl Channel {
         formats: Vec<&str>,
         variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
-        let mut url = client.url.join("/ari/channels")?;
+        let mut url = client.url.join("channels")?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
         url.append_pair("endpoint", endpoint);
@@ -689,7 +689,7 @@ impl Channel {
         formats: Vec<&str>,
         variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
-        let mut url = client.url.join("/ari/channels")?;
+        let mut url = client.url.join("channels")?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
         url.append_pair("endpoint", endpoint);
@@ -744,7 +744,7 @@ impl Channel {
     pub async fn get(client: &Client, channel_id: &str) -> Result<Channel> {
         let url = client
             .url
-            .join(&format!("/ari/channels/{}", channel_id))?
+            .join(&format!("channels/{}", channel_id))?
             .query_pairs_mut()
             .append_pair("api_key", &client.get_api_key())
             .finish()
@@ -769,7 +769,7 @@ impl Channel {
         formats: Vec<&str>,
         variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
-        let mut url = client.url.join(&format!("/ari/channels/{}", channel_id))?;
+        let mut url = client.url.join(&format!("channels/{}", channel_id))?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
         url.append_pair("endpoint", endpoint);
