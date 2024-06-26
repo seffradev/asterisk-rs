@@ -1,6 +1,6 @@
 use crate::Result;
 use crate::{
-    client::Client, playback::Playback, recording::LiveRecording, rtp_stat::RtpStat,
+    client::Client, playback::Playback, recording::LiveRecording, rtp_statistics::RtpStatistics,
     variable::Variable,
 };
 use chrono::DateTime;
@@ -559,7 +559,7 @@ impl Channel {
     }
 
     #[instrument]
-    pub fn get_rtp_stat(&self, _client: &Client) -> Result<RtpStat> {
+    pub fn get_rtp_statistics(&self, _client: &Client) -> Result<RtpStatistics> {
         unimplemented!()
     }
 

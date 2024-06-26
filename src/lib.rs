@@ -13,7 +13,7 @@ pub mod client;
 pub mod device;
 pub mod playback;
 pub mod recording;
-pub mod rtp_stat;
+pub mod rtp_statistics;
 pub mod variable;
 
 pub type Result<T> = std::result::Result<T, AriError>;
