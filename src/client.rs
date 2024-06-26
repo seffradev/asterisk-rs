@@ -5,7 +5,7 @@ use std::time::Duration;
 use tokio::sync::mpsc::Sender;
 use tokio::time::interval;
 use tokio_tungstenite::connect_async;
-use tracing::{event, span, Level};
+use tracing::{event, instrument, Level};
 use url::Url;
 
 impl ClientBuilder {
@@ -34,10 +34,8 @@ impl ClientBuilder {
         self
     }
 
+    #[instrument]
     pub fn build(self) -> Result<Client> {
-        let span = span!(Level::INFO, "build");
-        let _guard = span.enter();
-
         let mut ws_url = self.0.url.clone();
 
         if ws_url.set_port(self.0.url.port()).is_err() {
@@ -100,9 +98,8 @@ impl Client {
         ClientBuilder(Client::default())
     }
 
+    #[instrument]
     pub fn handle_message(&self, message: Vec<u8>) {
-        let span = span!(Level::INFO, "handle_message");
-        let _guard = span.enter();
         let data = String::from_utf8(message).unwrap();
 
         event!(Level::TRACE, "Parsing event");
@@ -126,10 +123,8 @@ impl Client {
         }
     }
 
+    #[instrument]
     pub async fn run(&self) -> Result<()> {
-        let span = span!(Level::INFO, "run");
-        let _guard = span.enter();
-
         event!(Level::INFO, "Connecting to Asterisk");
 
         let (ws_stream, _) = match connect_async(&self.ws_url).await {
