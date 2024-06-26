@@ -8,7 +8,7 @@ use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use std::collections::HashMap;
-use tracing::{event, span, Level};
+use tracing::{event, instrument, Level};
 use url::Url;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -214,9 +214,8 @@ pub struct Dialplan {
 }
 
 impl Channel {
+    #[instrument]
     pub async fn hangup(self, client: &Client, reason: Reason) -> Result<()> {
-        let span = span!(Level::INFO, "hangup");
-        let _guard = span.enter();
         let mut url = client.url.join(&format!("/ari/channels/{}", self.id))?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -235,20 +234,20 @@ impl Channel {
         Ok(())
     }
 
+    #[instrument]
     pub fn continue_in_dialplan(self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
     /// Transfer the channel to another ARI application.
     /// Same as `move` in Asterisk
+    #[instrument]
     pub fn transfer(self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
+    #[instrument]
     pub async fn answer(&self, client: &Client) -> Result<()> {
-        let span = span!(Level::INFO, "answer");
-        let _guard = span.enter();
-
         let url = client
             .url
             .join(&format!("/ari/channels/{}/answer", self.id))?
@@ -262,10 +261,8 @@ impl Channel {
         Ok(())
     }
 
+    #[instrument]
     pub async fn start_ringing(&self, client: &Client) -> Result<()> {
-        let span = span!(Level::INFO, "start_ringing");
-        let _guard = span.enter();
-
         let url = client
             .url
             .join(&format!("/ari/channels/{}/ring", self.id))?
@@ -279,10 +276,8 @@ impl Channel {
         Ok(())
     }
 
+    #[instrument]
     pub async fn stop_ringing(&self, client: &Client) -> Result<()> {
-        let span = span!(Level::INFO, "stop_ringing");
-        let _guard = span.enter();
-
         let url = client
             .url
             .join(&format!("/ari/channels/{}/ring", self.id))?
@@ -299,14 +294,13 @@ impl Channel {
         Ok(())
     }
 
+    #[instrument]
     pub fn send_dtmf(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
+    #[instrument]
     pub async fn mute(&self, client: &Client, direction: Direction) -> Result<()> {
-        let span = span!(Level::INFO, "mute");
-        let _guard = span.enter();
-
         let url = client
             .url
             .join(&format!("/ari/channels/{}/mute", self.id))?
@@ -321,10 +315,8 @@ impl Channel {
         Ok(())
     }
 
+    #[instrument]
     pub async fn unmute(&self, client: &Client, direction: Direction) -> Result<()> {
-        let span = span!(Level::INFO, "unmute");
-        let _guard = span.enter();
-
         let url = client
             .url
             .join(&format!("/ari/channels/{}/mute", self.id))?
@@ -339,30 +331,37 @@ impl Channel {
         Ok(())
     }
 
+    #[instrument]
     pub fn hold(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
+    #[instrument]
     pub fn unhold(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
+    #[instrument]
     pub fn start_moh(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
+    #[instrument]
     pub fn stop_moh(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
+    #[instrument]
     pub fn start_silence(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
+    #[instrument]
     pub fn stop_silence(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
+    #[instrument]
     pub async fn play_media(
         &self,
         client: &Client,
@@ -372,9 +371,6 @@ impl Channel {
         skip_ms: Option<u32>,
         playback_id: Option<&str>,
     ) -> Result<Playback> {
-        let span = span!(Level::INFO, "play_media");
-        let _guard = span.enter();
-
         let mut url = client
             .url
             .join(&format!("/ari/channels/{}/play", self.id))?;
@@ -418,6 +414,7 @@ impl Channel {
         Ok(playback)
     }
 
+    #[instrument]
     pub async fn play_media_with_id(
         &self,
         client: &Client,
@@ -427,9 +424,6 @@ impl Channel {
         offset_ms: Option<u32>,
         skip_ms: Option<u32>,
     ) -> Result<Playback> {
-        let span = span!(Level::INFO, "play_media_with_id");
-        let _guard = span.enter();
-
         let mut url = client.url.join(&format!(
             "/ari/channels/{}/play/{}/media",
             self.id, playback_id
@@ -472,6 +466,7 @@ impl Channel {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[instrument]
     pub async fn record(
         &self,
         client: &Client,
@@ -483,9 +478,6 @@ impl Channel {
         beep: bool,
         terminate_on: RecordingTermination,
     ) -> Result<LiveRecording> {
-        let span = span!(Level::INFO, "record");
-        let _guard = span.enter();
-
         let mut url = client
             .url
             .join(&format!("/ari/channels/{}/record", self.id))?;
@@ -523,23 +515,23 @@ impl Channel {
         Ok(recording)
     }
 
+    #[instrument]
     pub fn get_variable(&self, _client: &Client) -> Result<Variable> {
         unimplemented!()
     }
 
+    #[instrument]
     pub fn set_variable(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
+    #[instrument]
     pub async fn dial(
         &self,
         client: &Client,
         caller_id: Option<&str>,
         timeout: Option<u32>,
     ) -> Result<()> {
-        let span = span!(Level::INFO, "dial");
-        let _guard = span.enter();
-
         let mut url = client
             .url
             .join(&format!("/ari/channels/{}/dial", self.id))?;
@@ -566,14 +558,13 @@ impl Channel {
         Ok(())
     }
 
+    #[instrument]
     pub fn get_rtp_stat(&self, _client: &Client) -> Result<RtpStat> {
         unimplemented!()
     }
 
+    #[instrument]
     pub async fn list(client: &Client) -> Result<Vec<Channel>> {
-        let span = span!(Level::INFO, "list_channels");
-        let _guard = span.enter();
-
         let url: Url = client
             .url
             .join("/ari/channels")?
@@ -588,6 +579,7 @@ impl Channel {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[instrument]
     pub async fn originate<'a>(
         client: &Client,
         endpoint: &str,
@@ -600,8 +592,6 @@ impl Channel {
         formats: Vec<&str>,
         variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
-        let span = span!(Level::INFO, "originate_channel");
-        let _guard = span.enter();
         let mut url = client.url.join("/ari/channels")?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -687,6 +677,7 @@ impl Channel {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[instrument]
     pub async fn create(
         client: &Client,
         endpoint: &str,
@@ -698,8 +689,6 @@ impl Channel {
         formats: Vec<&str>,
         variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
-        let span = span!(Level::INFO, "create_channel");
-        let _guard = span.enter();
         let mut url = client.url.join("/ari/channels")?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -751,10 +740,8 @@ impl Channel {
         Ok(channel)
     }
 
+    #[instrument]
     pub async fn get(client: &Client, channel_id: &str) -> Result<Channel> {
-        let span = span!(Level::INFO, "get_channel");
-        let _guard = span.enter();
-
         let url = client
             .url
             .join(&format!("/ari/channels/{}", channel_id))?
@@ -769,6 +756,7 @@ impl Channel {
     }
 
     #[allow(clippy::too_many_arguments)]
+    #[instrument]
     pub async fn originate_with_id<'a>(
         client: &Client,
         channel_id: &str,
@@ -781,8 +769,6 @@ impl Channel {
         formats: Vec<&str>,
         variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
-        let span = span!(Level::INFO, "originate_channel_with_id");
-        let _guard = span.enter();
         let mut url = client.url.join(&format!("/ari/channels/{}", channel_id))?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -861,14 +847,17 @@ impl Channel {
         Ok(channel)
     }
 
+    #[instrument]
     pub fn snoop(&self, _channel_id: &str) -> Result<Channel> {
         unimplemented!()
     }
 
+    #[instrument]
     pub fn snoop_with_id(&self, _channel_id: &str) -> Result<Channel> {
         unimplemented!()
     }
 
+    #[instrument]
     pub fn start_external_media(&self, _channel_id: &str) -> Result<Channel> {
         unimplemented!()
     }
