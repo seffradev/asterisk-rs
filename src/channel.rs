@@ -3,7 +3,7 @@ use crate::{
     client::Client, playback::Playback, recording::LiveRecording, rtp_statistics::RtpStatistics,
     variable::Variable,
 };
-use chrono::DateTime;
+use chrono::{DateTime, Duration};
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -294,9 +294,57 @@ impl Channel {
         Ok(())
     }
 
-    pub fn send_dtmf(&self, _client: &Client) -> Result<()> {
-        unimplemented!()
     #[instrument(level = "debug")]
+    pub async fn send_dtmf(
+        &self,
+        client: &Client,
+        dtmf: &str,
+        before: Option<Duration>,
+        between: Option<Duration>,
+        duration: Option<Duration>,
+        after: Option<Duration>,
+    ) -> Result<()> {
+        let mut url = client.url.join(&format!("channels/{}/dtmf", self.id))?;
+        let mut url = url.query_pairs_mut();
+        client.add_api_key(&mut url);
+
+        url.append_pair("dtmf", dtmf)
+            .append_pair(
+                "between",
+                &between
+                    .map(|d| d.num_milliseconds())
+                    .unwrap_or(100)
+                    .to_string(),
+            )
+            .append_pair(
+                "duration",
+                &duration
+                    .map(|d| d.num_milliseconds())
+                    .unwrap_or(100)
+                    .to_string(),
+            );
+
+        if let Some(before) = before {
+            url.append_pair("before", &before.num_milliseconds().to_string());
+        }
+
+        if let Some(after) = after {
+            url.append_pair("after", &after.num_milliseconds().to_string());
+        }
+
+        reqwest::Client::new()
+            .post(url.finish().to_owned())
+            .send()
+            .await?;
+
+        event!(
+            Level::INFO,
+            "sent dtmf '{}' to channel with id {}",
+            dtmf,
+            self.id
+        );
+
+        Ok(())
     }
 
     #[instrument(level = "debug")]
