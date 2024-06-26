@@ -226,8 +226,11 @@ impl Channel {
             _ => url.append_pair("reason", &format!("{}", reason)),
         };
 
-        let url = url.finish().to_owned();
-        reqwest::Client::new().delete(url).send().await?;
+        reqwest::Client::new()
+            .delete(url.finish().to_owned())
+            .send()
+            .await?;
+
         event!(Level::INFO, "Successfully hung up channel");
         Ok(())
     }
@@ -400,9 +403,18 @@ impl Channel {
             url.append_pair("playback_id", playback_id);
         }
 
-        let url = url.finish().to_owned();
-        let response = reqwest::Client::new().post(url).send().await?;
-        let playback = response.json::<Playback>().await?;
+        let playback = reqwest::Client::new()
+            .post(url.finish().to_owned())
+            .send()
+            .await?
+            .json::<Playback>()
+            .await?;
+
+        event!(
+            Level::INFO,
+            "Successfully started media playback on channel"
+        );
+
         Ok(playback)
     }
 
@@ -444,9 +456,18 @@ impl Channel {
             url.append_pair("skip_ms", &skip_ms.to_string());
         }
 
-        let url = url.finish().to_owned();
-        let response = reqwest::Client::new().post(url).send().await?;
-        let playback = response.json::<Playback>().await?;
+        let playback = reqwest::Client::new()
+            .post(url.finish().to_owned())
+            .send()
+            .await?
+            .json::<Playback>()
+            .await?;
+
+        event!(
+            Level::INFO,
+            "Successfully started media playback on channel"
+        );
+
         Ok(playback)
     }
 
@@ -489,9 +510,16 @@ impl Channel {
         url.append_pair("beep", &beep.to_string());
         event!(Level::INFO, "Terminate on: {}", terminate_on);
         url.append_pair("terminate_on", &format!("{}", terminate_on));
-        let url = url.finish().to_owned();
-        let response = reqwest::Client::new().post(url).send().await?;
-        let recording = response.json::<LiveRecording>().await?;
+
+        let recording = reqwest::Client::new()
+            .post(url.finish().to_owned())
+            .send()
+            .await?
+            .json::<LiveRecording>()
+            .await?;
+
+        event!(Level::INFO, "Successfully started recording on channel");
+
         Ok(recording)
     }
 
@@ -529,8 +557,11 @@ impl Channel {
             url.append_pair("timeout", &timeout.to_string());
         }
 
-        let url = url.finish().to_owned();
-        reqwest::Client::new().post(url).send().await?;
+        reqwest::Client::new()
+            .post(url.finish().to_owned())
+            .send()
+            .await?;
+
         event!(Level::INFO, "Successfully dialed channel");
         Ok(())
     }
@@ -551,9 +582,8 @@ impl Channel {
             .finish()
             .to_owned();
 
-        let response = reqwest::get(url).await?;
+        let channels = reqwest::get(url).await?.json::<Vec<Channel>>().await?;
         event!(Level::INFO, "Successfully received channels");
-        let channels = response.json::<Vec<Channel>>().await?;
         Ok(channels)
     }
 
@@ -644,12 +674,15 @@ impl Channel {
             "variables": variables
         });
 
-        let url = url.finish().to_owned();
-        event!(Level::INFO, "URL: {}", url);
-        let response = reqwest::Client::new().post(url).json(&body).send().await?;
+        let channel = reqwest::Client::new()
+            .post(url.finish().to_owned())
+            .json(&body)
+            .send()
+            .await?
+            .json::<Channel>()
+            .await?;
+
         event!(Level::INFO, "Successfully created channel");
-        let channel = response.json::<Channel>().await?;
-        event!(Level::INFO, "Channel ID: {}", channel.id);
         Ok(channel)
     }
 
@@ -706,12 +739,15 @@ impl Channel {
             "variables": variables
         });
 
-        let url = url.finish().to_owned();
-        event!(Level::INFO, "URL: {}", url);
-        let response = reqwest::Client::new().post(url).json(&body).send().await?;
+        let channel = reqwest::Client::new()
+            .post(url.finish().to_owned())
+            .json(&body)
+            .send()
+            .await?
+            .json::<Channel>()
+            .await?;
+
         event!(Level::INFO, "Successfully created channel");
-        let channel = response.json::<Channel>().await?;
-        event!(Level::INFO, "Channel ID: {}", channel.id);
         Ok(channel)
     }
 
@@ -727,9 +763,8 @@ impl Channel {
             .finish()
             .to_owned();
 
-        let response = reqwest::get(url).await?;
+        let channel = reqwest::get(url).await?.json::<Channel>().await?;
         event!(Level::INFO, "Successfully received channel");
-        let channel = response.json::<Channel>().await?;
         Ok(channel)
     }
 
@@ -814,12 +849,15 @@ impl Channel {
             "variables": variables
         });
 
-        let url = url.finish().to_owned();
-        event!(Level::INFO, "URL: {}", url);
-        let response = reqwest::Client::new().post(url).json(&body).send().await?;
+        let channel = reqwest::Client::new()
+            .post(url.finish().to_owned())
+            .json(&body)
+            .send()
+            .await?
+            .json::<Channel>()
+            .await?;
+
         event!(Level::INFO, "Successfully created channel");
-        let channel = response.json::<Channel>().await?;
-        event!(Level::INFO, "Channel ID: {}", channel.id);
         Ok(channel)
     }
 
