@@ -194,6 +194,14 @@ impl Client {
 
         Ok(())
     }
+
+    pub(crate) fn get_api_key(&self) -> String {
+        format!("{}:{}", self.username, self.password)
+    }
+
+    pub(crate) fn add_api_key(&self, url: &mut url::form_urlencoded::Serializer<url::UrlQuery>) {
+        url.append_pair("api_key", &self.get_api_key());
+    }
 }
 
 impl Default for Client {

@@ -222,10 +222,7 @@ impl Channel {
 
         let mut url = url.query_pairs_mut();
 
-        url.append_pair(
-            "api_key",
-            &format!("{}:{}", client.username, client.password),
-        );
+        client.add_api_key(&mut url);
 
         match reason {
             Reason::Code(_) => url.append_pair("reason_code", &format!("{}", reason)),
@@ -265,10 +262,7 @@ impl Channel {
             .url
             .join(&format!("/ari/channels/{}/answer", self.id))?
             .query_pairs_mut()
-            .append_pair(
-                "api_key",
-                &format!("{}:{}", client.username, client.password),
-            )
+            .append_pair("api_key", &client.get_api_key())
             .finish()
             .to_owned();
 
@@ -293,10 +287,7 @@ impl Channel {
             .url
             .join(&format!("/ari/channels/{}/ring", self.id))?
             .query_pairs_mut()
-            .append_pair(
-                "api_key",
-                &format!("{}:{}", client.username, client.password),
-            )
+            .append_pair("api_key", &client.get_api_key())
             .finish()
             .to_owned();
 
@@ -353,10 +344,7 @@ impl Channel {
             .url
             .join(&format!("/ari/channels/{}/mute", self.id))?
             .query_pairs_mut()
-            .append_pair(
-                "api_key",
-                &format!("{}:{}", client.username, client.password),
-            )
+            .append_pair("api_key", &client.get_api_key())
             .append_pair("direction", &format!("{}", direction))
             .finish()
             .to_owned();
@@ -382,10 +370,7 @@ impl Channel {
             .url
             .join(&format!("/ari/channels/{}/mute", self.id))?
             .query_pairs_mut()
-            .append_pair(
-                "api_key",
-                &format!("{}:{}", client.username, client.password),
-            )
+            .append_pair("api_key", &client.get_api_key())
             .append_pair("direction", &format!("{}", direction))
             .finish()
             .to_owned();
@@ -444,12 +429,8 @@ impl Channel {
             .join(&format!("/ari/channels/{}/play", self.id))?;
 
         let mut url = url.query_pairs_mut();
-
-        url.append_pair(
-            "api_key",
-            &format!("{}:{}", client.username, client.password),
-        )
-        .append_pair("media", media);
+        client.add_api_key(&mut url);
+        url.append_pair("media", media);
 
         if let Some(lang) = lang {
             event!(Level::INFO, "Lang: {}", lang);
@@ -505,11 +486,7 @@ impl Channel {
         ))?;
 
         let mut url = url.query_pairs_mut();
-
-        url.append_pair(
-            "api_key",
-            &format!("{}:{}", client.username, client.password),
-        );
+        client.add_api_key(&mut url);
 
         let media = media.join(",");
         event!(Level::INFO, "Media: {}", media);
@@ -566,12 +543,9 @@ impl Channel {
 
         let mut url = url.query_pairs_mut();
 
-        url.append_pair(
-            "api_key",
-            &format!("{}:{}", client.username, client.password),
-        )
-        .append_pair("name", name)
-        .append_pair("format", format);
+        client.add_api_key(&mut url);
+
+        url.append_pair("name", name).append_pair("format", format);
 
         if let Some(max_duration_seconds) = max_duration_seconds {
             event!(Level::INFO, "Max duration: {}", max_duration_seconds);
@@ -627,12 +601,10 @@ impl Channel {
         let mut url = client
             .url
             .join(&format!("/ari/channels/{}/dial", self.id))?;
+
         let mut url = url.query_pairs_mut();
 
-        url.append_pair(
-            "api_key",
-            &format!("{}:{}", client.username, client.password),
-        );
+        client.add_api_key(&mut url);
 
         if let Some(caller_id) = caller_id {
             event!(Level::INFO, "Caller ID: {}", caller_id);
@@ -670,10 +642,7 @@ impl Channel {
             .url
             .join("/ari/channels")?
             .query_pairs_mut()
-            .append_pair(
-                "api_key",
-                &format!("{}:{}", client.username, client.password),
-            )
+            .append_pair("api_key", &client.get_api_key())
             .finish()
             .to_owned();
 
@@ -711,11 +680,9 @@ impl Channel {
         let mut url = client.url.join("/ari/channels")?;
         let mut url = url.query_pairs_mut();
 
-        url.append_pair(
-            "api_key",
-            &format!("{}:{}", client.username, client.password),
-        )
-        .append_pair("endpoint", endpoint);
+        client.add_api_key(&mut url);
+
+        url.append_pair("endpoint", endpoint);
 
         event!(Level::INFO, "Originate channel: {}", endpoint);
 
@@ -823,11 +790,8 @@ impl Channel {
         let mut url = client.url.join("/ari/channels")?;
         let mut url = url.query_pairs_mut();
 
-        url.append_pair(
-            "api_key",
-            &format!("{}:{}", client.username, client.password),
-        )
-        .append_pair("endpoint", endpoint);
+        client.add_api_key(&mut url);
+        url.append_pair("endpoint", endpoint);
 
         event!(Level::INFO, "Originate channel: {}", endpoint);
 
@@ -892,10 +856,7 @@ impl Channel {
             .url
             .join(&format!("/ari/channels/{}", channel_id))?
             .query_pairs_mut()
-            .append_pair(
-                "api_key",
-                &format!("{}:{}", client.username, client.password),
-            )
+            .append_pair("api_key", &client.get_api_key())
             .finish()
             .to_owned();
 
@@ -933,11 +894,8 @@ impl Channel {
         let mut url = client.url.join(&format!("/ari/channels/{}", channel_id))?;
         let mut url = url.query_pairs_mut();
 
-        url.append_pair(
-            "api_key",
-            &format!("{}:{}", client.username, client.password),
-        )
-        .append_pair("endpoint", endpoint);
+        client.add_api_key(&mut url);
+        url.append_pair("endpoint", endpoint);
 
         if !formats.is_empty() {
             let formats = formats.join(",");
