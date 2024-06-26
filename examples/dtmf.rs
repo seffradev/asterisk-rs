@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dtmf_buffer = Arc::new(Mutex::new(String::new()));
 
     let client = Client::new()
-        .url("http://localhost:8088/ari/")?
+        .url(url::Url::parse("http://localhost:8088/ari/")?)
         .username("asterisk")
         .password("asterisk")
         .app_name("ari")

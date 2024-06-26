@@ -9,9 +9,9 @@ use tracing::{event, instrument, Level};
 use url::Url;
 
 impl ClientBuilder {
-    pub fn url(mut self, url: &str) -> Result<Self> {
-        self.0.url = url::Url::parse(url)?;
-        Ok(self)
+    pub fn url(mut self, url: Url) -> Self {
+        self.0.url = url;
+        self
     }
 
     pub fn username(mut self, username: &str) -> Self {

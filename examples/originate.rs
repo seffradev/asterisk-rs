@@ -15,7 +15,7 @@ async fn main() -> Result<()> {
         .init();
 
     let client = Client::new()
-        .url("http://localhost:8088/")?
+        .url(url::Url::parse("http://localhost:8088/ari")?)
         .username("asterisk")
         .password("asterisk")
         .app_name(APP_NAME)
