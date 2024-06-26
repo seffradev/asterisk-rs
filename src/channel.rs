@@ -516,7 +516,7 @@ impl Channel {
         other_channel_id: Option<&str>,
         originator: Option<&str>,
         formats: Vec<&str>,
-        variables: Option<HashMap<&str, &str>>,
+        variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
         let span = span!(Level::INFO, "originate_channel");
         let _guard = span.enter();
@@ -623,12 +623,12 @@ impl Channel {
         client: &Client,
         endpoint: &str,
         app: &str,
-        app_args: Option<Vec<&str>>,
+        app_args: Vec<&str>,
         channel_id: Option<&str>,
         other_channel_id: Option<&str>,
         originator: Option<&str>,
         formats: Vec<&str>,
-        variables: Option<HashMap<&str, &str>>,
+        variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
         let span = span!(Level::INFO, "create_channel");
         let _guard = span.enter();
@@ -740,7 +740,7 @@ impl Channel {
         other_channel_id: Option<&str>,
         originator: Option<&str>,
         formats: Vec<&str>,
-        variables: Option<HashMap<&str, &str>>,
+        variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
         let span = span!(Level::INFO, "originate_channel_with_id");
         let _guard = span.enter();

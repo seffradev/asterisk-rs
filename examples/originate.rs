@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use arirs::channel::Channel;
 use arirs::Result;
 use arirs::{channel::OriginateParams, client::Client};
@@ -32,7 +34,7 @@ async fn main() -> Result<()> {
         None,
         None,
         vec!["alaw,ulaw"],
-        None,
+        HashMap::new(),
     )
     .await?;
 
