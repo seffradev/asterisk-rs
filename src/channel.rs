@@ -230,7 +230,7 @@ impl Channel {
             .send()
             .await?;
 
-        event!(Level::INFO, "Successfully hung up channel");
+        event!(Level::INFO, "hung up channel with id {}", self.id);
         Ok(())
     }
 
@@ -257,7 +257,7 @@ impl Channel {
             .to_owned();
 
         reqwest::Client::new().post(url).send().await?;
-        event!(Level::INFO, "Successfully answered channel");
+        event!(Level::INFO, "answered channel with id {}", self.id);
         Ok(())
     }
 
@@ -272,7 +272,7 @@ impl Channel {
             .to_owned();
 
         reqwest::Client::new().post(url).send().await?;
-        event!(Level::INFO, "Successfully rang channel");
+        event!(Level::INFO, "started ringing channel with id {}", self.id);
         Ok(())
     }
 
@@ -290,7 +290,7 @@ impl Channel {
             .to_owned();
 
         reqwest::Client::new().delete(url).send().await?;
-        event!(Level::INFO, "Successfully stopped ringing channel");
+        event!(Level::INFO, "stopped ringing channel with id {}", self.id);
         Ok(())
     }
 
@@ -359,7 +359,7 @@ impl Channel {
             .to_owned();
 
         reqwest::Client::new().post(url).send().await?;
-        event!(Level::INFO, "Successfully muted channel");
+        event!(Level::INFO, "muted channel with id {}", self.id);
         Ok(())
     }
 
@@ -375,7 +375,7 @@ impl Channel {
             .to_owned();
 
         reqwest::Client::new().delete(url).send().await?;
-        event!(Level::INFO, "Successfully unmuted channel");
+        event!(Level::INFO, "unmuted channel with id {}", self.id);
         Ok(())
     }
 
@@ -448,22 +448,18 @@ impl Channel {
         url.append_pair("media", media);
 
         if let Some(lang) = lang {
-            event!(Level::INFO, "Lang: {}", lang);
             url.append_pair("lang", lang);
         }
 
         if let Some(offset_ms) = offset_ms {
-            event!(Level::INFO, "Offset: {}", offset_ms);
             url.append_pair("offset_ms", &offset_ms.to_string());
         }
 
         if let Some(skip_ms) = skip_ms {
-            event!(Level::INFO, "Skip: {}", skip_ms);
             url.append_pair("skip_ms", &skip_ms.to_string());
         }
 
         if let Some(playback_id) = playback_id {
-            event!(Level::INFO, "Playback ID: {}", playback_id);
             url.append_pair("playback_id", playback_id);
         }
 
@@ -476,7 +472,9 @@ impl Channel {
 
         event!(
             Level::INFO,
-            "Successfully started media playback on channel"
+            "started media playback with id {} on channel with id {}",
+            playback.id,
+            self.id
         );
 
         Ok(playback)
@@ -500,21 +498,17 @@ impl Channel {
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
         let media = media.join(",");
-        event!(Level::INFO, "Media: {}", media);
         url.append_pair("media", &media);
 
         if let Some(lang) = lang {
-            event!(Level::INFO, "Lang: {}", lang);
             url.append_pair("lang", lang);
         }
 
         if let Some(offset_ms) = offset_ms {
-            event!(Level::INFO, "Offset: {}", offset_ms);
             url.append_pair("offset_ms", &offset_ms.to_string());
         }
 
         if let Some(skip_ms) = skip_ms {
-            event!(Level::INFO, "Skip: {}", skip_ms);
             url.append_pair("skip_ms", &skip_ms.to_string());
         }
 
@@ -527,7 +521,9 @@ impl Channel {
 
         event!(
             Level::INFO,
-            "Successfully started media playback on channel"
+            "started media playback with id {} on channel with id {}",
+            playback.id,
+            self.id
         );
 
         Ok(playback)
@@ -555,20 +551,15 @@ impl Channel {
         url.append_pair("name", name).append_pair("format", format);
 
         if let Some(max_duration_seconds) = max_duration_seconds {
-            event!(Level::INFO, "Max duration: {}", max_duration_seconds);
             url.append_pair("max_duration_seconds", &max_duration_seconds.to_string());
         }
 
         if let Some(max_silence_seconds) = max_silence_seconds {
-            event!(Level::INFO, "Max silence: {}", max_silence_seconds);
             url.append_pair("max_silence_seconds", &max_silence_seconds.to_string());
         }
 
-        event!(Level::INFO, "If exists: {}", if_exists);
         url.append_pair("if_exists", &format!("{}", if_exists));
-        event!(Level::INFO, "Beep: {}", beep);
         url.append_pair("beep", &beep.to_string());
-        event!(Level::INFO, "Terminate on: {}", terminate_on);
         url.append_pair("terminate_on", &format!("{}", terminate_on));
 
         let recording = reqwest::Client::new()
@@ -578,7 +569,12 @@ impl Channel {
             .json::<LiveRecording>()
             .await?;
 
-        event!(Level::INFO, "Successfully started recording on channel");
+        event!(
+            Level::INFO,
+            "started recording with id {} on channel with id {}",
+            recording.id,
+            self.id
+        );
 
         Ok(recording)
     }
@@ -608,12 +604,10 @@ impl Channel {
         client.add_api_key(&mut url);
 
         if let Some(caller_id) = caller_id {
-            event!(Level::INFO, "Caller ID: {}", caller_id);
             url.append_pair("callerId", caller_id);
         }
 
         if let Some(timeout) = timeout {
-            event!(Level::INFO, "Timeout: {}", timeout);
             url.append_pair("timeout", &timeout.to_string());
         }
 
@@ -622,7 +616,7 @@ impl Channel {
             .send()
             .await?;
 
-        event!(Level::INFO, "Successfully dialed channel");
+        event!(Level::INFO, "dialed channel with id {}", self.id);
         Ok(())
     }
 
@@ -642,7 +636,7 @@ impl Channel {
             .to_owned();
 
         let channels = reqwest::get(url).await?.json::<Vec<Channel>>().await?;
-        event!(Level::INFO, "Successfully received channels");
+        event!(Level::INFO, "received channels");
         Ok(channels)
     }
 
@@ -664,11 +658,9 @@ impl Channel {
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
         url.append_pair("endpoint", endpoint);
-        event!(Level::INFO, "Originate channel: {}", endpoint);
 
         if !formats.is_empty() {
             let formats = formats.join(",");
-            event!(Level::INFO, "Formats: {}", formats);
             url.append_pair("formats", &formats);
         }
 
@@ -694,40 +686,33 @@ impl Channel {
                 url.append_pair("app", app);
                 if !app_args.is_empty() {
                     let app_args = app_args.join(",");
-                    event!(Level::INFO, "App args: {}", app_args);
                     url.append_pair("app_args", &app_args);
                 }
             }
         }
 
-        event!(Level::INFO, "Caller ID: {:?}", caller_id);
         if let Some(caller_id) = caller_id {
             url.append_pair("callerId", caller_id);
         }
 
-        event!(Level::INFO, "Timeout: {:?}", timeout);
         if let Some(timeout) = timeout {
             url.append_pair("timeout", &timeout.to_string());
         } else {
             url.append_pair("timeout", "30");
         }
 
-        event!(Level::INFO, "Channel ID: {:?}", channel_id);
         if let Some(channel_id) = channel_id {
             url.append_pair("channel_id", channel_id);
         }
 
-        event!(Level::INFO, "Other Channel ID: {:?}", other_channel_id);
         if let Some(other_channel_id) = other_channel_id {
             url.append_pair("other_channel_id", other_channel_id);
         }
 
-        event!(Level::INFO, "Originator: {:?}", originator);
         if let Some(originator) = originator {
             url.append_pair("originator", originator);
         }
 
-        event!(Level::INFO, "Variables: {:?}", variables);
         let body = json!({
             "variables": variables
         });
@@ -740,8 +725,9 @@ impl Channel {
             .json::<Channel>()
             .await?;
 
-        event!(Level::INFO, "Successfully created channel");
+        event!(Level::INFO, "created channel with id {}", channel.id);
     #[instrument(level = "debug")]
+        event!(Level::INFO, "received channel with id {}", channel.id);
         Ok(channel)
     }
 
@@ -762,37 +748,31 @@ impl Channel {
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
         url.append_pair("endpoint", endpoint);
-        event!(Level::INFO, "Create channel: {}", endpoint);
+
 
         if !formats.is_empty() {
             let formats = formats.join(",");
-            event!(Level::INFO, "Formats: {}", formats);
             url.append_pair("formats", &formats);
         }
 
         url.append_pair("app", app);
         if !app_args.is_empty() {
             let app_args = app_args.join(",");
-            event!(Level::INFO, "App args: {}", app_args);
             url.append_pair("app_args", &app_args);
         }
 
-        event!(Level::INFO, "Channel ID: {:?}", channel_id);
         if let Some(channel_id) = channel_id {
             url.append_pair("channel_id", channel_id);
         }
 
-        event!(Level::INFO, "Other Channel ID: {:?}", other_channel_id);
         if let Some(other_channel_id) = other_channel_id {
             url.append_pair("other_channel_id", other_channel_id);
         }
 
-        event!(Level::INFO, "Originator: {:?}", originator);
         if let Some(originator) = originator {
             url.append_pair("originator", originator);
         }
 
-        event!(Level::INFO, "Variables: {:?}", variables);
         let body = json!({
             "variables": variables
         });
@@ -805,7 +785,6 @@ impl Channel {
             .json::<Channel>()
             .await?;
 
-        event!(Level::INFO, "Successfully created channel");
         Ok(channel)
     }
 
@@ -819,7 +798,7 @@ impl Channel {
             .to_owned();
 
         let channel = reqwest::get(url).await?.json::<Channel>().await?;
-        event!(Level::INFO, "Successfully received channel");
+        event!(Level::INFO, "originated channel with id {}", channel.id);
         Ok(channel)
     }
 
@@ -844,7 +823,6 @@ impl Channel {
 
         if !formats.is_empty() {
             let formats = formats.join(",");
-            event!(Level::INFO, "Formats: {}", formats);
             url.append_pair("formats", &formats);
         }
 
@@ -870,35 +848,28 @@ impl Channel {
                 url.append_pair("app", app);
                 if !app_args.is_empty() {
                     let app_args = app_args.join(",");
-                    event!(Level::INFO, "App args: {}", app_args);
                     url.append_pair("app_args", &app_args);
                 }
             }
         }
 
-        event!(Level::INFO, "Caller ID: {:?}", caller_id);
         if let Some(caller_id) = caller_id {
             url.append_pair("callerId", caller_id);
         }
 
-        event!(Level::INFO, "Timeout: {:?}", timeout);
         if let Some(timeout) = timeout {
             url.append_pair("timeout", &timeout.to_string());
         } else {
             url.append_pair("timeout", "30");
         }
-
-        event!(Level::INFO, "Other Channel ID: {:?}", other_channel_id);
         if let Some(other_channel_id) = other_channel_id {
             url.append_pair("otherChannelId", other_channel_id);
         }
 
-        event!(Level::INFO, "Originator: {:?}", originator);
         if let Some(originator) = originator {
             url.append_pair("originator", originator);
         }
 
-        event!(Level::INFO, "Variables: {:?}", variables);
         let body = json!({
             "variables": variables
         });
@@ -911,7 +882,7 @@ impl Channel {
             .json::<Channel>()
             .await?;
 
-        event!(Level::INFO, "Successfully created channel");
+        event!(Level::INFO, "originated channel with id {}", channel.id);
         Ok(channel)
     }
 
