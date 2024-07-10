@@ -27,6 +27,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "amirs"
+version = "0.1.0"
+
+[[package]]
 name = "android-tzdata"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
