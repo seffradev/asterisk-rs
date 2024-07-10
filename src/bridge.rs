@@ -1,7 +1,7 @@
-use crate::Result;
-use crate::{client::Client, playback::Playback, recording::LiveRecording};
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+
+use crate::{client::Client, playback::Playback, recording::LiveRecording, Result};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Bridge {
@@ -25,12 +25,7 @@ impl Bridge {
     }
 
     #[instrument(level = "debug")]
-    pub async fn set_channel_as_video_source(
-        &self,
-        _client: &Client,
-        _channel_id: &str,
-        _video_source_id: &str,
-    ) -> Result<()> {
+    pub async fn set_channel_as_video_source(&self, _client: &Client, _channel_id: &str, _video_source_id: &str) -> Result<()> {
         unimplemented!()
     }
 
@@ -60,11 +55,7 @@ impl Bridge {
     }
 
     #[instrument(level = "debug")]
-    pub async fn start_recording(
-        &self,
-        _client: &Client,
-        _recording: &LiveRecording,
-    ) -> Result<()> {
+    pub async fn start_recording(&self, _client: &Client, _recording: &LiveRecording) -> Result<()> {
         unimplemented!()
     }
 
@@ -79,11 +70,7 @@ impl Bridge {
     }
 
     #[instrument(level = "debug")]
-    pub async fn create_bridge_with_id(
-        _client: &Client,
-        _bridge_id: &str,
-        _bridge: &Bridge,
-    ) -> Result<Bridge> {
+    pub async fn create_bridge_with_id(_client: &Client, _bridge_id: &str, _bridge: &Bridge) -> Result<Bridge> {
         unimplemented!()
     }
 

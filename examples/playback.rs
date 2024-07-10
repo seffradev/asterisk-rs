@@ -1,5 +1,6 @@
-use arirs::{client::Client, Event};
 use std::sync::Arc;
+
+use arirs::{client::Client, Event};
 use tracing::{error, level_filters::LevelFilter};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -7,10 +8,7 @@ const APP_NAME: &str = "ari";
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing_subscriber::registry()
-        .with(fmt::layer())
-        .with(LevelFilter::TRACE)
-        .init();
+    tracing_subscriber::registry().with(fmt::layer()).with(LevelFilter::TRACE).init();
 
     let (tx, mut rx) = tokio::sync::mpsc::channel(1024);
 
@@ -35,9 +33,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         match event {
             Event::StasisStart(e) => {
                 let channel = e.channel;
-                channel
-                    .play_media(&client, "sound:hello", Some("en"), None, None, None)
-                    .await?;
+                channel.play_media(&client, "sound:hello", Some("en"), None, None, None).await?;
             }
             _ => {}
         }

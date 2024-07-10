@@ -1,12 +1,13 @@
-use crate::{Event, Result};
+use std::time::Duration;
+
 use futures_util::{SinkExt, StreamExt};
 use rand::Rng;
-use std::time::Duration;
-use tokio::sync::mpsc::Sender;
-use tokio::time::interval;
+use tokio::{sync::mpsc::Sender, time::interval};
 use tokio_tungstenite::connect_async;
 use tracing::{event, instrument, Level};
 use url::Url;
+
+use crate::{Event, Result};
 
 impl ClientBuilder {
     pub fn url(mut self, url: Url) -> Self {
@@ -54,17 +55,10 @@ impl ClientBuilder {
         ws_url
             .query_pairs_mut()
             .append_pair("app", &self.0.app_name)
-            .append_pair(
-                "api_key",
-                &format!("{}:{}", self.0.username, self.0.password),
-            )
+            .append_pair("api_key", &format!("{}:{}", self.0.username, self.0.password))
             .append_pair("subscribeAll", "true");
 
-        event!(
-            Level::TRACE,
-            "Using REST API server with URL '{}'",
-            self.0.url
-        );
+        event!(Level::TRACE, "Using REST API server with URL '{}'", self.0.url);
 
         event!(Level::TRACE, "Using WebSocket server with URL '{}'", ws_url);
 
@@ -125,10 +119,7 @@ impl Client {
             }
         };
 
-        event!(
-            Level::INFO,
-            "WebSocket handshake has been successfully completed"
-        );
+        event!(Level::INFO, "WebSocket handshake has been successfully completed");
 
         let (mut ws_sender, mut ws_receiver) = ws_stream.split();
         let mut interval = interval(Duration::from_millis(5000));

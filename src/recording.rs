@@ -1,7 +1,7 @@
-use crate::client::Client;
-use crate::Result;
 use serde::{Deserialize, Serialize};
 use tracing::instrument;
+
+use crate::{client::Client, Result};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]

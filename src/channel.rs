@@ -1,14 +1,13 @@
-use crate::{
-    client::Client, playback::Playback, recording::LiveRecording, rtp_statistics::RtpStatistics,
-    variable::Variable, Result,
-};
+use std::collections::HashMap;
+
 use chrono::{DateTime, Duration};
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use std::collections::HashMap;
 use tracing::{event, instrument, Level};
 use url::Url;
+
+use crate::{client::Client, playback::Playback, recording::LiveRecording, rtp_statistics::RtpStatistics, variable::Variable, Result};
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
@@ -224,10 +223,7 @@ impl Channel {
             _ => url.append_pair("reason", &format!("{}", reason)),
         };
 
-        reqwest::Client::new()
-            .delete(url.finish().to_owned())
-            .send()
-            .await?;
+        reqwest::Client::new().delete(url.finish().to_owned()).send().await?;
 
         event!(Level::INFO, "hung up channel with id {}", self.id);
         Ok(())
@@ -281,10 +277,7 @@ impl Channel {
             .url
             .join(&format!("channels/{}/ring", self.id))?
             .query_pairs_mut()
-            .append_pair(
-                "api_key",
-                &format!("{}:{}", client.username, client.password),
-            )
+            .append_pair("api_key", &format!("{}:{}", client.username, client.password))
             .finish()
             .to_owned();
 
@@ -308,20 +301,8 @@ impl Channel {
         client.add_api_key(&mut url);
 
         url.append_pair("dtmf", dtmf)
-            .append_pair(
-                "between",
-                &between
-                    .map(|d| d.num_milliseconds())
-                    .unwrap_or(100)
-                    .to_string(),
-            )
-            .append_pair(
-                "duration",
-                &duration
-                    .map(|d| d.num_milliseconds())
-                    .unwrap_or(100)
-                    .to_string(),
-            );
+            .append_pair("between", &between.map(|d| d.num_milliseconds()).unwrap_or(100).to_string())
+            .append_pair("duration", &duration.map(|d| d.num_milliseconds()).unwrap_or(100).to_string());
 
         if let Some(before) = before {
             url.append_pair("before", &before.num_milliseconds().to_string());
@@ -331,17 +312,9 @@ impl Channel {
             url.append_pair("after", &after.num_milliseconds().to_string());
         }
 
-        reqwest::Client::new()
-            .post(url.finish().to_owned())
-            .send()
-            .await?;
+        reqwest::Client::new().post(url.finish().to_owned()).send().await?;
 
-        event!(
-            Level::INFO,
-            "sent dtmf '{}' to channel with id {}",
-            dtmf,
-            self.id
-        );
+        event!(Level::INFO, "sent dtmf '{}' to channel with id {}", dtmf, self.id);
 
         Ok(())
     }
@@ -486,9 +459,7 @@ impl Channel {
         offset_ms: Option<u32>,
         skip_ms: Option<u32>,
     ) -> Result<Playback> {
-        let mut url = client
-            .url
-            .join(&format!("channels/{}/play/{}/media", self.id, playback_id))?;
+        let mut url = client.url.join(&format!("channels/{}/play/{}/media", self.id, playback_id))?;
 
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -583,12 +554,7 @@ impl Channel {
     }
 
     #[instrument(level = "debug")]
-    pub async fn dial(
-        &self,
-        client: &Client,
-        caller_id: Option<&str>,
-        timeout: Option<u32>,
-    ) -> Result<()> {
+    pub async fn dial(&self, client: &Client, caller_id: Option<&str>, timeout: Option<u32>) -> Result<()> {
         let mut url = client.url.join(&format!("channels/{}/dial", self.id))?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -601,10 +567,7 @@ impl Channel {
             url.append_pair("timeout", &timeout.to_string());
         }
 
-        reqwest::Client::new()
-            .post(url.finish().to_owned())
-            .send()
-            .await?;
+        reqwest::Client::new().post(url.finish().to_owned()).send().await?;
 
         event!(Level::INFO, "dialed channel with id {}", self.id);
         Ok(())
@@ -646,8 +609,7 @@ impl Channel {
         let mut url = client.url.join("channels")?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
-        url.append_pair("endpoint", endpoint)
-            .append_pair("app", app);
+        url.append_pair("endpoint", endpoint).append_pair("app", app);
 
         if !formats.is_empty() {
             let formats = formats.join(",");

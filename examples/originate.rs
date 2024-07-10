@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
-use arirs::channel::Channel;
-use arirs::Result;
-use arirs::{channel::OriginateParams, client::Client};
+use arirs::{
+    channel::{Channel, OriginateParams},
+    client::Client,
+    Result,
+};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 const APP_NAME: &str = "ari";

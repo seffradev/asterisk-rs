@@ -1,6 +1,6 @@
 use channel::{
-    ChannelCreated, ChannelDestroyed, ChannelDialplan, ChannelDtmfReceived, ChannelHangupRequest,
-    ChannelStateChange, ChannelVarset, StasisEnd, StasisStart,
+    ChannelCreated, ChannelDestroyed, ChannelDialplan, ChannelDtmfReceived, ChannelHangupRequest, ChannelStateChange, ChannelVarset,
+    StasisEnd, StasisStart,
 };
 use device::DeviceStateChanged;
 use serde::{Deserialize, Serialize};
