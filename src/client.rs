@@ -66,11 +66,7 @@ impl ClientBuilder {
             self.0.url
         );
 
-        event!(
-            Level::TRACE,
-            "Using WebSocket server with URL '{}'",
-            ws_url
-        );
+        event!(Level::TRACE, "Using WebSocket server with URL '{}'", ws_url);
 
         Ok(Client {
             url: self.0.url,

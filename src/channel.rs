@@ -1,7 +1,6 @@
-use crate::Result;
 use crate::{
     client::Client, playback::Playback, recording::LiveRecording, rtp_statistics::RtpStatistics,
-    variable::Variable,
+    variable::Variable, Result,
 };
 use chrono::{DateTime, Duration};
 use derive_more::Display;
