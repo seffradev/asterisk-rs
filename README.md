@@ -1,2 +1,7 @@
-# arirs
-An Asterisk REST Interface client for Rust.
+# asterisk-rs
+
+An Asterisk Library in Rust
+
+## arirs
+
+A crate for Asterisk REST Interface tooling

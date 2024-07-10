@@ -2,10 +2,4 @@
 
 [Introduction](./introduction.md)
 
-- [Bridges]()
-- [Channels]()
-- [Devices]()
-- [Playbacks]()
-- [RTP Statistics]()
-- [Recordings]()
-- [Variables]()
+- [Asterisk REST Interface]()

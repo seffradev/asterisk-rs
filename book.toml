@@ -3,7 +3,7 @@ authors = ["hampus.avekvist@hey.com"]
 language = "en"
 multilingual = false
 src = "docs"
-title = "Asterisk ARI Documentation"
+title = "Asterisk Libraries in Rust Documentation"
 
 [rust]
 edition = "2021"
@@ -13,7 +13,7 @@ build-dir = "target/book"
 
 [output.html]
 cname = "seffra.dev"
-edit-url-template = "https://github.com/seffradev/arirs/edit/trunk/{path}"
-git-repository-url = "https://github.com/seffradev/arirs"
+edit-url-template = "https://github.com/seffradev/asterisk-rs/edit/trunk/{path}"
+git-repository-url = "https://github.com/seffradev/asterisk-rs"
 preferred-dark-theme = "ayu"
 smart-punctuation = true
