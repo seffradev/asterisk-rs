@@ -6,6 +6,7 @@ use device::DeviceStateChanged;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tokio::task::JoinError;
+use tokio_tungstenite::tungstenite;
 
 pub mod bridge;
 pub mod channel;

@@ -3,7 +3,7 @@ use std::time::Duration;
 use futures_util::{SinkExt, StreamExt};
 use rand::Rng;
 use tokio::{sync::mpsc::Sender, time::interval};
-use tokio_tungstenite::connect_async;
+use tokio_tungstenite::{connect_async, tungstenite};
 use tracing::{event, instrument, Level};
 use url::Url;
 
@@ -111,7 +111,7 @@ impl Client {
     pub async fn run(&self) -> Result<()> {
         event!(Level::INFO, "Connecting to Asterisk");
 
-        let (ws_stream, _) = match connect_async(&self.ws_url).await {
+        let (ws_stream, _) = match connect_async(&self.ws_url.to_string()).await {
             Ok(stream) => stream,
             Err(e) => {
                 event!(Level::ERROR, "Failed to connect to Asterisk: {}", e);
