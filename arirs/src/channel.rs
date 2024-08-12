@@ -40,65 +40,65 @@ pub enum OriginateParams<'a> {
 
 #[derive(Debug, Display)]
 pub enum Reason {
-    #[display(fmt = "{}", _0)]
+    #[display("{}", _0)]
     Code(u16),
-    #[display(fmt = "normal")]
+    #[display("normal")]
     Normal,
-    #[display(fmt = "busy")]
+    #[display("busy")]
     Busy,
-    #[display(fmt = "congestion")]
+    #[display("congestion")]
     Congestion,
-    #[display(fmt = "no_answer")]
+    #[display("no_answer")]
     NoAnswer,
-    #[display(fmt = "timeout")]
+    #[display("timeout")]
     Timeout,
-    #[display(fmt = "rejected")]
+    #[display("rejected")]
     Rejected,
-    #[display(fmt = "unallocated")]
+    #[display("unallocated")]
     Unallocated,
-    #[display(fmt = "normal_unspecified")]
+    #[display("normal_unspecified")]
     NormalUnspecified,
-    #[display(fmt = "number_incomplete")]
+    #[display("number_incomplete")]
     NumberIncomplete,
-    #[display(fmt = "codec_mismatch")]
+    #[display("codec_mismatch")]
     CodecMismatch,
-    #[display(fmt = "interworking")]
+    #[display("interworking")]
     Interworking,
-    #[display(fmt = "failure")]
+    #[display("failure")]
     Failure,
-    #[display(fmt = "answered_elsewhere")]
+    #[display("answered_elsewhere")]
     AnsweredElsewhere,
 }
 
 #[derive(Debug, Display)]
 pub enum Direction {
-    #[display(fmt = "in")]
+    #[display("in")]
     In,
-    #[display(fmt = "out")]
+    #[display("out")]
     Out,
-    #[display(fmt = "both")]
+    #[display("both")]
     Both,
 }
 
 #[derive(Debug, Display)]
 pub enum RecordingAction {
-    #[display(fmt = "overwrite")]
+    #[display("overwrite")]
     Overwrite,
-    #[display(fmt = "append")]
+    #[display("append")]
     Append,
-    #[display(fmt = "fail")]
+    #[display("fail")]
     Fail,
 }
 
 #[derive(Debug, Display)]
 pub enum RecordingTermination {
-    #[display(fmt = "none")]
+    #[display("none")]
     None,
-    #[display(fmt = "any")]
+    #[display("any")]
     Any,
-    #[display(fmt = "*")]
+    #[display("*")]
     Asterisk,
-    #[display(fmt = "#")]
+    #[display("#")]
     Octothorpe,
 }
 
