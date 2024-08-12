@@ -30,14 +30,14 @@ impl Playback {
 #[derive(Serialize, Deserialize, Debug, Display)]
 #[serde(rename_all = "snake_case")]
 pub enum Operation {
-    #[display(fmt = "restart")]
+    #[display("restart")]
     Restart,
-    #[display(fmt = "pause")]
+    #[display("pause")]
     Pause,
-    #[display(fmt = "unpause")]
+    #[display("unpause")]
     Unpause,
-    #[display(fmt = "reverse")]
+    #[display("reverse")]
     Reverse,
-    #[display(fmt = "forward")]
+    #[display("forward")]
     Forward,
 }
