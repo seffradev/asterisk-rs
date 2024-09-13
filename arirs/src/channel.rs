@@ -211,11 +211,11 @@ pub struct Dialplan {
     pub app_data: String,
 }
 
-impl Channel {
-    pub async fn hangup(self, client: &RequestClient, reason: Reason) -> Result<()> {
-        let mut url = client.url().join(&format!("channels/{}", self.id))?;
+impl RequestClient {
+    pub async fn hangup(&self, channel: &Channel, reason: Reason) -> Result<()> {
+        let mut url = self.url().join(&format!("channels/{}", channel.id))?;
         let mut url = url.query_pairs_mut();
-        client.add_api_key(&mut url);
+        self.add_api_key(&mut url);
 
         match reason {
             Reason::Code(_) => url.append_pair("reason_code", &format!("{}", reason)),
@@ -224,74 +224,64 @@ impl Channel {
 
         reqwest::Client::new().delete(url.finish().to_owned()).send().await?;
 
-        event!(Level::INFO, "hung up channel with id {}", self.id);
+        event!(Level::INFO, "hung up channel with id {}", channel.id);
         Ok(())
     }
 
-    pub fn continue_in_dialplan(self, _client: &RequestClient) -> Result<()> {
-        unimplemented!()
-    }
-
-    /// Transfer the channel to another ARI application.
-    /// Same as `move` in Asterisk
-    pub fn transfer(self, _client: &RequestClient) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub async fn answer(&self, client: &RequestClient) -> Result<()> {
-        let url = client
+    pub async fn answer(&self, channel: &Channel) -> Result<()> {
+        let url = self
             .url()
-            .join(&format!("channels/{}/answer", self.id))?
+            .join(&format!("channels/{}/answer", channel.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &client.get_api_key())
+            .append_pair("api_key", &self.get_api_key())
             .finish()
             .to_owned();
 
         reqwest::Client::new().post(url).send().await?;
-        event!(Level::INFO, "answered channel with id {}", self.id);
+        event!(Level::INFO, "answered channel with id {}", channel.id);
         Ok(())
     }
 
-    pub async fn start_ringing(&self, client: &RequestClient) -> Result<()> {
-        let url = client
+    pub async fn start_ringing(&self, channel: &Channel) -> Result<()> {
+        let url = self
             .url()
-            .join(&format!("channels/{}/ring", self.id))?
+            .join(&format!("channels/{}/ring", channel.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &client.get_api_key())
+            .append_pair("api_key", &self.get_api_key())
             .finish()
             .to_owned();
 
         reqwest::Client::new().post(url).send().await?;
-        event!(Level::INFO, "started ringing channel with id {}", self.id);
+        event!(Level::INFO, "started ringing channel with id {}", channel.id);
         Ok(())
     }
 
-    pub async fn stop_ringing(&self, client: &RequestClient) -> Result<()> {
-        let url = client
+    pub async fn stop_ringing(&self, channel: &Channel) -> Result<()> {
+        let url = self
             .url()
-            .join(&format!("channels/{}/ring", self.id))?
+            .join(&format!("channels/{}/ring", channel.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &client.get_api_key())
+            .append_pair("api_key", &self.get_api_key())
             .finish()
             .to_owned();
 
         reqwest::Client::new().delete(url).send().await?;
-        event!(Level::INFO, "stopped ringing channel with id {}", self.id);
+        event!(Level::INFO, "stopped ringing channel with id {}", channel.id);
         Ok(())
     }
 
     pub async fn send_dtmf(
         &self,
-        client: &RequestClient,
+        channel: &Channel,
         dtmf: &str,
         before: Option<Duration>,
         between: Option<Duration>,
         duration: Option<Duration>,
         after: Option<Duration>,
     ) -> Result<()> {
-        let mut url = client.url().join(&format!("channels/{}/dtmf", self.id))?;
+        let mut url = self.url().join(&format!("channels/{}/dtmf", channel.id))?;
         let mut url = url.query_pairs_mut();
-        client.add_api_key(&mut url);
+        self.add_api_key(&mut url);
 
         url.append_pair("dtmf", dtmf)
             .append_pair("between", &between.map(|d| d.num_milliseconds()).unwrap_or(100).to_string())
@@ -307,97 +297,97 @@ impl Channel {
 
         reqwest::Client::new().post(url.finish().to_owned()).send().await?;
 
-        event!(Level::INFO, "sent dtmf '{}' to channel with id {}", dtmf, self.id);
+        event!(Level::INFO, "sent dtmf '{}' to channel with id {}", dtmf, channel.id);
 
         Ok(())
     }
 
-    pub async fn mute(&self, client: &RequestClient, direction: Direction) -> Result<()> {
-        let url = client
+    pub async fn mute(&self, channel: &Channel, direction: Direction) -> Result<()> {
+        let url = self
             .url()
-            .join(&format!("channels/{}/mute", self.id))?
+            .join(&format!("channels/{}/mute", channel.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &client.get_api_key())
+            .append_pair("api_key", &self.get_api_key())
             .append_pair("direction", &format!("{}", direction))
             .finish()
             .to_owned();
 
         reqwest::Client::new().post(url).send().await?;
-        event!(Level::INFO, "muted channel with id {}", self.id);
+        event!(Level::INFO, "muted channel with id {}", channel.id);
         Ok(())
     }
 
-    pub async fn unmute(&self, client: &RequestClient, direction: Direction) -> Result<()> {
-        let url = client
+    pub async fn unmute(&self, channel: &Channel, direction: Direction) -> Result<()> {
+        let url = self
             .url()
-            .join(&format!("channels/{}/mute", self.id))?
+            .join(&format!("channels/{}/mute", channel.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &client.get_api_key())
+            .append_pair("api_key", &self.get_api_key())
             .append_pair("direction", &format!("{}", direction))
             .finish()
             .to_owned();
 
         reqwest::Client::new().delete(url).send().await?;
-        event!(Level::INFO, "unmuted channel with id {}", self.id);
+        event!(Level::INFO, "unmuted channel with id {}", channel.id);
         Ok(())
     }
 
-    pub async fn hold(&self, client: &RequestClient) -> Result<()> {
-        let url = client
+    pub async fn hold(&self, channel: &Channel) -> Result<()> {
+        let url = self
             .url()
-            .join(&format!("channels/{}/hold", self.id))?
+            .join(&format!("channels/{}/hold", channel.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &client.get_api_key())
+            .append_pair("api_key", &self.get_api_key())
             .finish()
             .to_owned();
 
         reqwest::Client::new().post(url).send().await?;
-        event!(Level::INFO, "started hold on channel with id {}", self.id);
+        event!(Level::INFO, "started hold on channel with id {}", channel.id);
         Ok(())
     }
 
-    pub async fn unhold(&self, client: &RequestClient) -> Result<()> {
-        let url = client
+    pub async fn unhold(&self, channel: &Channel) -> Result<()> {
+        let url = self
             .url()
-            .join(&format!("channels/{}/hold", self.id))?
+            .join(&format!("channels/{}/hold", channel.id))?
             .query_pairs_mut()
-            .append_pair("api_key", &client.get_api_key())
+            .append_pair("api_key", &self.get_api_key())
             .finish()
             .to_owned();
 
         reqwest::Client::new().delete(url).send().await?;
-        event!(Level::INFO, "stopped hold on channel with id {}", self.id);
+        event!(Level::INFO, "stopped hold on channel with id {}", channel.id);
         Ok(())
     }
 
-    pub fn start_moh(&self, _client: &RequestClient) -> Result<()> {
+    pub fn start_moh(&self, _channel: &Channel) -> Result<()> {
         unimplemented!()
     }
 
-    pub fn stop_moh(&self, _client: &RequestClient) -> Result<()> {
+    pub fn stop_moh(&self, _channel: &Channel) -> Result<()> {
         unimplemented!()
     }
 
-    pub fn start_silence(&self, _client: &RequestClient) -> Result<()> {
+    pub fn start_silence(&self, _channel: &Channel) -> Result<()> {
         unimplemented!()
     }
 
-    pub fn stop_silence(&self, _client: &RequestClient) -> Result<()> {
+    pub fn stop_silence(&self, _channel: &Channel) -> Result<()> {
         unimplemented!()
     }
 
     pub async fn play_media(
         &self,
-        client: &RequestClient,
+        channel: &Channel,
         media: &str,
         lang: Option<&str>,
         offset_ms: Option<u32>,
         skip_ms: Option<u32>,
         playback_id: Option<&str>,
     ) -> Result<Playback> {
-        let mut url = client.url().join(&format!("channels/{}/play", self.id))?;
+        let mut url = self.url().join(&format!("channels/{}/play", channel.id))?;
         let mut url = url.query_pairs_mut();
-        client.add_api_key(&mut url);
+        self.add_api_key(&mut url);
         url.append_pair("media", media);
 
         if let Some(lang) = lang {
@@ -427,7 +417,7 @@ impl Channel {
             Level::INFO,
             "started media playback with id {} on channel with id {}",
             playback.id,
-            self.id
+            channel.id
         );
 
         Ok(playback)
@@ -435,17 +425,17 @@ impl Channel {
 
     pub async fn play_media_with_id(
         &self,
-        client: &RequestClient,
+        channel: &Channel,
         playback_id: &str,
         media: Vec<&str>,
         lang: Option<&str>,
         offset_ms: Option<u32>,
         skip_ms: Option<u32>,
     ) -> Result<Playback> {
-        let mut url = client.url().join(&format!("channels/{}/play/{}/media", self.id, playback_id))?;
+        let mut url = self.url().join(&format!("channels/{}/play/{}/media", channel.id, playback_id))?;
 
         let mut url = url.query_pairs_mut();
-        client.add_api_key(&mut url);
+        self.add_api_key(&mut url);
         let media = media.join(",");
         url.append_pair("media", &media);
 
@@ -472,7 +462,7 @@ impl Channel {
             Level::INFO,
             "started media playback with id {} on channel with id {}",
             playback.id,
-            self.id
+            channel.id
         );
 
         Ok(playback)
@@ -481,7 +471,7 @@ impl Channel {
     #[allow(clippy::too_many_arguments)]
     pub async fn record(
         &self,
-        client: &RequestClient,
+        channel: &Channel,
         name: &str,
         format: &str,
         max_duration_seconds: Option<u32>,
@@ -490,9 +480,9 @@ impl Channel {
         beep: bool,
         terminate_on: RecordingTermination,
     ) -> Result<LiveRecording> {
-        let mut url = client.url().join(&format!("channels/{}/record", self.id))?;
+        let mut url = self.url().join(&format!("channels/{}/record", channel.id))?;
         let mut url = url.query_pairs_mut();
-        client.add_api_key(&mut url);
+        self.add_api_key(&mut url);
 
         url.append_pair("name", name)
             .append_pair("format", format)
@@ -519,24 +509,24 @@ impl Channel {
             Level::INFO,
             "started recording with id {} on channel with id {}",
             recording.id,
-            self.id
+            channel.id
         );
 
         Ok(recording)
     }
 
-    pub fn get_variable(&self, _client: &RequestClient) -> Result<Variable> {
+    pub fn get_variable(&self, _channel: &Channel) -> Result<Variable> {
         unimplemented!()
     }
 
-    pub fn set_variable(&self, _client: &RequestClient) -> Result<()> {
+    pub fn set_variable(&self, _channel: &Channel) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn dial(&self, client: &RequestClient, caller_id: Option<&str>, timeout: Option<u32>) -> Result<()> {
-        let mut url = client.url().join(&format!("channels/{}/dial", self.id))?;
+    pub async fn dial(&self, channel: &Channel, caller_id: Option<&str>, timeout: Option<u32>) -> Result<()> {
+        let mut url = self.url().join(&format!("channels/{}/dial", channel.id))?;
         let mut url = url.query_pairs_mut();
-        client.add_api_key(&mut url);
+        self.add_api_key(&mut url);
 
         if let Some(caller_id) = caller_id {
             url.append_pair("callerId", caller_id);
@@ -548,20 +538,16 @@ impl Channel {
 
         reqwest::Client::new().post(url.finish().to_owned()).send().await?;
 
-        event!(Level::INFO, "dialed channel with id {}", self.id);
+        event!(Level::INFO, "dialed channel with id {}", channel.id);
         Ok(())
     }
 
-    pub fn get_rtp_statistics(&self, _client: &RequestClient) -> Result<RtpStatistics> {
-        unimplemented!()
-    }
-
-    pub async fn list(client: &RequestClient) -> Result<Vec<Channel>> {
-        let url: Url = client
+    pub async fn list(&self) -> Result<Vec<Channel>> {
+        let url: Url = self
             .url()
             .join("channels")?
             .query_pairs_mut()
-            .append_pair("api_key", &client.get_api_key())
+            .append_pair("api_key", &self.get_api_key())
             .finish()
             .to_owned();
 
@@ -572,7 +558,7 @@ impl Channel {
 
     #[allow(clippy::too_many_arguments)]
     pub async fn create(
-        client: &RequestClient,
+        &self,
         endpoint: &str,
         app: &str,
         app_args: Vec<&str>,
@@ -582,9 +568,9 @@ impl Channel {
         formats: Vec<&str>,
         variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
-        let mut url = client.url().join("channels")?;
+        let mut url = self.url().join("channels")?;
         let mut url = url.query_pairs_mut();
-        client.add_api_key(&mut url);
+        self.add_api_key(&mut url);
         url.append_pair("endpoint", endpoint).append_pair("app", app);
 
         if !formats.is_empty() {
@@ -625,12 +611,12 @@ impl Channel {
         Ok(channel)
     }
 
-    pub async fn get(client: &RequestClient, channel_id: &str) -> Result<Channel> {
-        let url = client
+    pub async fn get(self, channel_id: &str) -> Result<Channel> {
+        let url = self
             .url()
             .join(&format!("channels/{}", channel_id))?
             .query_pairs_mut()
-            .append_pair("api_key", &client.get_api_key())
+            .append_pair("api_key", &self.get_api_key())
             .finish()
             .to_owned();
 
@@ -641,7 +627,7 @@ impl Channel {
 
     #[allow(clippy::too_many_arguments)]
     pub async fn originate<'a>(
-        client: &RequestClient,
+        &self,
         endpoint: &str,
         params: OriginateParams<'a>,
         caller_id: Option<&str>,
@@ -652,9 +638,9 @@ impl Channel {
         formats: Vec<&str>,
         variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
-        let mut url = client.url().join("channels")?;
+        let mut url = self.url().join("channels")?;
         let mut url = url.query_pairs_mut();
-        client.add_api_key(&mut url);
+        self.add_api_key(&mut url);
 
         url.append_pair("endpoint", endpoint)
             .append_pair("timeout", &timeout.unwrap_or(30).to_string());
@@ -729,7 +715,7 @@ impl Channel {
 
     #[allow(clippy::too_many_arguments)]
     pub async fn originate_with_id<'a>(
-        client: &RequestClient,
+        &self,
         channel_id: &str,
         endpoint: &str,
         params: OriginateParams<'a>,
@@ -740,9 +726,9 @@ impl Channel {
         formats: Vec<&str>,
         variables: HashMap<&str, &str>,
     ) -> Result<Channel> {
-        let mut url = client.url().join(&format!("channels/{}", channel_id))?;
+        let mut url = self.url().join(&format!("channels/{}", channel_id))?;
         let mut url = url.query_pairs_mut();
-        client.add_api_key(&mut url);
+        self.add_api_key(&mut url);
 
         url.append_pair("endpoint", endpoint)
             .append_pair("timeout", &timeout.unwrap_or(30).to_string());
@@ -809,6 +795,20 @@ impl Channel {
 
         event!(Level::INFO, "originated channel with id {}", channel.id);
         Ok(channel)
+    }
+
+    pub fn continue_in_dialplan(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    /// Transfer the channel to another ARI application.
+    /// Same as `move` in Asterisk
+    pub fn transfer(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn get_rtp_statistics(&self, _channel: &Channel) -> Result<RtpStatistics> {
+        unimplemented!()
     }
 
     pub fn snoop(&self, _channel_id: &str) -> Result<Channel> {

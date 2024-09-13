@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use arirs::{Channel, OriginateParams, RequestClient, Result};
+use arirs::{OriginateParams, RequestClient, Result};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 const APP_NAME: &str = "ari";
@@ -14,22 +14,22 @@ async fn main() -> Result<()> {
 
     let client = RequestClient::default();
 
-    Channel::originate(
-        &client,
-        "PJSIP/1000",
-        OriginateParams::Application {
-            app: APP_NAME,
-            app_args: vec![],
-        },
-        None,
-        None,
-        None,
-        None,
-        None,
-        vec!["alaw,ulaw"],
-        HashMap::new(),
-    )
-    .await?;
+    client
+        .originate(
+            "PJSIP/1000",
+            OriginateParams::Application {
+                app: APP_NAME,
+                app_args: vec![],
+            },
+            None,
+            None,
+            None,
+            None,
+            None,
+            vec!["alaw,ulaw"],
+            HashMap::new(),
+        )
+        .await?;
 
     Ok(())
 }
