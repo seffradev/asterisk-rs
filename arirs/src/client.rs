@@ -1,6 +1,5 @@
 use std::time::Duration;
 
-use derive_getters::Getters;
 use futures_util::{SinkExt, StreamExt};
 use rand::Rng;
 use tokio::{sync::mpsc::UnboundedReceiver, task::JoinHandle, time::interval};
@@ -9,23 +8,6 @@ use tracing::{event, Level};
 use url::Url;
 
 use crate::*;
-
-#[derive(Debug, Getters)]
-pub struct RequestClient {
-    url: Url,
-    username: String,
-    password: String,
-}
-
-impl RequestClient {
-    pub(crate) fn get_api_key(&self) -> String {
-        format!("{}:{}", self.username, self.password)
-    }
-
-    pub(crate) fn add_api_key(&self, url: &mut url::form_urlencoded::Serializer<url::UrlQuery>) {
-        url.append_pair("api_key", &self.get_api_key());
-    }
-}
 
 pub struct Client;
 
