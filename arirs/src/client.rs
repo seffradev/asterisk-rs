@@ -9,6 +9,9 @@ use url::Url;
 
 use crate::*;
 
+#[derive(Debug, Default)]
+pub struct ClientBuilder(Client);
+
 impl ClientBuilder {
     pub fn url(mut self, url: Url) -> Self {
         self.0.url = url;
@@ -72,8 +75,15 @@ impl ClientBuilder {
     }
 }
 
-#[derive(Debug, Default)]
-pub struct ClientBuilder(Client);
+#[derive(Debug)]
+pub struct Client {
+    pub url: Url,
+    pub ws_url: Url,
+    pub username: String,
+    pub password: String,
+    pub app_name: String,
+    pub ws_channel: Option<Sender<Event>>,
+}
 
 impl Client {
     #[allow(clippy::new_ret_no_self)]
@@ -193,14 +203,4 @@ impl Default for Client {
             ws_channel: None,
         }
     }
-}
-
-#[derive(Debug)]
-pub struct Client {
-    pub url: Url,
-    pub ws_url: Url,
-    pub username: String,
-    pub password: String,
-    pub app_name: String,
-    pub ws_channel: Option<Sender<Event>>,
 }
