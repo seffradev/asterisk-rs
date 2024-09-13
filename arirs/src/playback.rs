@@ -1,6 +1,5 @@
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
-use tracing::instrument;
 
 use crate::{client::Client, Result};
 
@@ -11,17 +10,14 @@ pub struct Playback {
 }
 
 impl Playback {
-    #[instrument(level = "debug")]
     pub async fn get_playback(_client: &Client, _playback_id: &str) -> Result<Playback> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub async fn control(&self, _client: &Client, _operation: Operation) -> Result<()> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub async fn stop(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }

@@ -4,7 +4,7 @@ use futures_util::{SinkExt, StreamExt};
 use rand::Rng;
 use tokio::{sync::mpsc::Sender, time::interval};
 use tokio_tungstenite::{connect_async, tungstenite};
-use tracing::{event, instrument, Level};
+use tracing::{event, Level};
 use url::Url;
 
 use crate::{Event, Result};
@@ -35,7 +35,6 @@ impl ClientBuilder {
         self
     }
 
-    #[instrument(level = "debug")]
     pub fn build(self) -> Result<Client> {
         let mut ws_url = self.0.url.join("events")?;
 
@@ -82,7 +81,6 @@ impl Client {
         ClientBuilder(Client::default())
     }
 
-    #[instrument(level = "debug")]
     pub fn handle_message(&self, message: Vec<u8>) {
         let data = String::from_utf8(message).unwrap();
 
@@ -107,7 +105,6 @@ impl Client {
         }
     }
 
-    #[instrument(level = "debug")]
     pub async fn run(&self) -> Result<()> {
         event!(Level::INFO, "Connecting to Asterisk");
 

@@ -4,7 +4,7 @@ use chrono::{DateTime, Duration};
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use tracing::{event, instrument, Level};
+use tracing::{event, Level};
 use url::Url;
 
 use crate::{client::Client, playback::Playback, recording::LiveRecording, rtp_statistics::RtpStatistics, variable::Variable, Result};
@@ -212,7 +212,6 @@ pub struct Dialplan {
 }
 
 impl Channel {
-    #[instrument(level = "debug")]
     pub async fn hangup(self, client: &Client, reason: Reason) -> Result<()> {
         let mut url = client.url.join(&format!("channels/{}", self.id))?;
         let mut url = url.query_pairs_mut();
@@ -229,19 +228,16 @@ impl Channel {
         Ok(())
     }
 
-    #[instrument(level = "debug")]
     pub fn continue_in_dialplan(self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
     /// Transfer the channel to another ARI application.
     /// Same as `move` in Asterisk
-    #[instrument(level = "debug")]
     pub fn transfer(self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub async fn answer(&self, client: &Client) -> Result<()> {
         let url = client
             .url
@@ -256,7 +252,6 @@ impl Channel {
         Ok(())
     }
 
-    #[instrument(level = "debug")]
     pub async fn start_ringing(&self, client: &Client) -> Result<()> {
         let url = client
             .url
@@ -271,7 +266,6 @@ impl Channel {
         Ok(())
     }
 
-    #[instrument(level = "debug")]
     pub async fn stop_ringing(&self, client: &Client) -> Result<()> {
         let url = client
             .url
@@ -286,7 +280,6 @@ impl Channel {
         Ok(())
     }
 
-    #[instrument(level = "debug")]
     pub async fn send_dtmf(
         &self,
         client: &Client,
@@ -319,7 +312,6 @@ impl Channel {
         Ok(())
     }
 
-    #[instrument(level = "debug")]
     pub async fn mute(&self, client: &Client, direction: Direction) -> Result<()> {
         let url = client
             .url
@@ -335,7 +327,6 @@ impl Channel {
         Ok(())
     }
 
-    #[instrument(level = "debug")]
     pub async fn unmute(&self, client: &Client, direction: Direction) -> Result<()> {
         let url = client
             .url
@@ -351,7 +342,6 @@ impl Channel {
         Ok(())
     }
 
-    #[instrument(level = "debug")]
     pub async fn hold(&self, client: &Client) -> Result<()> {
         let url = client
             .url
@@ -366,7 +356,6 @@ impl Channel {
         Ok(())
     }
 
-    #[instrument(level = "debug")]
     pub async fn unhold(&self, client: &Client) -> Result<()> {
         let url = client
             .url
@@ -381,27 +370,22 @@ impl Channel {
         Ok(())
     }
 
-    #[instrument(level = "debug")]
     pub fn start_moh(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub fn stop_moh(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub fn start_silence(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub fn stop_silence(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub async fn play_media(
         &self,
         client: &Client,
@@ -449,7 +433,6 @@ impl Channel {
         Ok(playback)
     }
 
-    #[instrument(level = "debug")]
     pub async fn play_media_with_id(
         &self,
         client: &Client,
@@ -496,7 +479,6 @@ impl Channel {
     }
 
     #[allow(clippy::too_many_arguments)]
-    #[instrument(level = "debug")]
     pub async fn record(
         &self,
         client: &Client,
@@ -543,17 +525,14 @@ impl Channel {
         Ok(recording)
     }
 
-    #[instrument(level = "debug")]
     pub fn get_variable(&self, _client: &Client) -> Result<Variable> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub fn set_variable(&self, _client: &Client) -> Result<()> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub async fn dial(&self, client: &Client, caller_id: Option<&str>, timeout: Option<u32>) -> Result<()> {
         let mut url = client.url.join(&format!("channels/{}/dial", self.id))?;
         let mut url = url.query_pairs_mut();
@@ -573,12 +552,10 @@ impl Channel {
         Ok(())
     }
 
-    #[instrument(level = "debug")]
     pub fn get_rtp_statistics(&self, _client: &Client) -> Result<RtpStatistics> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub async fn list(client: &Client) -> Result<Vec<Channel>> {
         let url: Url = client
             .url
@@ -594,7 +571,6 @@ impl Channel {
     }
 
     #[allow(clippy::too_many_arguments)]
-    #[instrument(level = "debug")]
     pub async fn create(
         client: &Client,
         endpoint: &str,
@@ -649,7 +625,6 @@ impl Channel {
         Ok(channel)
     }
 
-    #[instrument(level = "debug")]
     pub async fn get(client: &Client, channel_id: &str) -> Result<Channel> {
         let url = client
             .url
@@ -665,7 +640,6 @@ impl Channel {
     }
 
     #[allow(clippy::too_many_arguments)]
-    #[instrument(level = "debug")]
     pub async fn originate<'a>(
         client: &Client,
         endpoint: &str,
@@ -754,7 +728,6 @@ impl Channel {
     }
 
     #[allow(clippy::too_many_arguments)]
-    #[instrument(level = "debug")]
     pub async fn originate_with_id<'a>(
         client: &Client,
         channel_id: &str,
@@ -838,17 +811,14 @@ impl Channel {
         Ok(channel)
     }
 
-    #[instrument(level = "debug")]
     pub fn snoop(&self, _channel_id: &str) -> Result<Channel> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub fn snoop_with_id(&self, _channel_id: &str) -> Result<Channel> {
         unimplemented!()
     }
 
-    #[instrument(level = "debug")]
     pub fn start_external_media(&self, _channel_id: &str) -> Result<Channel> {
         unimplemented!()
     }
