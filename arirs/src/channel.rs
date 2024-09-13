@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use chrono::{DateTime, Duration};
+use derive_getters::Getters;
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -9,19 +10,19 @@ use url::Url;
 
 use crate::*;
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct Channel {
-    pub id: String,
-    pub name: String,
-    pub state: String,
-    pub protocol_id: String,
-    pub caller: Caller,
-    pub connected: Caller,
-    pub accountcode: String,
-    pub dialplan: Dialplan,
-    pub creationtime: String,
-    pub language: String,
+    id: String,
+    name: String,
+    state: String,
+    protocol_id: String,
+    caller: Caller,
+    connected: Caller,
+    accountcode: String,
+    dialplan: Dialplan,
+    creationtime: String,
+    language: String,
 }
 
 #[derive(Debug)]
@@ -102,113 +103,113 @@ pub enum RecordingTermination {
     Octothorpe,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct StasisStart {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub args: Vec<String>,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
+    timestamp: DateTime<chrono::Utc>,
+    args: Vec<String>,
+    channel: Channel,
+    asterisk_id: String,
+    application: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct StasisEnd {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
+    timestamp: DateTime<chrono::Utc>,
+    channel: Channel,
+    asterisk_id: String,
+    application: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelCreated {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub channel: Option<Channel>,
-    pub asterisk_id: String,
-    pub application: String,
+    timestamp: DateTime<chrono::Utc>,
+    channel: Option<Channel>,
+    asterisk_id: String,
+    application: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelDestroyed {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub cause: i32,
-    pub cause_txt: String,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
+    timestamp: DateTime<chrono::Utc>,
+    cause: i32,
+    cause_txt: String,
+    channel: Channel,
+    asterisk_id: String,
+    application: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelVarset {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub variable: String,
-    pub value: String,
-    pub channel: Option<Channel>,
-    pub asterisk_id: String,
-    pub application: String,
+    timestamp: DateTime<chrono::Utc>,
+    variable: String,
+    value: String,
+    channel: Option<Channel>,
+    asterisk_id: String,
+    application: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelHangupRequest {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub soft: Option<bool>,
-    pub cause: i32,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
+    timestamp: DateTime<chrono::Utc>,
+    soft: Option<bool>,
+    cause: i32,
+    channel: Channel,
+    asterisk_id: String,
+    application: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelDialplan {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub dialplan_app: String,
-    pub dialplan_app_data: String,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
+    timestamp: DateTime<chrono::Utc>,
+    dialplan_app: String,
+    dialplan_app_data: String,
+    channel: Channel,
+    asterisk_id: String,
+    application: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelStateChange {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
+    timestamp: DateTime<chrono::Utc>,
+    channel: Channel,
+    asterisk_id: String,
+    application: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct ChannelDtmfReceived {
-    pub timestamp: DateTime<chrono::Utc>,
-    pub digit: String,
-    pub duration_ms: i32,
-    pub channel: Channel,
-    pub asterisk_id: String,
-    pub application: String,
+    timestamp: DateTime<chrono::Utc>,
+    digit: String,
+    duration_ms: i32,
+    channel: Channel,
+    asterisk_id: String,
+    application: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct Caller {
-    pub name: String,
-    pub number: String,
+    name: String,
+    number: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Getters)]
 #[serde(rename_all = "snake_case")]
 pub struct Dialplan {
-    pub context: String,
-    pub exten: String,
-    pub priority: i32,
-    pub app_name: String,
-    pub app_data: String,
+    context: String,
+    exten: String,
+    priority: i32,
+    app_name: String,
+    app_data: String,
 }
 
 impl RequestClient {

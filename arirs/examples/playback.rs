@@ -10,9 +10,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     while let Some(event) = event_listener.recv().await {
         if let Event::StasisStart(e) = event {
-            let channel = e.channel;
+            let channel = e.channel();
             request_client
-                .play_media(&channel.id, "sound:hello", Some("en"), None, None, None)
+                .play_media(channel.id(), "sound:hello", Some("en"), None, None, None)
                 .await?;
         }
     }
