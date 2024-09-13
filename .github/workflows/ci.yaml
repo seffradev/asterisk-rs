@@ -1,0 +1,145 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: full
+jobs:
+  pre-commit:
+    name: Validate `pre-commit` Hooks
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v3
+    - name: Get python
+      uses: actions/setup-python@v3
+    - name: Run pre-commit check
+      uses: pre-commit/action@v3.0.1
+      with:
+        extra_args: run --all-files --hook-stage manual
+  conventional-commits-check:
+    name: Conventional Commit Checking
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+        with:
+          fetch-depth: 0
+      - name: Assert conventional commit usage
+        uses: oknozor/cocogitto-action@v3
+  spell-check:
+    name: Spell Checking
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout sources
+      uses: actions/checkout@v4
+    - name: typos
+      uses: crate-ci/typos@master
+  broken-url-check:
+    name: Broken URL Checking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Run lychee
+        uses: lycheeverse/lychee-action@v1.9.3
+        with:
+          fail: true
+  toml-lint-check:
+    name: TOML Lint Checking
+    runs-on: ubuntu-latest
+    container:
+      image: tamasfe/taplo:0.8.0
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: taplo lint
+        run: taplo lint
+  toml-format-check:
+    name: TOML Format Checking
+    runs-on: ubuntu-latest
+    container:
+      image: tamasfe/taplo:0.8.0
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: taplo fmt
+        run: taplo fmt --check --diff
+  rust-format-check:
+    name: Rust Code Format Checking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Build setup
+        uses: ./.github/actions/build-setup
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+  rust-lint-check:
+    name: Lint Checking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Build setup
+        uses: ./.github/actions/build-setup
+      - name: Run clippy
+        run: cargo clippy --all-features --tests -- -D warnings
+  rust-docs-check:
+    name: Developer Documentation Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Build setup
+        uses: ./.github/actions/build-setup
+      - name: Run cargo doc
+        env:
+          RUSTDOCFLAGS: "-D warnings"
+        run: cargo doc --no-deps --all-features
+  audit:
+    name: Dependency Auditing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@cargo-deny
+      - name: Vulnerability scanning
+        run: cargo deny check advisories
+  unused:
+    name: Unused Dependencies Checking
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Build setup
+        uses: ./.github/actions/build-setup
+      - name: Run cargo-udeps
+        uses: aig787/cargo-udeps-action@v1
+        with:
+          args: --all-features
+  rust-test:
+    name: Execute Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Build setup
+        uses: ./.github/actions/build-setup
+      - name: Run tests
+        run: cargo test --all-features -- --include-ignored --nocapture
+  user-docs-check:
+    name: User Documentation Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+      - name: Build setup
+        uses: ./.github/actions/build-setup
+      - name: mdBook setup
+        uses: peaceiris/actions-mdbook@v1
+        with:
+          mdbook-version: 'latest'
+      - name: Run mdbook test
+        run: mdbook test

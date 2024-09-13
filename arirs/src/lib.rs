@@ -29,7 +29,7 @@ pub enum AriError {
     ReqwestError(#[from] reqwest::Error),
     #[error("Join Error")]
     JoinError(#[from] JoinError),
-    #[error("Unknown error occured: {0}")]
+    #[error("Unknown error occurred: {0}")]
     Unknown(String),
 }
 

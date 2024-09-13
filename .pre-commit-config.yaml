@@ -1,21 +1,51 @@
+# manual staged used to selectively run pre-commit jobs which don't have a dedicated CI job.
+
+default_stages: ["pre-commit"]
+
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
-    hooks:
-      - id: check-yaml
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-  - repo: https://github.com/FeryET/pre-commit-rust
-    rev: v1.1.0
-    hooks:
-      - id: fmt
-      - id: cargo-check
-  - repo: https://github.com/ComPWA/mirrors-taplo
-    rev: "v0.8.1"
-    hooks:
-      - id: taplo
-  - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v2.5.1
-    hooks:
-      - id: prettier
-        files: \.(js|ts|jsx|tsx|css|less|html|json|markdown|md|yaml|yml)$
+- repo: local
+  hooks:
+  - id: cargo-fmt
+    name: cargo fmt
+    language: rust
+    files: \.rs$
+    pass_filenames: false
+    entry: cargo fmt
+    args: ["--all", "--", "--check"]
+  - id: cargo-clippy
+    name: cargo clippy
+    language: rust
+    files: \.rs$
+    pass_filenames: false
+    entry: cargo clippy
+    args: ["--all-features", "--tests", "--", "-D", "warnings"]
+  - id: cargo-doc
+    name: cargo doc
+    language: rust
+    files: \.rs$
+    pass_filenames: false
+    entry: sh -c "RUSTDOCFLAGS='-D warnings' cargo doc"
+    args: ["--no-deps", "--all-features", "--workspace"]
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.6.0
+  hooks:
+    - id: check-yaml
+      stages: ["pre-commit", "manual"]
+    - id: check-json
+      stages: ["pre-commit", "manual"]
+    - id: check-xml
+      stages: ["pre-commit", "manual"]
+    - id: check-toml
+      stages: ["pre-commit", "manual"]
+    - id: check-merge-conflict
+      stages: ["pre-commit", "manual"]
+    - id: check-executables-have-shebangs
+      stages: ["pre-commit", "manual"]
+    - id: trailing-whitespace
+      stages: ["pre-commit", "manual"]
+    - id: end-of-file-fixer
+      stages: ["pre-commit", "manual"]
+    - id: forbid-submodules
+      stages: ["pre-commit", "manual"]
+    - id: forbid-new-submodules
+      stages: ["pre-commit", "manual"]
