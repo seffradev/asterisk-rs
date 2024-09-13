@@ -45,7 +45,6 @@ impl ClientBuilder {
             "http" => "ws",
             "https" => "wss",
             _ => {
-                event!(Level::ERROR, "Unsupported scheme '{}'", ws_url.scheme());
                 return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
             }
         };
@@ -59,10 +58,6 @@ impl ClientBuilder {
             .append_pair("app", &self.0.app_name)
             .append_pair("api_key", &format!("{}:{}", self.0.username, self.0.password))
             .append_pair("subscribeAll", "true");
-
-        event!(Level::TRACE, "Using REST API server with URL '{}'", self.0.url);
-
-        event!(Level::TRACE, "Using WebSocket server with URL '{}'", ws_url);
 
         Ok(Client {
             url: self.0.url,
