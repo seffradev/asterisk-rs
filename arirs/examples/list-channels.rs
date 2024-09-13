@@ -1,4 +1,4 @@
-use arirs::{channel::Channel, client::Client, Result};
+use arirs::{Channel, Client, Result};
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 

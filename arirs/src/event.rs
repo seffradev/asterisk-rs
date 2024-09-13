@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{channel::*, device::DeviceStateChanged};
+use crate::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "type")]

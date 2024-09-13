@@ -1,7 +1,7 @@
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
-use crate::{client::Client, Result};
+use crate::*;
 
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]

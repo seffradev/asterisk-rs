@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use arirs::{client::Client, Event};
+use arirs::{Client, Event};
 use tracing::{error, level_filters::LevelFilter};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 

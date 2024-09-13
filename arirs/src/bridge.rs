@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{client::Client, playback::Playback, recording::LiveRecording, Result};
+use crate::*;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Bridge {

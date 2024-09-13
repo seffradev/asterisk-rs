@@ -1,11 +1,26 @@
-pub mod bridge;
-pub mod channel;
-pub mod client;
-pub mod device;
-pub mod playback;
-pub mod recording;
-pub mod rtp_statistics;
-pub mod variable;
+mod bridge;
+pub use bridge::Bridge;
+
+mod channel;
+pub use channel::*;
+
+mod client;
+pub use client::{Client, ClientBuilder};
+
+mod device;
+pub use device::{DeviceState, DeviceStateChanged};
+
+mod playback;
+pub use playback::{Operation, Playback};
+
+mod recording;
+pub use recording::{LiveRecording, StoredRecording};
+
+mod rtp_statistics;
+pub use rtp_statistics::RtpStatistics;
+
+mod variable;
+pub use variable::Variable;
 
 mod error;
 pub use error::{AriError, Result};

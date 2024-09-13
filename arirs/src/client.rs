@@ -7,7 +7,7 @@ use tokio_tungstenite::{connect_async, tungstenite};
 use tracing::{event, Level};
 use url::Url;
 
-use crate::{Event, Result};
+use crate::*;
 
 impl ClientBuilder {
     pub fn url(mut self, url: Url) -> Self {
