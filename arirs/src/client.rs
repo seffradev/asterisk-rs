@@ -3,7 +3,7 @@ use std::time::Duration;
 use derive_getters::Getters;
 use futures_util::{SinkExt, StreamExt};
 use rand::Rng;
-use tokio::{sync::mpsc::UnboundedSender, time::interval};
+use tokio::{sync::mpsc::UnboundedReceiver, task::JoinHandle, time::interval};
 use tokio_tungstenite::{connect_async, tungstenite};
 use tracing::{event, Level};
 use url::Url;
@@ -11,25 +11,34 @@ use url::Url;
 use crate::*;
 
 #[derive(Debug, Getters)]
-pub struct Client {
+pub struct RequestClient {
     url: Url,
-    ws_url: Url,
     username: String,
     password: String,
-    ws_channel: Option<UnboundedSender<Event>>,
 }
+
+impl RequestClient {
+    pub(crate) fn get_api_key(&self) -> String {
+        format!("{}:{}", self.username, self.password)
+    }
+
+    pub(crate) fn add_api_key(&self, url: &mut url::form_urlencoded::Serializer<url::UrlQuery>) {
+        url.append_pair("api_key", &self.get_api_key());
+    }
+}
+
+pub struct Client;
 
 impl Client {
     /// Create a new client
     ///
     /// `url` should end in `/`, `ari/` will be appended to it.
-    pub fn new(
+    pub async fn connect(
         url: impl AsRef<str>,
         app_name: impl AsRef<str>,
         username: impl Into<String>,
         password: impl Into<String>,
-        event_sender: Option<UnboundedSender<Event>>,
-    ) -> Result<Self> {
+    ) -> Result<(RequestClient, UnboundedReceiver<Event>)> {
         let url = Url::parse(url.as_ref())?.join("ari")?;
 
         let mut ws_url = url.join("events")?;
@@ -49,124 +58,82 @@ impl Client {
             .append_pair("api_key", &format!("{}:{}", username, password))
             .append_pair("subscribeAll", "true");
 
-        Ok(Self {
-            url,
-            ws_url,
-            username,
-            password,
-            ws_channel: event_sender,
-        })
+        let request_client = RequestClient { url, username, password };
+
+        let event_listener = Self::connect_ws(ws_url).await?;
+
+        Ok((request_client, event_listener))
     }
 
-    pub fn handle_message(&self, message: Vec<u8>) {
-        let data = String::from_utf8(message).unwrap();
+    async fn connect_ws(ws_url: Url) -> Result<UnboundedReceiver<Event>> {
+        let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
 
-        event!(Level::TRACE, "Parsing event");
+        let (ws_stream, _) = connect_async(&ws_url.to_string()).await?;
 
-        let event: Event = match serde_json::from_str(&data) {
-            Ok(data) => data,
-            Err(e) => {
-                event!(Level::ERROR, "Error: {}", e);
-                event!(Level::ERROR, "Data: {}", data);
-                return;
-            }
-        };
+        let _join_task: JoinHandle<Result<()>> = tokio::task::spawn(async move {
+            let (mut ws_sender, mut ws_receiver) = ws_stream.split();
+            let mut interval = interval(Duration::from_millis(5000));
 
-        event!(Level::TRACE, "Event parsed successfully");
-
-        if let Some(tx) = &self.ws_channel {
-            event!(Level::INFO, "Sending event to channel");
-            if let Err(e) = tx.send(event) {
-                event!(Level::ERROR, "Error sending event: {}", e);
-            }
-        }
-    }
-
-    pub async fn run(&self) -> Result<()> {
-        event!(Level::INFO, "Connecting to Asterisk");
-
-        let (ws_stream, _) = match connect_async(&self.ws_url.to_string()).await {
-            Ok(stream) => stream,
-            Err(e) => {
-                event!(Level::ERROR, "Failed to connect to Asterisk: {}", e);
-                return Err(e.into());
-            }
-        };
-
-        event!(Level::INFO, "WebSocket handshake has been successfully completed");
-
-        let (mut ws_sender, mut ws_receiver) = ws_stream.split();
-        let mut interval = interval(Duration::from_millis(5000));
-
-        loop {
-            tokio::select! {
-                message = ws_receiver.next() => {
-                    match message {
-                        Some(message) => {
-                            let message = message?;
-                            match message {
-                                tungstenite::Message::Text(_) => {
-                                    event!(Level::INFO, "Received WebSocket Text");
-                                    self.handle_message(message.into_data());
-                                }
-                                tungstenite::Message::Ping(data) => {
-                                    event!(Level::INFO, "Received WebSocket Ping, sending Pong");
-                                    ws_sender.send(tungstenite::Message::Pong(data)).await?;
-                                }
-                                tungstenite::Message::Pong(_) => {
-                                    event!(Level::INFO, "Received WebSocket Pong");
-                                },
-                                tungstenite::Message::Close(frame) => {
-                                    event!(Level::INFO, "WebSocket closed: {:?}", frame);
-                                    break;
-                                },
-                                _ => {
-                                    event!(Level::INFO, "Unknown WebSocket message");
+            loop {
+                tokio::select! {
+                    message = ws_receiver.next() => {
+                        match message {
+                            Some(message) => {
+                                let message = message?;
+                                match message {
+                                    tungstenite::Message::Text(_) => {
+                                        if let Err(e) = tx.send(serde_json::from_slice(message.into_data().as_slice()).map_err(|err| AriError::Unknown(err.to_string()))?) {
+                                            event!(Level::ERROR, "Error sending event: {}", e);
+                                        }
+                                    }
+                                    tungstenite::Message::Ping(data) => {
+                                        event!(Level::TRACE, "Received WebSocket Ping, sending Pong");
+                                        ws_sender.send(tungstenite::Message::Pong(data)).await?;
+                                    }
+                                    tungstenite::Message::Pong(_) => {
+                                        event!(Level::TRACE, "Received WebSocket Pong");
+                                    },
+                                    tungstenite::Message::Close(frame) => {
+                                        event!(Level::INFO, "WebSocket closed: {:?}", frame);
+                                        break;
+                                    },
+                                    _ => {
+                                        event!(Level::INFO, "Unknown WebSocket message");
+                                    }
                                 }
                             }
-                        }
-                        None => {
-                            event!(Level::INFO, "WebSocket closed");
-                            break;
+                            None => {
+                                tracing::error!("WebSocket closed");
+                                break;
+                            }
                         }
                     }
-                }
-                _ = interval.tick() => {
-                    // every 5 seconds we are sending ping to keep connection alive
-                    // https://rust-lang-nursery.github.io/rust-cookbook/algorithms/randomness.html
-                    let random_bytes = rand::thread_rng().gen::<[u8; 32]>().to_vec();
-                    let _ = ws_sender.send(tungstenite::Message::Ping(random_bytes)).await;
-                    event!(Level::DEBUG, "ARI connection ping sent");
+                    _ = interval.tick() => {
+                        // every 5 seconds we are sending ping to keep connection alive
+                        // https://rust-lang-nursery.github.io/rust-cookbook/algorithms/randomness.html
+                        let random_bytes = rand::thread_rng().gen::<[u8; 32]>().to_vec();
+                        let _ = ws_sender.send(tungstenite::Message::Ping(random_bytes)).await;
+                        event!(Level::DEBUG, "ARI connection ping sent");
+                    }
                 }
             }
-        }
 
-        Ok(())
-    }
+            Ok(())
+        });
 
-    pub(crate) fn get_api_key(&self) -> String {
-        format!("{}:{}", self.username, self.password)
-    }
-
-    pub(crate) fn add_api_key(&self, url: &mut url::form_urlencoded::Serializer<url::UrlQuery>) {
-        url.append_pair("api_key", &self.get_api_key());
+        Ok(rx)
     }
 }
 
-impl Default for Client {
+impl Default for RequestClient {
     fn default() -> Self {
         Self {
             url: match Url::parse("http://localhost:8088/") {
                 Ok(url) => url,
                 Err(_) => panic!("Failed to parse URL"),
             },
-            ws_url: match Url::parse("ws://localhost:8088/ari/events?app=ari&api_key=asterisk:asterisk&subscribeAll=true") {
-                Ok(url) => url,
-                Err(_) => panic!("Failed to parse URL"),
-            },
             username: "asterisk".to_string(),
             password: "asterisk".to_string(),
-            ws_channel: None,
         }
     }
 }

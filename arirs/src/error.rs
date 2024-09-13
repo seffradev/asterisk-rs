@@ -1,5 +1,4 @@
 use thiserror::Error;
-use tokio::task::JoinError;
 use tokio_tungstenite::tungstenite;
 
 pub type Result<T> = std::result::Result<T, AriError>;
@@ -12,8 +11,6 @@ pub enum AriError {
     TungsteniteError(#[from] tungstenite::Error),
     #[error("HTTP Request error")]
     ReqwestError(#[from] reqwest::Error),
-    #[error("Join Error")]
-    JoinError(#[from] JoinError),
     #[error("Unknown error occurred: {0}")]
     Unknown(String),
 }

@@ -5,7 +5,7 @@ mod channel;
 pub use channel::*;
 
 mod client;
-pub use client::Client;
+pub use client::{Client, RequestClient};
 
 mod device;
 pub use device::{DeviceState, DeviceStateChanged};

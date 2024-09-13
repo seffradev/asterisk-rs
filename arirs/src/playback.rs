@@ -10,15 +10,15 @@ pub struct Playback {
 }
 
 impl Playback {
-    pub async fn get_playback(_client: &Client, _playback_id: &str) -> Result<Playback> {
+    pub async fn get_playback(_client: &RequestClient, _playback_id: &str) -> Result<Playback> {
         unimplemented!()
     }
 
-    pub async fn control(&self, _client: &Client, _operation: Operation) -> Result<()> {
+    pub async fn control(&self, _client: &RequestClient, _operation: Operation) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn stop(&self, _client: &Client) -> Result<()> {
+    pub async fn stop(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 }

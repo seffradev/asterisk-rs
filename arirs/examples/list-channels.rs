@@ -1,4 +1,4 @@
-use arirs::{Channel, Client, Result};
+use arirs::{Channel, RequestClient, Result};
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -9,7 +9,7 @@ async fn main() -> Result<()> {
         .with(EnvFilter::from_default_env())
         .init();
 
-    let client = Client::default();
+    let client = RequestClient::default();
 
     for channel in Channel::list(&client).await? {
         debug!("Channel ID: {}", channel.id);

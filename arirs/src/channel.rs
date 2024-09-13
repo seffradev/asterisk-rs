@@ -212,7 +212,7 @@ pub struct Dialplan {
 }
 
 impl Channel {
-    pub async fn hangup(self, client: &Client, reason: Reason) -> Result<()> {
+    pub async fn hangup(self, client: &RequestClient, reason: Reason) -> Result<()> {
         let mut url = client.url().join(&format!("channels/{}", self.id))?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -228,17 +228,17 @@ impl Channel {
         Ok(())
     }
 
-    pub fn continue_in_dialplan(self, _client: &Client) -> Result<()> {
+    pub fn continue_in_dialplan(self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
     /// Transfer the channel to another ARI application.
     /// Same as `move` in Asterisk
-    pub fn transfer(self, _client: &Client) -> Result<()> {
+    pub fn transfer(self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn answer(&self, client: &Client) -> Result<()> {
+    pub async fn answer(&self, client: &RequestClient) -> Result<()> {
         let url = client
             .url()
             .join(&format!("channels/{}/answer", self.id))?
@@ -252,7 +252,7 @@ impl Channel {
         Ok(())
     }
 
-    pub async fn start_ringing(&self, client: &Client) -> Result<()> {
+    pub async fn start_ringing(&self, client: &RequestClient) -> Result<()> {
         let url = client
             .url()
             .join(&format!("channels/{}/ring", self.id))?
@@ -266,7 +266,7 @@ impl Channel {
         Ok(())
     }
 
-    pub async fn stop_ringing(&self, client: &Client) -> Result<()> {
+    pub async fn stop_ringing(&self, client: &RequestClient) -> Result<()> {
         let url = client
             .url()
             .join(&format!("channels/{}/ring", self.id))?
@@ -282,7 +282,7 @@ impl Channel {
 
     pub async fn send_dtmf(
         &self,
-        client: &Client,
+        client: &RequestClient,
         dtmf: &str,
         before: Option<Duration>,
         between: Option<Duration>,
@@ -312,7 +312,7 @@ impl Channel {
         Ok(())
     }
 
-    pub async fn mute(&self, client: &Client, direction: Direction) -> Result<()> {
+    pub async fn mute(&self, client: &RequestClient, direction: Direction) -> Result<()> {
         let url = client
             .url()
             .join(&format!("channels/{}/mute", self.id))?
@@ -327,7 +327,7 @@ impl Channel {
         Ok(())
     }
 
-    pub async fn unmute(&self, client: &Client, direction: Direction) -> Result<()> {
+    pub async fn unmute(&self, client: &RequestClient, direction: Direction) -> Result<()> {
         let url = client
             .url()
             .join(&format!("channels/{}/mute", self.id))?
@@ -342,7 +342,7 @@ impl Channel {
         Ok(())
     }
 
-    pub async fn hold(&self, client: &Client) -> Result<()> {
+    pub async fn hold(&self, client: &RequestClient) -> Result<()> {
         let url = client
             .url()
             .join(&format!("channels/{}/hold", self.id))?
@@ -356,7 +356,7 @@ impl Channel {
         Ok(())
     }
 
-    pub async fn unhold(&self, client: &Client) -> Result<()> {
+    pub async fn unhold(&self, client: &RequestClient) -> Result<()> {
         let url = client
             .url()
             .join(&format!("channels/{}/hold", self.id))?
@@ -370,25 +370,25 @@ impl Channel {
         Ok(())
     }
 
-    pub fn start_moh(&self, _client: &Client) -> Result<()> {
+    pub fn start_moh(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub fn stop_moh(&self, _client: &Client) -> Result<()> {
+    pub fn stop_moh(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub fn start_silence(&self, _client: &Client) -> Result<()> {
+    pub fn start_silence(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub fn stop_silence(&self, _client: &Client) -> Result<()> {
+    pub fn stop_silence(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
     pub async fn play_media(
         &self,
-        client: &Client,
+        client: &RequestClient,
         media: &str,
         lang: Option<&str>,
         offset_ms: Option<u32>,
@@ -435,7 +435,7 @@ impl Channel {
 
     pub async fn play_media_with_id(
         &self,
-        client: &Client,
+        client: &RequestClient,
         playback_id: &str,
         media: Vec<&str>,
         lang: Option<&str>,
@@ -481,7 +481,7 @@ impl Channel {
     #[allow(clippy::too_many_arguments)]
     pub async fn record(
         &self,
-        client: &Client,
+        client: &RequestClient,
         name: &str,
         format: &str,
         max_duration_seconds: Option<u32>,
@@ -525,15 +525,15 @@ impl Channel {
         Ok(recording)
     }
 
-    pub fn get_variable(&self, _client: &Client) -> Result<Variable> {
+    pub fn get_variable(&self, _client: &RequestClient) -> Result<Variable> {
         unimplemented!()
     }
 
-    pub fn set_variable(&self, _client: &Client) -> Result<()> {
+    pub fn set_variable(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn dial(&self, client: &Client, caller_id: Option<&str>, timeout: Option<u32>) -> Result<()> {
+    pub async fn dial(&self, client: &RequestClient, caller_id: Option<&str>, timeout: Option<u32>) -> Result<()> {
         let mut url = client.url().join(&format!("channels/{}/dial", self.id))?;
         let mut url = url.query_pairs_mut();
         client.add_api_key(&mut url);
@@ -552,11 +552,11 @@ impl Channel {
         Ok(())
     }
 
-    pub fn get_rtp_statistics(&self, _client: &Client) -> Result<RtpStatistics> {
+    pub fn get_rtp_statistics(&self, _client: &RequestClient) -> Result<RtpStatistics> {
         unimplemented!()
     }
 
-    pub async fn list(client: &Client) -> Result<Vec<Channel>> {
+    pub async fn list(client: &RequestClient) -> Result<Vec<Channel>> {
         let url: Url = client
             .url()
             .join("channels")?
@@ -572,7 +572,7 @@ impl Channel {
 
     #[allow(clippy::too_many_arguments)]
     pub async fn create(
-        client: &Client,
+        client: &RequestClient,
         endpoint: &str,
         app: &str,
         app_args: Vec<&str>,
@@ -625,7 +625,7 @@ impl Channel {
         Ok(channel)
     }
 
-    pub async fn get(client: &Client, channel_id: &str) -> Result<Channel> {
+    pub async fn get(client: &RequestClient, channel_id: &str) -> Result<Channel> {
         let url = client
             .url()
             .join(&format!("channels/{}", channel_id))?
@@ -641,7 +641,7 @@ impl Channel {
 
     #[allow(clippy::too_many_arguments)]
     pub async fn originate<'a>(
-        client: &Client,
+        client: &RequestClient,
         endpoint: &str,
         params: OriginateParams<'a>,
         caller_id: Option<&str>,
@@ -729,7 +729,7 @@ impl Channel {
 
     #[allow(clippy::too_many_arguments)]
     pub async fn originate_with_id<'a>(
-        client: &Client,
+        client: &RequestClient,
         channel_id: &str,
         endpoint: &str,
         params: OriginateParams<'a>,

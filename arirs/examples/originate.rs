@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use arirs::{Channel, Client, OriginateParams, Result};
+use arirs::{Channel, OriginateParams, RequestClient, Result};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 const APP_NAME: &str = "ari";
@@ -12,7 +12,7 @@ async fn main() -> Result<()> {
         .with(EnvFilter::from_default_env())
         .init();
 
-    let client = Client::default();
+    let client = RequestClient::default();
 
     Channel::originate(
         &client,

@@ -14,28 +14,28 @@ impl LiveRecording {
         unimplemented!()
     }
 
-    pub async fn discard(&self, _client: &Client) -> Result<()> {
+    pub async fn discard(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
     // TODO: explore if it's possible to return a StoredRecording
-    pub async fn stop(&self, _client: &Client) -> Result<()> {
+    pub async fn stop(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn pause(&self, _client: &Client) -> Result<()> {
+    pub async fn pause(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn resume(&self, _client: &Client) -> Result<()> {
+    pub async fn resume(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn mute(&self, _client: &Client) -> Result<()> {
+    pub async fn mute(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn unmute(&self, _client: &Client) -> Result<()> {
+    pub async fn unmute(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 }
@@ -48,7 +48,7 @@ pub struct StoredRecording {
 }
 
 impl StoredRecording {
-    pub async fn list(_client: &Client) -> Result<Vec<StoredRecording>> {
+    pub async fn list(_client: &RequestClient) -> Result<Vec<StoredRecording>> {
         unimplemented!()
     }
 
@@ -56,11 +56,11 @@ impl StoredRecording {
         unimplemented!()
     }
 
-    pub async fn delete(&self, _client: &Client) -> Result<()> {
+    pub async fn delete(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn download(&self, _client: &Client) -> Result<&[u8]> {
+    pub async fn download(&self, _client: &RequestClient) -> Result<&[u8]> {
         unimplemented!()
     }
 }
