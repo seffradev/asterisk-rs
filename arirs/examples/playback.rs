@@ -8,7 +8,7 @@ use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::registry().with(fmt::layer()).with(LevelFilter::TRACE).init();
 
-    let (tx, mut rx) = tokio::sync::mpsc::channel(1024);
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
 
     let client = Arc::new(Client::new("http://localhost:8088/", "asterisk", "asterisk", "ari", Some(tx))?);
 

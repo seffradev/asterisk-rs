@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with(EnvFilter::from_default_env())
         .init();
 
-    let (tx, mut rx) = tokio::sync::mpsc::channel(1024);
+    let (tx, mut rx) = tokio::sync::mpsc::unbounded_channel();
     let dtmf_buffer = Arc::new(Mutex::new(String::new()));
 
     let client = Client::new("http://localhost:8088/", "asterisk", "asterisk", "ari", Some(tx))?;

@@ -3,7 +3,7 @@ use std::time::Duration;
 use derive_getters::Getters;
 use futures_util::{SinkExt, StreamExt};
 use rand::Rng;
-use tokio::{sync::mpsc::Sender, time::interval};
+use tokio::{sync::mpsc::UnboundedSender, time::interval};
 use tokio_tungstenite::{connect_async, tungstenite};
 use tracing::{event, Level};
 use url::Url;
@@ -16,7 +16,7 @@ pub struct Client {
     ws_url: Url,
     username: String,
     password: String,
-    ws_channel: Option<Sender<Event>>,
+    ws_channel: Option<UnboundedSender<Event>>,
 }
 
 impl Client {
@@ -28,7 +28,7 @@ impl Client {
         app_name: impl AsRef<str>,
         username: impl Into<String>,
         password: impl Into<String>,
-        event_sender: Option<Sender<Event>>,
+        event_sender: Option<UnboundedSender<Event>>,
     ) -> Result<Self> {
         let url = Url::parse(url.as_ref())?.join("ari")?;
 
@@ -76,7 +76,7 @@ impl Client {
 
         if let Some(tx) = &self.ws_channel {
             event!(Level::INFO, "Sending event to channel");
-            if let Err(e) = tx.try_send(event) {
+            if let Err(e) = tx.send(event) {
                 event!(Level::ERROR, "Error sending event: {}", e);
             }
         }
