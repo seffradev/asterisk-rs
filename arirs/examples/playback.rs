@@ -12,7 +12,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         if let Event::StasisStart(e) = event {
             let channel = e.channel;
             request_client
-                .play_media(&channel, "sound:hello", Some("en"), None, None, None)
+                .play_media(&channel.id, "sound:hello", Some("en"), None, None, None)
                 .await?;
         }
     }
