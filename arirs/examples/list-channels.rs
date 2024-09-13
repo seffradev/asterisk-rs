@@ -9,12 +9,7 @@ async fn main() -> Result<()> {
         .with(EnvFilter::from_default_env())
         .init();
 
-    let client = Client::new()
-        .url(url::Url::parse("http://localhost:8088/ari")?)
-        .username("asterisk")
-        .password("asterisk")
-        .app_name("ari")
-        .build()?;
+    let client = Client::default();
 
     for channel in Channel::list(&client).await? {
         debug!("Channel ID: {}", channel.id);

@@ -14,13 +14,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (tx, mut rx) = tokio::sync::mpsc::channel(1024);
     let dtmf_buffer = Arc::new(Mutex::new(String::new()));
 
-    let client = Client::new()
-        .url(url::Url::parse("http://localhost:8088/ari/")?)
-        .username("asterisk")
-        .password("asterisk")
-        .app_name("ari")
-        .handler(tx)
-        .build()?;
+    let client = Client::new("http://localhost:8088/", "asterisk", "asterisk", "ari", Some(tx))?;
 
     tokio::spawn(async move {
         if let Err(e) = client.run().await {

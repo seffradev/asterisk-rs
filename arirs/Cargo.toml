@@ -7,6 +7,7 @@ version = "0.1.0"
 
 [dependencies]
 chrono = { version = "0.4.38", features = ["serde"] }
+derive-getters = "0.5"
 derive_more = { version = "1.0.0", features = ["display"] }
 futures-channel = "0.3.30"
 futures-util = "0.3.30"

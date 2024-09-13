@@ -1,5 +1,6 @@
 use std::time::Duration;
 
+use derive_getters::Getters;
 use futures_util::{SinkExt, StreamExt};
 use rand::Rng;
 use tokio::{sync::mpsc::Sender, time::interval};
@@ -9,81 +10,52 @@ use url::Url;
 
 use crate::*;
 
-#[derive(Debug, Default)]
-pub struct ClientBuilder(Client);
-
-impl ClientBuilder {
-    pub fn url(mut self, url: Url) -> Self {
-        self.0.url = url;
-        self
-    }
-
-    pub fn username(mut self, username: &str) -> Self {
-        self.0.username = username.to_string();
-        self
-    }
-
-    pub fn password(mut self, password: &str) -> Self {
-        self.0.password = password.to_string();
-        self
-    }
-
-    pub fn app_name(mut self, app_name: &str) -> Self {
-        self.0.app_name = app_name.to_string();
-        self
-    }
-
-    pub fn handler(mut self, tx: Sender<Event>) -> Self {
-        self.0.ws_channel = Some(tx);
-        self
-    }
-
-    pub fn build(self) -> Result<Client> {
-        let mut ws_url = self.0.url.join("events")?;
-
-        let scheme = match ws_url.scheme() {
-            "http" => "ws",
-            "https" => "wss",
-            _ => {
-                return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
-            }
-        };
-
-        if ws_url.set_scheme(scheme).is_err() {
-            return Err(tungstenite::error::UrlError::UnsupportedUrlScheme.into());
-        }
-
-        ws_url
-            .query_pairs_mut()
-            .append_pair("app", &self.0.app_name)
-            .append_pair("api_key", &format!("{}:{}", self.0.username, self.0.password))
-            .append_pair("subscribeAll", "true");
-
-        Ok(Client {
-            url: self.0.url,
-            ws_url,
-            username: self.0.username,
-            password: self.0.password,
-            app_name: self.0.app_name,
-            ws_channel: self.0.ws_channel,
-        })
-    }
-}
-
-#[derive(Debug)]
+#[derive(Debug, Getters)]
 pub struct Client {
-    pub url: Url,
-    pub ws_url: Url,
-    pub username: String,
-    pub password: String,
-    pub app_name: String,
-    pub ws_channel: Option<Sender<Event>>,
+    url: Url,
+    ws_url: Url,
+    username: String,
+    password: String,
+    ws_channel: Option<Sender<Event>>,
 }
 
 impl Client {
-    #[allow(clippy::new_ret_no_self)]
-    pub fn new() -> ClientBuilder {
-        ClientBuilder(Client::default())
+    /// Create a new client
+    ///
+    /// `url` should end in `/`, `ari/` will be appended to it.
+    pub fn new(
+        url: impl AsRef<str>,
+        app_name: impl AsRef<str>,
+        username: impl Into<String>,
+        password: impl Into<String>,
+        event_sender: Option<Sender<Event>>,
+    ) -> Result<Self> {
+        let url = Url::parse(url.as_ref())?.join("ari")?;
+
+        let mut ws_url = url.join("events")?;
+        let scheme = match ws_url.scheme() {
+            "http" => "ws",
+            "https" => "wss",
+            _ => Err(tungstenite::error::UrlError::UnsupportedUrlScheme)?,
+        };
+
+        let username = username.into();
+        let password = password.into();
+
+        ws_url.set_scheme(scheme).expect("invalid url scheme");
+        ws_url
+            .query_pairs_mut()
+            .append_pair("app", app_name.as_ref())
+            .append_pair("api_key", &format!("{}:{}", username, password))
+            .append_pair("subscribeAll", "true");
+
+        Ok(Self {
+            url,
+            ws_url,
+            username,
+            password,
+            ws_channel: event_sender,
+        })
     }
 
     pub fn handle_message(&self, message: Vec<u8>) {
@@ -194,7 +166,6 @@ impl Default for Client {
             },
             username: "asterisk".to_string(),
             password: "asterisk".to_string(),
-            app_name: "ari".to_string(),
             ws_channel: None,
         }
     }

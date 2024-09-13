@@ -12,12 +12,7 @@ async fn main() -> Result<()> {
         .with(EnvFilter::from_default_env())
         .init();
 
-    let client = Client::new()
-        .url(url::Url::parse("http://localhost:8088/ari")?)
-        .username("asterisk")
-        .password("asterisk")
-        .app_name(APP_NAME)
-        .build()?;
+    let client = Client::default();
 
     Channel::originate(
         &client,
