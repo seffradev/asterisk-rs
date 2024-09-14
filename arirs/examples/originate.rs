@@ -1,44 +1,34 @@
 use std::collections::HashMap;
 
-use arirs::{
-    channel::{Channel, OriginateParams},
-    client::Client,
-    Result,
-};
+use arirs::{AriClient, AriClientError, OriginateChannelParams, OriginateParams};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 const APP_NAME: &str = "ari";
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), AriClientError> {
     tracing_subscriber::registry()
         .with(fmt::layer())
         .with(EnvFilter::from_default_env())
         .init();
 
-    let client = Client::new()
-        .url(url::Url::parse("http://localhost:8088/ari")?)
-        .username("asterisk")
-        .password("asterisk")
-        .app_name(APP_NAME)
-        .build()?;
+    let client = AriClient::default();
 
-    Channel::originate(
-        &client,
-        "PJSIP/1000",
-        OriginateParams::Application {
+    let originate_params = OriginateChannelParams {
+        endpoint: "PJSIP/1000",
+        params: OriginateParams::Application {
             app: APP_NAME,
-            app_args: vec![],
+            app_args: &[],
         },
-        None,
-        None,
-        None,
-        None,
-        None,
-        vec!["alaw,ulaw"],
-        HashMap::new(),
-    )
-    .await?;
+        caller_id: None,
+        timeout: None,
+        channel_id: None,
+        other_channel_id: None,
+        originator: None,
+        formats: &["alaw,ulaw"],
+    };
+
+    client.channel_originate(originate_params, &HashMap::new()).await?;
 
     Ok(())
 }

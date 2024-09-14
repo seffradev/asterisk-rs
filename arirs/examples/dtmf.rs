@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
-use arirs::{client::Client, Event};
-use tracing::{debug, error};
+use arirs::{Asterisk, Event};
+use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[tokio::main]
@@ -11,28 +11,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with(EnvFilter::from_default_env())
         .init();
 
-    let (tx, mut rx) = tokio::sync::mpsc::channel(1024);
     let dtmf_buffer = Arc::new(Mutex::new(String::new()));
 
-    let client = Client::new()
-        .url(url::Url::parse("http://localhost:8088/ari/")?)
-        .username("asterisk")
-        .password("asterisk")
-        .app_name("ari")
-        .handler(tx)
-        .build()?;
+    let (_, mut event_listener) = Asterisk::connect("http://localhost:8088/", "asterisk", "asterisk", "ari").await?;
 
-    tokio::spawn(async move {
-        if let Err(e) = client.run().await {
-            error!("Error: {}", e);
-        }
-    });
-
-    while let Some(event) = rx.recv().await {
+    while let Some(event) = event_listener.recv().await {
         match event {
             Event::ChannelDtmfReceived(event) => {
-                debug!("Received DTMF: {}", event.digit);
-                dtmf_buffer.lock().unwrap().push_str(&event.digit);
+                debug!("Received DTMF: {}", event.digit());
+                dtmf_buffer.lock().unwrap().push_str(event.digit());
             }
             Event::StasisEnd(_) => {
                 debug!("Stasis ended, DTMF buffer: {}", dtmf_buffer.lock().unwrap());
