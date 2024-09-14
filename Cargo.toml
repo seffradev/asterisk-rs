@@ -1,5 +1,5 @@
 [workspace]
-members = ["agirs", "amirs", "arirs"]
+members = ["crates/*"]
 resolver = "2"
 
 [workspace.lints.rust]
