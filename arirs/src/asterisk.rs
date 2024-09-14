@@ -11,7 +11,7 @@ use url::Url;
 use crate::*;
 
 #[derive(Debug, Error)]
-pub enum ClientError {
+pub enum AsteriskError {
     #[error(transparent)]
     UrlParseError(#[from] url::ParseError),
     #[error("unsupported scheme, expected 'http' or 'https', found: '{}'", .0)]
@@ -20,10 +20,10 @@ pub enum ClientError {
     WebSocketConnect(tokio_tungstenite::tungstenite::Error),
 }
 
-pub struct Client;
+pub struct Asterisk;
 
-impl Client {
-    /// Create a new Asterisk ARI client
+impl Asterisk {
+    /// Connect to the Asterisk, return an ARI request client and an WebSocket event stream.
     ///
     /// Spawns a [`tokio::task`] that connects to the Asterisk
     /// WebSocket endpoint to immideatedly listen to incoming [`Event`]
@@ -47,7 +47,7 @@ impl Client {
         app_name: impl AsRef<str>,
         username: impl AsRef<str>,
         password: impl AsRef<str>,
-    ) -> Result<(RequestClient, UnboundedReceiver<Event>), ClientError> {
+    ) -> Result<(RequestClient, UnboundedReceiver<Event>), AsteriskError> {
         let url = url.as_ref().parse::<Url>()?.join("ari/")?;
 
         let api_key = Authorization::api_key(username.as_ref(), password.as_ref());
@@ -61,7 +61,7 @@ impl Client {
         Ok((request_client, event_listener))
     }
 
-    fn build_ws_url(base_url: &Url, api_key: &str, app_name: &str) -> Result<Url, ClientError> {
+    fn build_ws_url(base_url: &Url, api_key: &str, app_name: &str) -> Result<Url, AsteriskError> {
         #[derive(Serialize)]
         #[serde(rename_all = "camelCase")]
         struct AsteriskWebSocketParams<'a> {
@@ -74,7 +74,7 @@ impl Client {
         let scheme = match ws_url.scheme() {
             "http" => "ws",
             "https" => "wss",
-            other => Err(ClientError::UnsupportedScheme(other.to_string()))?,
+            other => Err(AsteriskError::UnsupportedScheme(other.to_string()))?,
         };
         ws_url.set_scheme(scheme).expect("invalid url scheme");
 
@@ -91,9 +91,9 @@ impl Client {
         Ok(ws_url)
     }
 
-    async fn connect_ws(ws_url: &Url) -> Result<UnboundedReceiver<Event>, ClientError> {
+    async fn connect_ws(ws_url: &Url) -> Result<UnboundedReceiver<Event>, AsteriskError> {
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
-        let (ws_stream, _) = connect_async(ws_url).await.map_err(ClientError::WebSocketConnect)?;
+        let (ws_stream, _) = connect_async(ws_url).await.map_err(AsteriskError::WebSocketConnect)?;
 
         tokio::task::spawn(async move {
             let (mut ws_sender, mut ws_receiver) = ws_stream.split();

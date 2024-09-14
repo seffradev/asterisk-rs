@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use arirs::{Client, Event};
+use arirs::{Asterisk, Event};
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -13,7 +13,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let dtmf_buffer = Arc::new(Mutex::new(String::new()));
 
-    let (_, mut event_listener) = Client::connect("http://localhost:8088/", "asterisk", "asterisk", "ari").await?;
+    let (_, mut event_listener) = Asterisk::connect("http://localhost:8088/", "asterisk", "asterisk", "ari").await?;
 
     while let Some(event) = event_listener.recv().await {
         match event {

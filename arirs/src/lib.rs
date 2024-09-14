@@ -1,5 +1,5 @@
-mod client;
-pub use client::Client;
+mod asterisk;
+pub use asterisk::Asterisk;
 
 mod request_client;
 pub use request_client::*;
