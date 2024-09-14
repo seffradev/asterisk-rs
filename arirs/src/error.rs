@@ -8,6 +8,4 @@ pub enum AriError {
     UrlParse(#[from] url::ParseError),
     #[error("HTTP Request error")]
     Reqwest(#[from] reqwest::Error),
-    #[error("Unknown error occurred: {0}")]
-    Unknown(String),
 }
