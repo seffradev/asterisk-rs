@@ -16,9 +16,6 @@ pub use playback::{Operation, Playback};
 mod recording;
 pub use recording::{LiveRecording, StoredRecording};
 
-mod variable;
-pub use variable::Variable;
-
 mod error;
 pub use error::{AriError, Result};
 

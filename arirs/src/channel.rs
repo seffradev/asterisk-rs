@@ -27,6 +27,12 @@ pub struct RtpStatistics {
     id: String,
 }
 
+#[derive(Debug, Deserialize, Getters)]
+#[serde(rename_all = "snake_case")]
+pub struct ChannelVariable {
+    id: String,
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OriginateChannelParams<'a> {
@@ -423,7 +429,7 @@ impl RequestClient {
     pub fn stop_silence(&self, _channel_id: &str) -> Result<()> {
         unimplemented!()
     }
-    pub fn get_variable(&self, _channel_id: &str) -> Result<Variable> {
+    pub fn get_variable(&self, _channel_id: &str) -> Result<ChannelVariable> {
         unimplemented!()
     }
 
