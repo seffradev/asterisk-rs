@@ -10,32 +10,32 @@ pub struct LiveRecording {
 }
 
 impl LiveRecording {
-    pub async fn get(_recording_name: &str) -> Result<LiveRecording> {
+    pub async fn live_recording_get(_recording_name: &str) -> Result<LiveRecording> {
         unimplemented!()
     }
 
-    pub async fn discard(&self, _client: &RequestClient) -> Result<()> {
+    pub async fn live_recording_discard(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
     // TODO: explore if it's possible to return a StoredRecording
-    pub async fn stop(&self, _client: &RequestClient) -> Result<()> {
+    pub async fn live_recording_stop(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn pause(&self, _client: &RequestClient) -> Result<()> {
+    pub async fn live_recording_pause(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn resume(&self, _client: &RequestClient) -> Result<()> {
+    pub async fn live_recording_resume(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn mute(&self, _client: &RequestClient) -> Result<()> {
+    pub async fn live_recording_mute(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn unmute(&self, _client: &RequestClient) -> Result<()> {
+    pub async fn live_recording_unmute(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 }
