@@ -2,7 +2,7 @@ pub use core::RequestClient;
 mod core {
     use derive_getters::Getters;
     use derive_more::AsRef;
-    use serde::Serialize;
+    use serde::{de::DeserializeOwned, Serialize};
     use url::Url;
 
     use crate::*;
@@ -37,6 +37,16 @@ mod core {
             let url = self.authorized_url(path, params)?;
             self.as_ref().post(url).send().await?;
             Ok(())
+        }
+
+        pub(crate) async fn authorized_post_json_response<T: Serialize, R: DeserializeOwned>(
+            &self,
+            path: impl AsRef<[&str]>,
+            params: T,
+        ) -> Result<R> {
+            let url = self.authorized_url(path, params)?;
+            let response = self.as_ref().post(url).send().await?.json().await?;
+            Ok(response)
         }
 
         pub(crate) async fn authorized_delete<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {

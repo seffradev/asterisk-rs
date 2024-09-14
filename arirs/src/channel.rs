@@ -362,27 +362,16 @@ impl RequestClient {
     }
 
     pub async fn play_media(&self, channel_id: &str, params: PlayMediaParams<'_>) -> Result<Playback> {
-        let mut url = self.url().join(&format!("channels/{}/play", channel_id))?;
-        self.set_authorized_query_params(&mut url, params);
-
-        let playback = self.as_ref().post(url).send().await?.json::<Playback>().await?;
-        Ok(playback)
+        self.authorized_post_json_response(["channels", channel_id, "play"], params).await
     }
 
     pub async fn play_media_with_id(&self, channel_id: &str, playback_id: &str, params: PlayMediaWithIdParams<'_>) -> Result<Playback> {
-        let mut url = self.url().join(&format!("channels/{}/play/{}/media", channel_id, playback_id))?;
-        self.set_authorized_query_params(&mut url, params);
-
-        let playback = self.as_ref().post(url).send().await?.json().await?;
-        Ok(playback)
+        self.authorized_post_json_response(["channels", channel_id, "play", playback_id, "media"], params)
+            .await
     }
 
     pub async fn record(&self, channel_id: &str, params: RecordParams<'_>) -> Result<LiveRecording> {
-        let mut url = self.url().join(&format!("channels/{}/record", channel_id))?;
-        self.set_authorized_query_params(&mut url, params);
-
-        let recording = self.as_ref().post(url).send().await?.json().await?;
-        Ok(recording)
+        self.authorized_post_json_response(["channels", channel_id, "record"], params).await
     }
 
     pub async fn dial(&self, channel_id: &str, params: DialParams<'_>) -> Result<()> {
