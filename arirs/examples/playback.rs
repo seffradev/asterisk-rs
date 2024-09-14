@@ -1,4 +1,4 @@
-use arirs::{Client, Event, PlayMediaParams};
+use arirs::{Client, Event, PlayMediaBaseParams, PlayMediaParams};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -14,11 +14,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .play_media(
                     event.channel().id(),
                     PlayMediaParams {
-                        media: "sound:hello",
-                        lang: Some("en"),
-                        offset_ms: None,
-                        skip_ms: None,
                         playback_id: None,
+                        base_params: PlayMediaBaseParams {
+                            media: &["sound:hello"],
+                            lang: Some("en"),
+                            offset_ms: None,
+                            skip_ms: None,
+                        },
                     },
                 )
                 .await?;

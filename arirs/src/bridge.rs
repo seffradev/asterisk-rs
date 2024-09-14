@@ -1,8 +1,9 @@
-use serde::{Deserialize, Serialize};
+use derive_getters::Getters;
+use serde::Deserialize;
 
 use crate::*;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Deserialize, Getters)]
 pub struct Bridge {
     pub id: String,
 }
