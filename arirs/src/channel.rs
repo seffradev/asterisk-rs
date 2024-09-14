@@ -330,7 +330,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}", channel_id))?;
         self.set_authorized_query_params(&mut url, reason);
 
-        reqwest::Client::new().delete(url).send().await?;
+        self.as_ref().delete(url).send().await?;
 
         Ok(())
     }
@@ -339,7 +339,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/answer", channel_id))?;
         self.set_authorized_query_params(&mut url, ());
 
-        reqwest::Client::new().post(url).send().await?;
+        self.as_ref().post(url).send().await?;
         Ok(())
     }
 
@@ -347,7 +347,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/ring", channel_id))?;
         self.set_authorized_query_params(&mut url, ());
 
-        reqwest::Client::new().post(url).send().await?;
+        self.as_ref().post(url).send().await?;
         Ok(())
     }
 
@@ -355,7 +355,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/ring", channel_id))?;
         self.set_authorized_query_params(&mut url, ());
 
-        reqwest::Client::new().delete(url).send().await?;
+        self.as_ref().delete(url).send().await?;
         Ok(())
     }
 
@@ -363,7 +363,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/dtmf", channel_id))?;
         self.set_authorized_query_params(&mut url, params);
 
-        reqwest::Client::new().post(url).send().await?;
+        self.as_ref().post(url).send().await?;
 
         Ok(())
     }
@@ -372,7 +372,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/mute", channel_id))?;
         self.set_authorized_query_params(&mut url, direction);
 
-        reqwest::Client::new().post(url).send().await?;
+        self.as_ref().post(url).send().await?;
         Ok(())
     }
 
@@ -380,7 +380,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/mute", channel_id))?;
         self.set_authorized_query_params(&mut url, direction);
 
-        reqwest::Client::new().delete(url).send().await?;
+        self.as_ref().delete(url).send().await?;
         Ok(())
     }
 
@@ -388,7 +388,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/hold", channel_id))?;
         self.set_authorized_query_params(&mut url, ());
 
-        reqwest::Client::new().post(url).send().await?;
+        self.as_ref().post(url).send().await?;
         Ok(())
     }
 
@@ -396,7 +396,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/ring", channel_id))?;
         self.set_authorized_query_params(&mut url, ());
 
-        reqwest::Client::new().delete(url).send().await?;
+        self.as_ref().delete(url).send().await?;
         Ok(())
     }
 
@@ -404,7 +404,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/play", channel_id))?;
         self.set_authorized_query_params(&mut url, params);
 
-        let playback = reqwest::Client::new().post(url).send().await?.json::<Playback>().await?;
+        let playback = self.as_ref().post(url).send().await?.json::<Playback>().await?;
         Ok(playback)
     }
 
@@ -412,7 +412,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/play/{}/media", channel_id, playback_id))?;
         self.set_authorized_query_params(&mut url, params);
 
-        let playback = reqwest::Client::new().post(url).send().await?.json().await?;
+        let playback = self.as_ref().post(url).send().await?.json().await?;
         Ok(playback)
     }
 
@@ -420,7 +420,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/record", channel_id))?;
         self.set_authorized_query_params(&mut url, params);
 
-        let recording = reqwest::Client::new().post(url).send().await?.json().await?;
+        let recording = self.as_ref().post(url).send().await?.json().await?;
         Ok(recording)
     }
 
@@ -428,7 +428,7 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}/dial", channel_id))?;
         self.set_authorized_query_params(&mut url, params);
 
-        reqwest::Client::new().post(url).send().await?;
+        self.as_ref().post(url).send().await?;
         Ok(())
     }
 
@@ -449,7 +449,8 @@ impl RequestClient {
         let mut url = self.url().join("channels")?;
         self.set_authorized_query_params(&mut url, params);
 
-        let channel = reqwest::Client::new()
+        let channel = self
+            .as_ref()
             .post(url)
             .json(&json!({
                 "variables": variables
@@ -480,7 +481,8 @@ impl RequestClient {
 
         self.set_authorized_query_params(&mut url, params);
 
-        let channel = reqwest::Client::new()
+        let channel = self
+            .as_ref()
             .post(url)
             .json(&json!({
                 "variables": variables
@@ -502,7 +504,8 @@ impl RequestClient {
         let mut url = self.url().join(&format!("channels/{}", channel_id))?;
         self.set_authorized_query_params(&mut url, params);
 
-        let channel = reqwest::Client::new()
+        let channel = self
+            .as_ref()
             .post(url)
             .json(&json!({
                 "variables": variables
@@ -571,11 +574,7 @@ mod tests {
 
     #[test]
     fn serializes_parameters() {
-        let request_client = RequestClient {
-            url: "http://localhost:8080/".parse().unwrap(),
-            username: "asterisk".to_string(),
-            password: "asterisk".to_string(),
-        };
+        let request_client = RequestClient::new("http://localhost:8080/".parse().unwrap(), "asterisk", "asterisk");
 
         let mut url = request_client.url().join("channel").unwrap();
 
@@ -596,11 +595,7 @@ mod tests {
 
     #[test]
     fn serializes_unit_type() {
-        let request_client = RequestClient {
-            url: "http://localhost:8080/".parse().unwrap(),
-            username: "asterisk".to_string(),
-            password: "asterisk".to_string(),
-        };
+        let request_client = RequestClient::new("http://localhost:8080/".parse().unwrap(), "asterisk", "asterisk");
 
         let mut url = request_client.url().join("channel").unwrap();
 

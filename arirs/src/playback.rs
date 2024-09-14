@@ -1,4 +1,3 @@
-use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::*;
@@ -23,17 +22,12 @@ impl Playback {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Display)]
+#[derive(Serialize, Deserialize, Debug)]
 #[serde(rename_all = "snake_case")]
 pub enum Operation {
-    #[display("restart")]
     Restart,
-    #[display("pause")]
     Pause,
-    #[display("unpause")]
     Unpause,
-    #[display("reverse")]
     Reverse,
-    #[display("forward")]
     Forward,
 }

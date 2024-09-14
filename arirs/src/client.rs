@@ -40,7 +40,7 @@ impl Client {
             .append_pair("api_key", &format!("{}:{}", username, password))
             .append_pair("subscribeAll", "true");
 
-        let request_client = RequestClient { url, username, password };
+        let request_client = RequestClient::new(url, username, password);
 
         let event_listener = Self::connect_ws(ws_url).await?;
 
@@ -104,18 +104,5 @@ impl Client {
         });
 
         Ok(rx)
-    }
-}
-
-impl Default for RequestClient {
-    fn default() -> Self {
-        Self {
-            url: match Url::parse("http://localhost:8088/") {
-                Ok(url) => url,
-                Err(_) => panic!("Failed to parse URL"),
-            },
-            username: "asterisk".to_string(),
-            password: "asterisk".to_string(),
-        }
     }
 }
