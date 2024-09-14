@@ -3,7 +3,6 @@ use std::collections::HashMap;
 use chrono::DateTime;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize, Serializer};
-use serde_json::json;
 
 use crate::*;
 
@@ -387,21 +386,7 @@ impl RequestClient {
     }
 
     pub async fn create(&self, params: ChannelCreateParams<'_>, variables: &HashMap<&str, &str>) -> Result<Channel> {
-        let mut url = self.url().join("channels")?;
-        self.set_authorized_query_params(&mut url, params);
-
-        let channel = self
-            .as_ref()
-            .post(url)
-            .json(&json!({
-                "variables": variables
-            }))
-            .send()
-            .await?
-            .json()
-            .await?;
-
-        Ok(channel)
+        self.authorized_post_variables(["channels", "create"], params, variables).await
     }
 
     pub async fn get(self, channel_id: &str) -> Result<Channel> {
@@ -418,22 +403,7 @@ impl RequestClient {
     }
 
     pub async fn originate<'a>(&self, params: OriginateChannelParams<'a>, variables: &HashMap<&str, &str>) -> Result<Channel> {
-        let mut url = self.url().join("channels")?;
-
-        self.set_authorized_query_params(&mut url, params);
-
-        let channel = self
-            .as_ref()
-            .post(url)
-            .json(&json!({
-                "variables": variables
-            }))
-            .send()
-            .await?
-            .json()
-            .await?;
-
-        Ok(channel)
+        self.authorized_post_variables(["channels"], params, variables).await
     }
 
     pub async fn originate_with_id<'a>(
@@ -442,21 +412,7 @@ impl RequestClient {
         params: OriginateChannelWithIdParams<'a>,
         variables: &HashMap<&str, &str>,
     ) -> Result<Channel> {
-        let mut url = self.url().join(&format!("channels/{}", channel_id))?;
-        self.set_authorized_query_params(&mut url, params);
-
-        let channel = self
-            .as_ref()
-            .post(url)
-            .json(&json!({
-                "variables": variables
-            }))
-            .send()
-            .await?
-            .json()
-            .await?;
-
-        Ok(channel)
+        self.authorized_post_variables(["channels", channel_id], params, variables).await
     }
 
     pub fn start_moh(&self, _channel_id: &str) -> Result<()> {

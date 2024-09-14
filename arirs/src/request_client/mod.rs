@@ -1,5 +1,7 @@
 pub use core::RequestClient;
 mod core {
+    use std::collections::HashMap;
+
     use derive_getters::Getters;
     use derive_more::AsRef;
     use serde::{de::DeserializeOwned, Serialize};
@@ -46,6 +48,26 @@ mod core {
         ) -> Result<R> {
             let url = self.authorized_url(path, params)?;
             let response = self.as_ref().post(url).send().await?.json().await?;
+            Ok(response)
+        }
+
+        pub(crate) async fn authorized_post_variables<T: Serialize, R: DeserializeOwned>(
+            &self,
+            path: impl AsRef<[&str]>,
+            params: T,
+            variables: &HashMap<&str, &str>,
+        ) -> Result<R> {
+            let url = self.authorized_url(path, params)?;
+            let response = self
+                .as_ref()
+                .post(url)
+                .json(&serde_json::json!({
+                    "variables": variables
+                }))
+                .send()
+                .await?
+                .json()
+                .await?;
             Ok(response)
         }
 
