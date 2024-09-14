@@ -8,21 +8,19 @@ use url::Url;
 use crate::*;
 
 #[derive(Debug, Getters)]
-pub struct RequestClient {
+pub struct AriClient {
     url: Url,
     api_key: String,
     inner: reqwest::Client,
 }
 
-pub(crate) type RequestClientResult<T> = Result<T, RequestClientError>;
-
 #[derive(Debug, Error)]
-pub enum RequestClientError {
+pub enum AriClientError {
     #[error("encountered inner HTTP client error")]
     Reqwest(#[from] reqwest::Error),
 }
 
-impl RequestClient {
+impl AriClient {
     pub(crate) fn new(url: Url, api_key: String) -> Self {
         Self {
             url,
@@ -35,13 +33,13 @@ impl RequestClient {
         &self,
         path: impl AsRef<[&str]>,
         params: T,
-    ) -> RequestClientResult<R> {
+    ) -> AriClientResult<R> {
         let url = self.authorized_url(path, params);
         let response = self.inner.get(url).send().await?.json().await?;
         Ok(response)
     }
 
-    pub(crate) async fn authorized_post<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> RequestClientResult<()> {
+    pub(crate) async fn authorized_post<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> AriClientResult<()> {
         let url = self.authorized_url(path, params);
         self.inner.post(url).send().await?;
         Ok(())
@@ -51,7 +49,7 @@ impl RequestClient {
         &self,
         path: impl AsRef<[&str]>,
         params: T,
-    ) -> RequestClientResult<R> {
+    ) -> AriClientResult<R> {
         let url = self.authorized_url(path, params);
         let response = self.inner.post(url).send().await?.json().await?;
         Ok(response)
@@ -62,7 +60,7 @@ impl RequestClient {
         path: impl AsRef<[&str]>,
         params: T,
         variables: &HashMap<&str, &str>,
-    ) -> RequestClientResult<R> {
+    ) -> AriClientResult<R> {
         let url = self.authorized_url(path, params);
         let response = self
             .inner
@@ -77,7 +75,7 @@ impl RequestClient {
         Ok(response)
     }
 
-    pub(crate) async fn authorized_delete<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> RequestClientResult<()> {
+    pub(crate) async fn authorized_delete<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> AriClientResult<()> {
         let url = self.authorized_url(path, params);
         self.inner.delete(url).send().await?;
         Ok(())
@@ -88,7 +86,7 @@ impl RequestClient {
     }
 }
 
-impl Default for RequestClient {
+impl Default for AriClient {
     fn default() -> Self {
         Self::new(
             "http://localhost:8088/".parse().expect("failed to parse url"),

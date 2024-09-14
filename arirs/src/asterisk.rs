@@ -47,14 +47,14 @@ impl Asterisk {
         app_name: impl AsRef<str>,
         username: impl AsRef<str>,
         password: impl AsRef<str>,
-    ) -> Result<(RequestClient, UnboundedReceiver<Event>), AsteriskError> {
+    ) -> Result<(AriClient, UnboundedReceiver<Event>), AsteriskError> {
         let url = url.as_ref().parse::<Url>()?.join("ari/")?;
 
         let api_key = Authorization::api_key(username.as_ref(), password.as_ref());
 
         let ws_url = Self::build_ws_url(&url, &api_key, app_name.as_ref())?;
 
-        let request_client = RequestClient::new(url, api_key);
+        let request_client = AriClient::new(url, api_key);
 
         let event_listener = Self::connect_ws(&ws_url).await?;
 

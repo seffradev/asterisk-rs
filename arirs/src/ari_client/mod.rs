@@ -1,6 +1,7 @@
+pub(crate) type AriClientResult<T> = Result<T, AriClientError>;
+
 mod core;
-pub(crate) use core::RequestClientResult;
-pub use core::{RequestClient, RequestClientError};
+pub use core::{AriClient, AriClientError};
 
 mod bridge;
 pub use bridge::*;
