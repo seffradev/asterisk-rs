@@ -10,9 +10,6 @@ pub use channel::*;
 mod client;
 pub use client::Client;
 
-mod device;
-pub use device::{DeviceState, DeviceStateChanged};
-
 mod playback;
 pub use playback::{Operation, Playback};
 
