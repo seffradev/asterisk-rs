@@ -7,8 +7,8 @@ use url::Url;
 use crate::*;
 
 #[derive(Serialize)]
-pub struct AuthorizedRequest<T> {
-    api_key: String,
+pub struct AuthorizedRequest<'a, T> {
+    api_key: &'a str,
     #[serde(flatten)]
     inner: T,
 }
@@ -16,17 +16,15 @@ pub struct AuthorizedRequest<T> {
 #[derive(Debug, Getters)]
 pub struct RequestClient {
     url: Url,
-    username: String,
-    password: String,
+    bearer: String,
     inner: reqwest::Client,
 }
 
 impl RequestClient {
-    pub(crate) fn new(url: Url, username: impl Into<String>, password: impl Into<String>) -> Self {
+    pub(crate) fn new(url: Url, username: impl AsRef<str>, password: impl AsRef<str>) -> Self {
         Self {
             url,
-            username: username.into(),
-            password: password.into(),
+            bearer: format!("{}:{}", username.as_ref(), password.as_ref()),
             inner: reqwest::Client::new(),
         }
     }
@@ -85,13 +83,9 @@ impl RequestClient {
         Ok(url)
     }
 
-    pub(crate) fn get_api_key(&self) -> String {
-        format!("{}:{}", self.username, self.password)
-    }
-
     pub(crate) fn set_authorized_query_params<T: Serialize>(&self, url: &mut Url, params: T) {
         let authorized_request_params = AuthorizedRequest {
-            api_key: self.get_api_key(),
+            api_key: &self.bearer,
             inner: params,
         };
 
@@ -102,11 +96,10 @@ impl RequestClient {
 
 impl Default for RequestClient {
     fn default() -> Self {
-        Self {
-            url: "http://localhost:8088/".parse().expect("failed to parse url"),
-            username: "asterisk".to_string(),
-            password: "asterisk".to_string(),
-            inner: reqwest::Client::new(),
-        }
+        Self::new(
+            "http://localhost:8088/".parse().expect("failed to parse url"),
+            "asterisk",
+            "asterisk",
+        )
     }
 }
