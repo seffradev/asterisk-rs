@@ -4,9 +4,6 @@ pub use client::Client;
 mod request_client;
 pub use request_client::*;
 
-mod playback;
-pub use playback::{Operation, Playback};
-
 mod recording;
 pub use recording::{LiveRecording, StoredRecording};
 
