@@ -4,7 +4,6 @@ use chrono::DateTime;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::json;
-use url::Url;
 
 use crate::*;
 
@@ -327,12 +326,7 @@ pub struct ChannelCreateParams<'a> {
 
 impl RequestClient {
     pub async fn hangup(&self, channel_id: &str, reason: Reason) -> Result<()> {
-        let mut url = self.url().join(&format!("channels/{}", channel_id))?;
-        self.set_authorized_query_params(&mut url, reason);
-
-        self.as_ref().delete(url).send().await?;
-
-        Ok(())
+        self.authorized_delete(["channels", channel_id], reason).await
     }
 
     pub async fn answer(&self, channel_id: &str) -> Result<()> {
@@ -352,11 +346,7 @@ impl RequestClient {
     }
 
     pub async fn stop_ringing(&self, channel_id: &str) -> Result<()> {
-        let mut url = self.url().join(&format!("channels/{}/ring", channel_id))?;
-        self.set_authorized_query_params(&mut url, ());
-
-        self.as_ref().delete(url).send().await?;
-        Ok(())
+        self.authorized_delete(["channels", channel_id, "ring"], ()).await
     }
 
     pub async fn send_dtmf(&self, channel_id: &str, params: SendDtmfParams<'_>) -> Result<()> {
@@ -377,11 +367,7 @@ impl RequestClient {
     }
 
     pub async fn unmute(&self, channel_id: &str, direction: Direction) -> Result<()> {
-        let mut url = self.url().join(&format!("channels/{}/mute", channel_id))?;
-        self.set_authorized_query_params(&mut url, direction);
-
-        self.as_ref().delete(url).send().await?;
-        Ok(())
+        self.authorized_delete(["channels", channel_id, "mute"], direction).await
     }
 
     pub async fn hold(&self, channel_id: &str) -> Result<()> {
@@ -393,11 +379,7 @@ impl RequestClient {
     }
 
     pub async fn unhold(&self, channel_id: &str) -> Result<()> {
-        let mut url = self.url().join(&format!("channels/{}/ring", channel_id))?;
-        self.set_authorized_query_params(&mut url, ());
-
-        self.as_ref().delete(url).send().await?;
-        Ok(())
+        self.authorized_delete(["channels", channel_id, "ring"], ()).await
     }
 
     pub async fn play_media(&self, channel_id: &str, params: PlayMediaParams<'_>) -> Result<Playback> {
@@ -433,15 +415,10 @@ impl RequestClient {
     }
 
     pub async fn list(&self) -> Result<Vec<Channel>> {
-        let url: Url = self
-            .url()
-            .join("channels")?
-            .query_pairs_mut()
-            .append_pair("api_key", &self.get_api_key())
-            .finish()
-            .to_owned();
+        let mut url = self.url().join("channels")?;
+        self.set_authorized_query_params(&mut url, ());
 
-        let channels = reqwest::get(url).await?.json::<Vec<Channel>>().await?;
+        let channels = self.as_ref().get(url).send().await?.json().await?;
         Ok(channels)
     }
 

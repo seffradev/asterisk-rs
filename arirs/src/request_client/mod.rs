@@ -5,6 +5,8 @@ mod core {
     use serde::Serialize;
     use url::Url;
 
+    use crate::*;
+
     #[derive(Serialize)]
     pub struct AuthorizedRequest<T> {
         api_key: String,
@@ -29,6 +31,16 @@ mod core {
                 password: password.into(),
                 inner: reqwest::Client::new(),
             }
+        }
+
+        pub(crate) async fn authorized_delete<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {
+            let mut url = self.url().join(&path.as_ref().join("/"))?;
+
+            self.set_authorized_query_params(&mut url, params);
+
+            self.as_ref().delete(url).send().await?;
+
+            Ok(())
         }
 
         pub(crate) fn authorize_request<T>(&self, inner: T) -> AuthorizedRequest<T> {
