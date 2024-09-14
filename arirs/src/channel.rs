@@ -4,7 +4,6 @@ use chrono::DateTime;
 use derive_getters::Getters;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::json;
-use tracing::{event, Level};
 use url::Url;
 
 use crate::*;
@@ -333,7 +332,6 @@ impl RequestClient {
 
         reqwest::Client::new().delete(url).send().await?;
 
-        event!(Level::INFO, "hung up channel with id {}", channel_id);
         Ok(())
     }
 
@@ -342,7 +340,6 @@ impl RequestClient {
         self.set_authorized_query_params(&mut url, ());
 
         reqwest::Client::new().post(url).send().await?;
-        event!(Level::INFO, "answered channel with id {}", channel_id);
         Ok(())
     }
 
@@ -351,7 +348,6 @@ impl RequestClient {
         self.set_authorized_query_params(&mut url, ());
 
         reqwest::Client::new().post(url).send().await?;
-        event!(Level::INFO, "started ringing channel with id {}", channel_id);
         Ok(())
     }
 
@@ -360,7 +356,6 @@ impl RequestClient {
         self.set_authorized_query_params(&mut url, ());
 
         reqwest::Client::new().delete(url).send().await?;
-        event!(Level::INFO, "stopped ringing channel with id {}", channel_id);
         Ok(())
     }
 
@@ -378,7 +373,6 @@ impl RequestClient {
         self.set_authorized_query_params(&mut url, direction);
 
         reqwest::Client::new().post(url).send().await?;
-        event!(Level::INFO, "muted channel with id {}", channel_id);
         Ok(())
     }
 
@@ -387,7 +381,6 @@ impl RequestClient {
         self.set_authorized_query_params(&mut url, direction);
 
         reqwest::Client::new().delete(url).send().await?;
-        event!(Level::INFO, "unmuted channel with id {}", channel_id);
         Ok(())
     }
 
@@ -396,7 +389,6 @@ impl RequestClient {
         self.set_authorized_query_params(&mut url, ());
 
         reqwest::Client::new().post(url).send().await?;
-        event!(Level::INFO, "started hold on channel with id {}", channel_id);
         Ok(())
     }
 
@@ -405,24 +397,7 @@ impl RequestClient {
         self.set_authorized_query_params(&mut url, ());
 
         reqwest::Client::new().delete(url).send().await?;
-        event!(Level::INFO, "stopped hold on channel with id {}", channel_id);
         Ok(())
-    }
-
-    pub fn start_moh(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub fn stop_moh(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub fn start_silence(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
-    pub fn stop_silence(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
     }
 
     pub async fn play_media(&self, channel_id: &str, params: PlayMediaParams<'_>) -> Result<Playback> {
@@ -449,14 +424,6 @@ impl RequestClient {
         Ok(recording)
     }
 
-    pub fn get_variable(&self, _channel_id: &str) -> Result<Variable> {
-        unimplemented!()
-    }
-
-    pub fn set_variable(&self, _channel_id: &str) -> Result<()> {
-        unimplemented!()
-    }
-
     pub async fn dial(&self, channel_id: &str, params: DialParams<'_>) -> Result<()> {
         let mut url = self.url().join(&format!("channels/{}/dial", channel_id))?;
         self.set_authorized_query_params(&mut url, params);
@@ -475,7 +442,6 @@ impl RequestClient {
             .to_owned();
 
         let channels = reqwest::get(url).await?.json::<Vec<Channel>>().await?;
-        event!(Level::INFO, "received channels");
         Ok(channels)
     }
 
@@ -506,7 +472,6 @@ impl RequestClient {
             .to_owned();
 
         let channel = reqwest::get(url).await?.json::<Channel>().await?;
-        event!(Level::INFO, "received channel with id {}", channel_id);
         Ok(channel)
     }
 
@@ -548,6 +513,29 @@ impl RequestClient {
             .await?;
 
         Ok(channel)
+    }
+
+    pub fn start_moh(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn stop_moh(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn start_silence(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+
+    pub fn stop_silence(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
+    }
+    pub fn get_variable(&self, _channel_id: &str) -> Result<Variable> {
+        unimplemented!()
+    }
+
+    pub fn set_variable(&self, _channel_id: &str) -> Result<()> {
+        unimplemented!()
     }
 
     pub fn continue_in_dialplan(&self, _channel_id: &str) -> Result<()> {
