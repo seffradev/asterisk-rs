@@ -16,9 +16,6 @@ pub use playback::{Operation, Playback};
 mod recording;
 pub use recording::{LiveRecording, StoredRecording};
 
-mod rtp_statistics;
-pub use rtp_statistics::RtpStatistics;
-
 mod variable;
 pub use variable::Variable;
 

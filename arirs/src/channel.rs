@@ -21,6 +21,12 @@ pub struct Channel {
     language: String,
 }
 
+#[derive(Debug, Deserialize, Getters)]
+#[serde(rename_all = "snake_case")]
+pub struct RtpStatistics {
+    id: String,
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct OriginateChannelParams<'a> {
