@@ -1,13 +1,4 @@
-use serde::{Deserialize, Serialize};
-
 use crate::*;
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct LiveRecording {
-    pub id: String,
-    pub name: String,
-}
 
 impl RequestClient {
     pub async fn live_recording_get(&self, _recording_name: &str) -> Result<LiveRecording> {
@@ -38,13 +29,6 @@ impl RequestClient {
     pub async fn live_recording_unmute(&self, _recording_name: &str) -> Result<()> {
         unimplemented!()
     }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(rename_all = "snake_case")]
-pub struct StoredRecording {
-    pub id: String,
-    pub format: String,
 }
 
 impl RequestClient {

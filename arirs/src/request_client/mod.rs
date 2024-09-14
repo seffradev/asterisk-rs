@@ -9,3 +9,6 @@ pub use channel::*;
 
 mod playback;
 pub use playback::*;
+
+mod recording;
+pub use recording::*;
