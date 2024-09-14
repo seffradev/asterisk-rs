@@ -141,7 +141,7 @@ pub struct ChannelCreateParams<'a> {
     pub formats: &'a [&'a str],
 }
 
-fn join_serialize<S>(slice: &[&str], s: S) -> std::result::Result<S::Ok, S::Error>
+fn join_serialize<S>(slice: &[&str], s: S) -> Result<S::Ok, S::Error>
 where
     S: Serializer,
 {
@@ -181,7 +181,7 @@ pub enum Reason {
 }
 
 impl Serialize for Reason {
-    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {

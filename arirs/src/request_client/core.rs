@@ -14,7 +14,7 @@ pub struct RequestClient {
     inner: reqwest::Client,
 }
 
-pub(crate) type RequestClientResult<T> = std::result::Result<T, RequestClientError>;
+pub(crate) type RequestClientResult<T> = Result<T, RequestClientError>;
 
 #[derive(Debug, Error)]
 pub enum RequestClientError {

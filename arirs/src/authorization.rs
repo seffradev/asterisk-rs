@@ -20,7 +20,7 @@ impl Authorization {
         path: impl AsRef<[&'a str]>,
         api_key: &str,
         params: T,
-    ) -> std::result::Result<Url, url::ParseError> {
+    ) -> Result<Url, url::ParseError> {
         let mut url = url.join(&path.as_ref().join("/"))?;
 
         Self::add_query_parameters(&mut url, api_key, params);
