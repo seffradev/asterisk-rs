@@ -1,12 +1,24 @@
 use std::time::Duration;
 
-use futures_util::{SinkExt, StreamExt};
+use futures_util::{SinkExt, StreamExt, TryStreamExt};
 use rand::Rng;
-use tokio::{sync::mpsc::UnboundedReceiver, task::JoinHandle, time::interval};
+use serde::Serialize;
+use thiserror::Error;
+use tokio::{sync::mpsc::UnboundedReceiver, time::interval};
 use tokio_tungstenite::{connect_async, tungstenite};
 use url::Url;
 
 use crate::*;
+
+#[derive(Debug, Error)]
+pub enum ClientError {
+    #[error(transparent)]
+    UrlParseError(#[from] url::ParseError),
+    #[error("unsupported scheme, expected 'http' or 'https', found: '{}'", .0)]
+    UnsupportedScheme(String),
+    #[error("failed to connect")]
+    WebSocketConnect(tokio_tungstenite::tungstenite::Error),
+}
 
 pub struct Client;
 
@@ -18,10 +30,9 @@ impl Client {
     /// (`crate::Event`)s. These may be listened to by polling the returned
     /// [`tokio::sync::mpsc::UnboundedReceiver`] stream.
     ///
-    // IMPROVEMENT: return differentiable errors for the respective cases
-    /// Event listener task is aborted if the listener stream is dropped,
-    /// or when WebSocket connection toward the Asterisk is dropped, be it
-    /// gracefully or unintentionally.
+    /// Event listener task is stopped if the listener stream is dropped,
+    /// when WebSocket connection toward the Astbrisk is dropped, be it
+    /// gracefully or unintentionally. But also when any
     ///
     /// # Arguments
     ///
@@ -34,74 +45,94 @@ impl Client {
     pub async fn connect(
         url: impl AsRef<str>,
         app_name: impl AsRef<str>,
-        username: impl Into<String>,
-        password: impl Into<String>,
-    ) -> Result<(RequestClient, UnboundedReceiver<Event>)> {
-        let url = Url::parse(url.as_ref())?.join("ari")?;
+        username: impl AsRef<str>,
+        password: impl AsRef<str>,
+    ) -> std::result::Result<(RequestClient, UnboundedReceiver<Event>), ClientError> {
+        let url = url.as_ref().parse::<Url>()?.join("ari/")?;
 
-        let mut ws_url = url.join("events")?;
-        let scheme = match ws_url.scheme() {
-            "http" => "ws",
-            "https" => "wss",
-            _ => Err(tungstenite::error::UrlError::UnsupportedUrlScheme)?,
-        };
+        let api_key = Authorization::api_key(username.as_ref(), password.as_ref());
 
-        let username = username.into();
-        let password = password.into();
+        let ws_url = Self::build_ws_url(&url, &api_key, app_name.as_ref())?;
 
-        ws_url.set_scheme(scheme).expect("invalid url scheme");
-        ws_url
-            .query_pairs_mut()
-            .append_pair("app", app_name.as_ref())
-            .append_pair("api_key", &format!("{}:{}", username, password))
-            .append_pair("subscribeAll", "true");
+        let request_client = RequestClient::new(url, api_key);
 
-        let request_client = RequestClient::new(url, username, password);
-
-        let event_listener = Self::connect_ws(ws_url).await?;
+        let event_listener = Self::connect_ws(&ws_url).await?;
 
         Ok((request_client, event_listener))
     }
 
-    async fn connect_ws(ws_url: Url) -> Result<UnboundedReceiver<Event>> {
+    fn build_ws_url(base_url: &Url, api_key: &str, app_name: &str) -> std::result::Result<Url, ClientError> {
+        #[derive(Serialize)]
+        #[serde(rename_all = "camelCase")]
+        struct AsteriskWebSocketParams<'a> {
+            #[serde(rename = "app")]
+            app_name: &'a str,
+            subscribe_all: bool,
+        }
+
+        let mut ws_url = base_url.join("events")?;
+        let scheme = match ws_url.scheme() {
+            "http" => "ws",
+            "https" => "wss",
+            other => Err(ClientError::UnsupportedScheme(other.to_string()))?,
+        };
+        ws_url.set_scheme(scheme).expect("invalid url scheme");
+
+        let ws_url = Authorization::build_url(
+            &ws_url,
+            [],
+            api_key,
+            AsteriskWebSocketParams {
+                app_name,
+                subscribe_all: true,
+            },
+        )?;
+
+        Ok(ws_url)
+    }
+
+    async fn connect_ws(ws_url: &Url) -> std::result::Result<UnboundedReceiver<Event>, ClientError> {
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
+        let (ws_stream, _) = connect_async(ws_url).await.map_err(ClientError::WebSocketConnect)?;
 
-        let (ws_stream, _) = connect_async(&ws_url.to_string()).await?;
-
-        let _join_task: JoinHandle<Result<()>> = tokio::task::spawn(async move {
+        tokio::task::spawn(async move {
             let (mut ws_sender, mut ws_receiver) = ws_stream.split();
             let mut interval = interval(Duration::from_millis(5000));
 
             loop {
                 tokio::select! {
-                    message = ws_receiver.next() => {
+                    message_result = ws_receiver.try_next() => {
+                        let Ok(Some(message)) = message_result else {
+                            // IMPROVEMENT: might be wiser to propagate the
+                            // errors to the event consumer
+                            break;
+                        };
+
                         match message {
-                            Some(message) => {
-                                let message = message?;
-                                match message {
-                                    tungstenite::Message::Text(_) => {
-                                        let event_result = serde_json::from_slice(message.into_data().as_slice())
-                                            .expect("failed to deserialize asterisk event");
-                                        if tx.send(event_result).is_err() {
-                                            // Assume that tx has been dropped
-                                            break;
-                                        }
-                                    }
-                                    tungstenite::Message::Ping(data) => { ws_sender.send(tungstenite::Message::Pong(data)).await?; }
-                                    tungstenite::Message::Pong(_) => { },
-                                    tungstenite::Message::Close(_frame) => {
-                                        break;
-                                    },
-                                    tungstenite::Message::Frame(_) => {
-                                        unreachable!("raw frame not supposed to be received when reading incoming messages")
-                                    }
-                                    tungstenite::Message::Binary(_) => {
-                                        unreachable!("asterisk should send data marked using text payloads")
-                                    }
+                            tungstenite::Message::Text(_) => {
+                                let event_result = serde_json::from_slice(message.into_data().as_slice())
+                                    .expect("failed to deserialize asterisk event");
+                                if tx.send(event_result).is_err() {
+                                    // Assume that tx has been dropped
+                                    break;
                                 }
                             }
-                            None => {
+                            tungstenite::Message::Ping(data) => {
+                                if ws_sender.send(tungstenite::Message::Pong(data)).await.is_err() {
+                                    // IMPROVEMENT: might be wiser to propagate the
+                                    // errors to the event consumer
+                                    break;
+                                }
+                             }
+                            tungstenite::Message::Pong(_) => { },
+                            tungstenite::Message::Close(_frame) => {
                                 break;
+                            },
+                            tungstenite::Message::Frame(_) => {
+                                unreachable!("raw frame not supposed to be received when reading incoming messages")
+                            }
+                            tungstenite::Message::Binary(_) => {
+                                unreachable!("asterisk should send data marked using text payloads")
                             }
                         }
                     }
@@ -115,8 +146,6 @@ impl Client {
                     }
                 }
             }
-
-            Ok(())
         });
 
         Ok(rx)
