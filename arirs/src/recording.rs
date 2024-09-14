@@ -48,19 +48,19 @@ pub struct StoredRecording {
 }
 
 impl StoredRecording {
-    pub async fn list(_client: &RequestClient) -> Result<Vec<StoredRecording>> {
+    pub async fn stored_recording_list(_client: &RequestClient) -> Result<Vec<StoredRecording>> {
         unimplemented!()
     }
 
-    pub async fn get(_recording_name: &str) -> Result<StoredRecording> {
+    pub async fn stored_recording_get(_recording_name: &str) -> Result<StoredRecording> {
         unimplemented!()
     }
 
-    pub async fn delete(&self, _client: &RequestClient) -> Result<()> {
+    pub async fn stored_recording_delete(&self, _client: &RequestClient) -> Result<()> {
         unimplemented!()
     }
 
-    pub async fn download(&self, _client: &RequestClient) -> Result<&[u8]> {
+    pub async fn stored_recording_download(&self, _client: &RequestClient) -> Result<&[u8]> {
         unimplemented!()
     }
 }
