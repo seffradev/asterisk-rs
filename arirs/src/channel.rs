@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use chrono::DateTime;
 use derive_getters::Getters;
-use derive_more::Display;
 use serde::{Deserialize, Serialize, Serializer};
 use serde_json::json;
 use tracing::{event, Level};
@@ -124,13 +123,12 @@ mod reason {
     }
 }
 
-#[derive(Debug, Display)]
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+#[serde(tag = "direction")]
 pub enum Direction {
-    #[display("in")]
     In,
-    #[display("out")]
     Out,
-    #[display("both")]
     Both,
 }
 
@@ -340,13 +338,8 @@ impl RequestClient {
     }
 
     pub async fn answer(&self, channel_id: &str) -> Result<()> {
-        let url = self
-            .url()
-            .join(&format!("channels/{}/answer", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &self.get_api_key())
-            .finish()
-            .to_owned();
+        let mut url = self.url().join(&format!("channels/{}/answer", channel_id))?;
+        self.set_authorized_query_params(&mut url, ());
 
         reqwest::Client::new().post(url).send().await?;
         event!(Level::INFO, "answered channel with id {}", channel_id);
@@ -354,13 +347,8 @@ impl RequestClient {
     }
 
     pub async fn start_ringing(&self, channel_id: &str) -> Result<()> {
-        let url = self
-            .url()
-            .join(&format!("channels/{}/ring", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &self.get_api_key())
-            .finish()
-            .to_owned();
+        let mut url = self.url().join(&format!("channels/{}/ring", channel_id))?;
+        self.set_authorized_query_params(&mut url, ());
 
         reqwest::Client::new().post(url).send().await?;
         event!(Level::INFO, "started ringing channel with id {}", channel_id);
@@ -368,13 +356,8 @@ impl RequestClient {
     }
 
     pub async fn stop_ringing(&self, channel_id: &str) -> Result<()> {
-        let url = self
-            .url()
-            .join(&format!("channels/{}/ring", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &self.get_api_key())
-            .finish()
-            .to_owned();
+        let mut url = self.url().join(&format!("channels/{}/ring", channel_id))?;
+        self.set_authorized_query_params(&mut url, ());
 
         reqwest::Client::new().delete(url).send().await?;
         event!(Level::INFO, "stopped ringing channel with id {}", channel_id);
@@ -391,14 +374,8 @@ impl RequestClient {
     }
 
     pub async fn mute(&self, channel_id: &str, direction: Direction) -> Result<()> {
-        let url = self
-            .url()
-            .join(&format!("channels/{}/mute", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &self.get_api_key())
-            .append_pair("direction", &format!("{}", direction))
-            .finish()
-            .to_owned();
+        let mut url = self.url().join(&format!("channels/{}/mute", channel_id))?;
+        self.set_authorized_query_params(&mut url, direction);
 
         reqwest::Client::new().post(url).send().await?;
         event!(Level::INFO, "muted channel with id {}", channel_id);
@@ -406,14 +383,8 @@ impl RequestClient {
     }
 
     pub async fn unmute(&self, channel_id: &str, direction: Direction) -> Result<()> {
-        let url = self
-            .url()
-            .join(&format!("channels/{}/mute", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &self.get_api_key())
-            .append_pair("direction", &format!("{}", direction))
-            .finish()
-            .to_owned();
+        let mut url = self.url().join(&format!("channels/{}/mute", channel_id))?;
+        self.set_authorized_query_params(&mut url, direction);
 
         reqwest::Client::new().delete(url).send().await?;
         event!(Level::INFO, "unmuted channel with id {}", channel_id);
@@ -421,13 +392,8 @@ impl RequestClient {
     }
 
     pub async fn hold(&self, channel_id: &str) -> Result<()> {
-        let url = self
-            .url()
-            .join(&format!("channels/{}/hold", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &self.get_api_key())
-            .finish()
-            .to_owned();
+        let mut url = self.url().join(&format!("channels/{}/hold", channel_id))?;
+        self.set_authorized_query_params(&mut url, ());
 
         reqwest::Client::new().post(url).send().await?;
         event!(Level::INFO, "started hold on channel with id {}", channel_id);
@@ -435,13 +401,8 @@ impl RequestClient {
     }
 
     pub async fn unhold(&self, channel_id: &str) -> Result<()> {
-        let url = self
-            .url()
-            .join(&format!("channels/{}/hold", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &self.get_api_key())
-            .finish()
-            .to_owned();
+        let mut url = self.url().join(&format!("channels/{}/ring", channel_id))?;
+        self.set_authorized_query_params(&mut url, ());
 
         reqwest::Client::new().delete(url).send().await?;
         event!(Level::INFO, "stopped hold on channel with id {}", channel_id);
@@ -642,6 +603,22 @@ mod tests {
         );
 
         let expected = "http://localhost:8080/channel?api_key=asterisk%3Aasterisk&media=sound%3Ahello&lang=en";
+        assert_eq!(expected, url.as_str())
+    }
+
+    #[test]
+    fn serializes_unit_type() {
+        let request_client = RequestClient {
+            url: "http://localhost:8080/".parse().unwrap(),
+            username: "asterisk".to_string(),
+            password: "asterisk".to_string(),
+        };
+
+        let mut url = request_client.url().join("channel").unwrap();
+
+        request_client.set_authorized_query_params(&mut url, ());
+
+        let expected = "http://localhost:8080/channel?api_key=asterisk%3Aasterisk";
         assert_eq!(expected, url.as_str())
     }
 }
