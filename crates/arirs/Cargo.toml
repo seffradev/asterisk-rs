@@ -1,7 +1,9 @@
 [package]
-edition = "2021"
 name = "arirs"
-version = "0.1.0"
+
+edition.workspace = true
+readme.workspace = true
+version.workspace = true
 
 [dependencies]
 chrono = { version = "0.4", features = ["serde"] }
