@@ -325,24 +325,16 @@ pub struct ChannelCreateParams<'a> {
 }
 
 impl RequestClient {
+    pub async fn answer(&self, channel_id: &str) -> Result<()> {
+        self.authorized_post(["channels", channel_id, "answer"], ()).await
+    }
+
     pub async fn hangup(&self, channel_id: &str, reason: Reason) -> Result<()> {
         self.authorized_delete(["channels", channel_id], reason).await
     }
 
-    pub async fn answer(&self, channel_id: &str) -> Result<()> {
-        let mut url = self.url().join(&format!("channels/{}/answer", channel_id))?;
-        self.set_authorized_query_params(&mut url, ());
-
-        self.as_ref().post(url).send().await?;
-        Ok(())
-    }
-
     pub async fn start_ringing(&self, channel_id: &str) -> Result<()> {
-        let mut url = self.url().join(&format!("channels/{}/ring", channel_id))?;
-        self.set_authorized_query_params(&mut url, ());
-
-        self.as_ref().post(url).send().await?;
-        Ok(())
+        self.authorized_post(["channels", channel_id, "ring"], ()).await
     }
 
     pub async fn stop_ringing(&self, channel_id: &str) -> Result<()> {
@@ -350,20 +342,11 @@ impl RequestClient {
     }
 
     pub async fn send_dtmf(&self, channel_id: &str, params: SendDtmfParams<'_>) -> Result<()> {
-        let mut url = self.url().join(&format!("channels/{}/dtmf", channel_id))?;
-        self.set_authorized_query_params(&mut url, params);
-
-        self.as_ref().post(url).send().await?;
-
-        Ok(())
+        self.authorized_post(["channels", channel_id, "dtmf"], params).await
     }
 
     pub async fn mute(&self, channel_id: &str, direction: Direction) -> Result<()> {
-        let mut url = self.url().join(&format!("channels/{}/mute", channel_id))?;
-        self.set_authorized_query_params(&mut url, direction);
-
-        self.as_ref().post(url).send().await?;
-        Ok(())
+        self.authorized_post(["channels", channel_id, "mute"], direction).await
     }
 
     pub async fn unmute(&self, channel_id: &str, direction: Direction) -> Result<()> {
@@ -371,15 +354,11 @@ impl RequestClient {
     }
 
     pub async fn hold(&self, channel_id: &str) -> Result<()> {
-        let mut url = self.url().join(&format!("channels/{}/hold", channel_id))?;
-        self.set_authorized_query_params(&mut url, ());
-
-        self.as_ref().post(url).send().await?;
-        Ok(())
+        self.authorized_post(["channels", channel_id, "hold"], ()).await
     }
 
     pub async fn unhold(&self, channel_id: &str) -> Result<()> {
-        self.authorized_delete(["channels", channel_id, "ring"], ()).await
+        self.authorized_delete(["channels", channel_id, "hold"], ()).await
     }
 
     pub async fn play_media(&self, channel_id: &str, params: PlayMediaParams<'_>) -> Result<Playback> {
@@ -407,11 +386,7 @@ impl RequestClient {
     }
 
     pub async fn dial(&self, channel_id: &str, params: DialParams<'_>) -> Result<()> {
-        let mut url = self.url().join(&format!("channels/{}/dial", channel_id))?;
-        self.set_authorized_query_params(&mut url, params);
-
-        self.as_ref().post(url).send().await?;
-        Ok(())
+        self.authorized_post(["channels", channel_id, "dial"], params).await
     }
 
     pub async fn list(&self) -> Result<Vec<Channel>> {

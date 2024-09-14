@@ -33,14 +33,22 @@ mod core {
             }
         }
 
-        pub(crate) async fn authorized_delete<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {
-            let mut url = self.url().join(&path.as_ref().join("/"))?;
-
-            self.set_authorized_query_params(&mut url, params);
-
-            self.as_ref().delete(url).send().await?;
-
+        pub(crate) async fn authorized_post<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {
+            let url = self.authorized_url(path, params)?;
+            self.as_ref().post(url).send().await?;
             Ok(())
+        }
+
+        pub(crate) async fn authorized_delete<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {
+            let url = self.authorized_url(path, params)?;
+            self.as_ref().delete(url).send().await?;
+            Ok(())
+        }
+
+        fn authorized_url<'a, T: Serialize>(&self, path: impl AsRef<[&'a str]>, params: T) -> Result<Url> {
+            let mut url = self.url().join(&path.as_ref().join("/"))?;
+            self.set_authorized_query_params(&mut url, params);
+            Ok(url)
         }
 
         pub(crate) fn authorize_request<T>(&self, inner: T) -> AuthorizedRequest<T> {
