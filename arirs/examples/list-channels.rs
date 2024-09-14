@@ -1,9 +1,9 @@
-use arirs::{RequestClient, Result};
+use arirs::{RequestClient, RequestClientError};
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 #[tokio::main]
-async fn main() -> Result<()> {
+async fn main() -> Result<(), RequestClientError> {
     tracing_subscriber::registry()
         .with(fmt::layer())
         .with(EnvFilter::from_default_env())

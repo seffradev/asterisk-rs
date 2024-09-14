@@ -1,5 +1,6 @@
 mod core;
-pub use core::RequestClient;
+pub(crate) use core::RequestClientResult;
+pub use core::{RequestClient, RequestClientError};
 
 mod bridge;
 pub use bridge::*;

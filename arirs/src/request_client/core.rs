@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use derive_getters::Getters;
 use serde::{de::DeserializeOwned, Serialize};
+use thiserror::Error;
 use url::Url;
 
 use crate::*;
@@ -13,6 +14,14 @@ pub struct RequestClient {
     inner: reqwest::Client,
 }
 
+pub(crate) type RequestClientResult<T> = std::result::Result<T, RequestClientError>;
+
+#[derive(Debug, Error)]
+pub enum RequestClientError {
+    #[error("encountered inner HTTP client error")]
+    Reqwest(#[from] reqwest::Error),
+}
+
 impl RequestClient {
     pub(crate) fn new(url: Url, api_key: String) -> Self {
         Self {
@@ -22,13 +31,17 @@ impl RequestClient {
         }
     }
 
-    pub(crate) async fn authorized_get<T: Serialize, R: DeserializeOwned>(&self, path: impl AsRef<[&str]>, params: T) -> Result<R> {
+    pub(crate) async fn authorized_get<T: Serialize, R: DeserializeOwned>(
+        &self,
+        path: impl AsRef<[&str]>,
+        params: T,
+    ) -> RequestClientResult<R> {
         let url = self.authorized_url(path, params);
         let response = self.inner.get(url).send().await?.json().await?;
         Ok(response)
     }
 
-    pub(crate) async fn authorized_post<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {
+    pub(crate) async fn authorized_post<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> RequestClientResult<()> {
         let url = self.authorized_url(path, params);
         self.inner.post(url).send().await?;
         Ok(())
@@ -38,7 +51,7 @@ impl RequestClient {
         &self,
         path: impl AsRef<[&str]>,
         params: T,
-    ) -> Result<R> {
+    ) -> RequestClientResult<R> {
         let url = self.authorized_url(path, params);
         let response = self.inner.post(url).send().await?.json().await?;
         Ok(response)
@@ -49,7 +62,7 @@ impl RequestClient {
         path: impl AsRef<[&str]>,
         params: T,
         variables: &HashMap<&str, &str>,
-    ) -> Result<R> {
+    ) -> RequestClientResult<R> {
         let url = self.authorized_url(path, params);
         let response = self
             .inner
@@ -64,7 +77,7 @@ impl RequestClient {
         Ok(response)
     }
 
-    pub(crate) async fn authorized_delete<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {
+    pub(crate) async fn authorized_delete<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> RequestClientResult<()> {
         let url = self.authorized_url(path, params);
         self.inner.delete(url).send().await?;
         Ok(())
