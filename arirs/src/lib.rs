@@ -2,13 +2,10 @@ mod client;
 pub use client::Client;
 
 mod request_client;
-pub use request_client::RequestClient;
+pub use request_client::*;
 
 mod bridge;
 pub use bridge::Bridge;
-
-mod channel;
-pub use channel::*;
 
 mod playback;
 pub use playback::{Operation, Playback};

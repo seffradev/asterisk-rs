@@ -2,12 +2,6 @@ use std::collections::HashMap;
 
 use crate::*;
 
-mod responses;
-pub use responses::*;
-
-mod request_params;
-pub use request_params::*;
-
 impl RequestClient {
     pub async fn answer(&self, channel_id: &str) -> Result<()> {
         self.authorized_post(["channels", channel_id, "answer"], ()).await
@@ -134,45 +128,5 @@ impl RequestClient {
 
     pub fn start_external_media(&self, _channel_id: &str) -> Result<Channel> {
         unimplemented!()
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn serializes_parameters() {
-        let request_client = RequestClient::new("http://localhost:8080/".parse().unwrap(), "asterisk", "asterisk");
-
-        let mut url = request_client.url().join("channel").unwrap();
-
-        request_client.set_authorized_query_params(
-            &mut url,
-            PlayMediaParams {
-                playback_id: None,
-                base_params: PlayMediaBaseParams {
-                    media: &["sound:hello"],
-                    lang: Some("en"),
-                    offset_ms: None,
-                    skip_ms: None,
-                },
-            },
-        );
-
-        let expected = "http://localhost:8080/channel?api_key=asterisk%3Aasterisk&media=sound%3Ahello&lang=en";
-        assert_eq!(expected, url.as_str())
-    }
-
-    #[test]
-    fn serializes_unit_type() {
-        let request_client = RequestClient::new("http://localhost:8080/".parse().unwrap(), "asterisk", "asterisk");
-
-        let mut url = request_client.url().join("channel").unwrap();
-
-        request_client.set_authorized_query_params(&mut url, ());
-
-        let expected = "http://localhost:8080/channel?api_key=asterisk%3Aasterisk";
-        assert_eq!(expected, url.as_str())
     }
 }
