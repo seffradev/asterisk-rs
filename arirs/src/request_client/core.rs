@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use derive_getters::Getters;
-use derive_more::AsRef;
 use serde::{de::DeserializeOwned, Serialize};
 use url::Url;
 
@@ -14,12 +13,11 @@ pub struct AuthorizedRequest<T> {
     inner: T,
 }
 
-#[derive(Debug, Getters, AsRef)]
+#[derive(Debug, Getters)]
 pub struct RequestClient {
-    pub(crate) url: Url,
-    pub(crate) username: String,
-    pub(crate) password: String,
-    #[as_ref]
+    url: Url,
+    username: String,
+    password: String,
     inner: reqwest::Client,
 }
 
@@ -35,13 +33,13 @@ impl RequestClient {
 
     pub(crate) async fn authorized_get<T: Serialize, R: DeserializeOwned>(&self, path: impl AsRef<[&str]>, params: T) -> Result<R> {
         let url = self.authorized_url(path, params)?;
-        let response = self.as_ref().get(url).send().await?.json().await?;
+        let response = self.inner.get(url).send().await?.json().await?;
         Ok(response)
     }
 
     pub(crate) async fn authorized_post<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {
         let url = self.authorized_url(path, params)?;
-        self.as_ref().post(url).send().await?;
+        self.inner.post(url).send().await?;
         Ok(())
     }
 
@@ -51,7 +49,7 @@ impl RequestClient {
         params: T,
     ) -> Result<R> {
         let url = self.authorized_url(path, params)?;
-        let response = self.as_ref().post(url).send().await?.json().await?;
+        let response = self.inner.post(url).send().await?.json().await?;
         Ok(response)
     }
 
@@ -63,7 +61,7 @@ impl RequestClient {
     ) -> Result<R> {
         let url = self.authorized_url(path, params)?;
         let response = self
-            .as_ref()
+            .inner
             .post(url)
             .json(&serde_json::json!({
                 "variables": variables
@@ -77,7 +75,7 @@ impl RequestClient {
 
     pub(crate) async fn authorized_delete<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {
         let url = self.authorized_url(path, params)?;
-        self.as_ref().delete(url).send().await?;
+        self.inner.delete(url).send().await?;
         Ok(())
     }
 
@@ -87,19 +85,16 @@ impl RequestClient {
         Ok(url)
     }
 
-    pub(crate) fn authorize_request<T>(&self, inner: T) -> AuthorizedRequest<T> {
-        AuthorizedRequest {
-            api_key: self.get_api_key(),
-            inner,
-        }
-    }
-
     pub(crate) fn get_api_key(&self) -> String {
         format!("{}:{}", self.username, self.password)
     }
 
     pub(crate) fn set_authorized_query_params<T: Serialize>(&self, url: &mut Url, params: T) {
-        let authorized_request_params = self.authorize_request(params);
+        let authorized_request_params = AuthorizedRequest {
+            api_key: self.get_api_key(),
+            inner: params,
+        };
+
         let query_string = serde_qs::to_string(&authorized_request_params).expect("failed to serialize query parameters");
         url.set_query(Some(&query_string));
     }
