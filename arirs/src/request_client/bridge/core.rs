@@ -1,12 +1,4 @@
-use derive_getters::Getters;
-use serde::Deserialize;
-
 use crate::*;
-
-#[derive(Debug, Deserialize, Getters)]
-pub struct Bridge {
-    pub id: String,
-}
 
 impl RequestClient {
     pub async fn destroy(&self, _bridge_id: &str) -> Result<()> {

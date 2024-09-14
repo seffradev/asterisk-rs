@@ -4,9 +4,6 @@ pub use client::Client;
 mod request_client;
 pub use request_client::*;
 
-mod bridge;
-pub use bridge::Bridge;
-
 mod playback;
 pub use playback::{Operation, Playback};
 
