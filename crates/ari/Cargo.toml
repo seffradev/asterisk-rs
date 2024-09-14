@@ -1,5 +1,5 @@
 [package]
-name = "arirs"
+name = "asterisk-rs-ari"
 
 edition.workspace = true
 readme.workspace = true

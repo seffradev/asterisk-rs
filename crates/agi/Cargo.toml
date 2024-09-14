@@ -1,5 +1,5 @@
 [package]
-name = "agirs"
+name = "asterisk-rs-agi"
 
 edition.workspace = true
 readme.workspace = true

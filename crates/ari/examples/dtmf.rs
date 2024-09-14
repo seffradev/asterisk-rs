@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use arirs::{Asterisk, Event};
+use asterisk_rs_ari::{Asterisk, Event};
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 

@@ -1,4 +1,4 @@
-use arirs::{Asterisk, Event, PlayMediaBaseParams, PlayMediaParams};
+use asterisk_rs_ari::{Asterisk, Event, PlayMediaBaseParams, PlayMediaParams};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 

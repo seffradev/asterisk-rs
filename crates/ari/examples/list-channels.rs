@@ -1,4 +1,4 @@
-use arirs::{AriClient, AriClientError};
+use asterisk_rs_ari::{AriClient, AriClientError};
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 

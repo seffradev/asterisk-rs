@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use arirs::{AriClient, AriClientError, OriginateChannelParams, OriginateParams};
+use asterisk_rs_ari::{AriClient, AriClientError, OriginateChannelParams, OriginateParams};
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 const APP_NAME: &str = "ari";
