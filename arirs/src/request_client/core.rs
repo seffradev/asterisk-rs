@@ -6,18 +6,18 @@ use url::Url;
 
 use crate::*;
 
-#[derive(Serialize)]
-pub struct AuthorizedRequest<'a, T> {
-    api_key: &'a str,
-    #[serde(flatten)]
-    inner: T,
-}
-
 #[derive(Debug, Getters)]
 pub struct RequestClient {
     url: Url,
     bearer: String,
     inner: reqwest::Client,
+}
+
+#[derive(Serialize)]
+struct AuthorizedRequest<'a, T> {
+    api_key: &'a str,
+    #[serde(flatten)]
+    inner: T,
 }
 
 impl RequestClient {
