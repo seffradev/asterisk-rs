@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use chrono::{DateTime, Duration};
+use chrono::DateTime;
 use derive_getters::Getters;
 use derive_more::Display;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize, Serializer};
 use serde_json::json;
 use tracing::{event, Level};
 use url::Url;
@@ -25,7 +25,37 @@ pub struct Channel {
     language: String,
 }
 
-#[derive(Debug)]
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OriginateChannelParams<'a> {
+    pub endpoint: &'a str,
+    pub params: OriginateParams<'a>,
+    pub caller_id: Option<&'a str>,
+    pub timeout: Option<u32>,
+    pub channel_id: Option<&'a str>,
+    pub other_channel_id: Option<&'a str>,
+    pub originator: Option<&'a str>,
+    #[serde(skip_serializing_if = "<[_]>::is_empty")]
+    #[serde(serialize_with = "join_serialize")]
+    pub formats: &'a [&'a str],
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OriginateChannelWithIdParams<'a> {
+    pub endpoint: &'a str,
+    pub params: OriginateParams<'a>,
+    pub caller_id: Option<&'a str>,
+    pub timeout: Option<u32>,
+    pub other_channel_id: Option<&'a str>,
+    pub originator: Option<&'a str>,
+    #[serde(skip_serializing_if = "<[_]>::is_empty")]
+    #[serde(serialize_with = "join_serialize")]
+    pub formats: &'a [&'a str],
+}
+
+#[derive(Debug, Serialize)]
+#[serde(untagged)]
 pub enum OriginateParams<'a> {
     Extension {
         extension: &'a str,
@@ -35,40 +65,63 @@ pub enum OriginateParams<'a> {
     },
     Application {
         app: &'a str,
-        app_args: Vec<&'a str>,
+        #[serde(skip_serializing_if = "<[_]>::is_empty")]
+        #[serde(serialize_with = "join_serialize")]
+        app_args: &'a [&'a str],
     },
 }
 
-#[derive(Debug, Display)]
-pub enum Reason {
-    #[display("{}", _0)]
-    Code(u16),
-    #[display("normal")]
-    Normal,
-    #[display("busy")]
-    Busy,
-    #[display("congestion")]
-    Congestion,
-    #[display("no_answer")]
-    NoAnswer,
-    #[display("timeout")]
-    Timeout,
-    #[display("rejected")]
-    Rejected,
-    #[display("unallocated")]
-    Unallocated,
-    #[display("normal_unspecified")]
-    NormalUnspecified,
-    #[display("number_incomplete")]
-    NumberIncomplete,
-    #[display("codec_mismatch")]
-    CodecMismatch,
-    #[display("interworking")]
-    Interworking,
-    #[display("failure")]
-    Failure,
-    #[display("answered_elsewhere")]
-    AnsweredElsewhere,
+pub use reason::Reason;
+mod reason {
+    use serde::ser::SerializeMap;
+    use strum::AsRefStr;
+
+    use super::*;
+
+    #[derive(Debug, AsRefStr)]
+    pub enum Reason {
+        Code(u16),
+        #[strum(serialize = "normal")]
+        Normal,
+        #[strum(serialize = "busy")]
+        Busy,
+        #[strum(serialize = "congestion")]
+        Congestion,
+        #[strum(serialize = "no_answer")]
+        NoAnswer,
+        #[strum(serialize = "timeout")]
+        Timeout,
+        #[strum(serialize = "rejected")]
+        Rejected,
+        #[strum(serialize = "unallocated")]
+        Unallocated,
+        #[strum(serialize = "normal_unspecified")]
+        NormalUnspecified,
+        #[strum(serialize = "number_incomplete")]
+        NumberIncomplete,
+        #[strum(serialize = "codec_mismatch")]
+        CodecMismatch,
+        #[strum(serialize = "interworking")]
+        Interworking,
+        #[strum(serialize = "failure")]
+        Failure,
+        #[strum(serialize = "answered_elsewhere")]
+        AnsweredElsewhere,
+    }
+
+    impl Serialize for Reason {
+        fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+        where
+            S: serde::Serializer,
+        {
+            let mut map = serializer.serialize_map(Some(1))?;
+            match self {
+                Reason::Code(code) => map.serialize_entry("reason_code", code)?,
+                _ => map.serialize_entry("reason", self.as_ref())?,
+            };
+            map.end()
+        }
+    }
 }
 
 #[derive(Debug, Display)]
@@ -79,28 +132,6 @@ pub enum Direction {
     Out,
     #[display("both")]
     Both,
-}
-
-#[derive(Debug, Display)]
-pub enum RecordingAction {
-    #[display("overwrite")]
-    Overwrite,
-    #[display("append")]
-    Append,
-    #[display("fail")]
-    Fail,
-}
-
-#[derive(Debug, Display)]
-pub enum RecordingTermination {
-    #[display("none")]
-    None,
-    #[display("any")]
-    Any,
-    #[display("*")]
-    Asterisk,
-    #[display("#")]
-    Octothorpe,
 }
 
 #[derive(Serialize, Deserialize, Debug, Getters)]
@@ -212,18 +243,97 @@ pub struct Dialplan {
     app_data: String,
 }
 
+#[derive(Serialize)]
+pub struct SendDtmfParams<'a> {
+    pub dtmf: &'a str,
+    /// in milliseconds
+    pub between: Option<u32>,
+    /// in milliseconds
+    pub duration: Option<u32>,
+    pub before: Option<u32>,
+    pub after: Option<u32>,
+}
+
+#[derive(Serialize)]
+pub struct PlayMediaParams<'a> {
+    pub media: &'a str,
+    pub lang: Option<&'a str>,
+    pub offset_ms: Option<u32>,
+    pub skip_ms: Option<u32>,
+    pub playback_id: Option<&'a str>,
+}
+
+#[derive(Serialize)]
+pub struct PlayMediaWithIdParams<'a> {
+    #[serde(serialize_with = "join_serialize")]
+    pub media: &'a [&'a str],
+    pub lang: Option<&'a str>,
+    pub offset_ms: Option<u32>,
+    pub skip_ms: Option<u32>,
+}
+
+fn join_serialize<S>(slice: &[&str], s: S) -> std::result::Result<S::Ok, S::Error>
+where
+    S: Serializer,
+{
+    s.serialize_str(&slice.join(","))
+}
+
+#[derive(Serialize)]
+pub struct RecordParams<'a> {
+    pub name: &'a str,
+    pub format: &'a str,
+    pub max_duration_seconds: Option<u32>,
+    pub max_silence_seconds: Option<u32>,
+    pub if_exists: RecordingAction,
+    pub beep: bool,
+    pub terminate_on: RecordingTermination,
+}
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RecordingAction {
+    Overwrite,
+    Append,
+    Fail,
+}
+#[derive(Debug, Serialize)]
+pub enum RecordingTermination {
+    None,
+    Any,
+    #[serde(rename = "*")]
+    Asterisk,
+    #[serde(rename = "#")]
+    Octothorpe,
+}
+
+#[derive(Serialize)]
+pub struct DialParams<'a> {
+    pub caller: Option<&'a str>,
+    pub timeout: Option<u32>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChannelCreateParams<'a> {
+    pub endpoint: &'a str,
+    pub app: &'a str,
+    #[serde(skip_serializing_if = "<[_]>::is_empty")]
+    #[serde(serialize_with = "join_serialize")]
+    pub app_args: &'a [&'a str],
+    pub channel_id: Option<&'a str>,
+    pub other_channel_id: Option<&'a str>,
+    pub originator: Option<&'a str>,
+    #[serde(skip_serializing_if = "<[_]>::is_empty")]
+    #[serde(serialize_with = "join_serialize")]
+    pub formats: &'a [&'a str],
+}
+
 impl RequestClient {
     pub async fn hangup(&self, channel_id: &str, reason: Reason) -> Result<()> {
         let mut url = self.url().join(&format!("channels/{}", channel_id))?;
-        let mut url = url.query_pairs_mut();
-        self.add_api_key(&mut url);
+        self.set_authorized_query_params(&mut url, reason);
 
-        match reason {
-            Reason::Code(_) => url.append_pair("reason_code", &format!("{}", reason)),
-            _ => url.append_pair("reason", &format!("{}", reason)),
-        };
-
-        reqwest::Client::new().delete(url.finish().to_owned()).send().await?;
+        reqwest::Client::new().delete(url).send().await?;
 
         event!(Level::INFO, "hung up channel with id {}", channel_id);
         Ok(())
@@ -271,34 +381,11 @@ impl RequestClient {
         Ok(())
     }
 
-    pub async fn send_dtmf(
-        &self,
-        channel_id: &str,
-        dtmf: &str,
-        before: Option<Duration>,
-        between: Option<Duration>,
-        duration: Option<Duration>,
-        after: Option<Duration>,
-    ) -> Result<()> {
+    pub async fn send_dtmf(&self, channel_id: &str, params: SendDtmfParams<'_>) -> Result<()> {
         let mut url = self.url().join(&format!("channels/{}/dtmf", channel_id))?;
-        let mut url = url.query_pairs_mut();
-        self.add_api_key(&mut url);
+        self.set_authorized_query_params(&mut url, params);
 
-        url.append_pair("dtmf", dtmf)
-            .append_pair("between", &between.map(|d| d.num_milliseconds()).unwrap_or(100).to_string())
-            .append_pair("duration", &duration.map(|d| d.num_milliseconds()).unwrap_or(100).to_string());
-
-        if let Some(before) = before {
-            url.append_pair("before", &before.num_milliseconds().to_string());
-        }
-
-        if let Some(after) = after {
-            url.append_pair("after", &after.num_milliseconds().to_string());
-        }
-
-        reqwest::Client::new().post(url.finish().to_owned()).send().await?;
-
-        event!(Level::INFO, "sent dtmf '{}' to channel with id {}", dtmf, channel_id);
+        reqwest::Client::new().post(url).send().await?;
 
         Ok(())
     }
@@ -377,142 +464,27 @@ impl RequestClient {
         unimplemented!()
     }
 
-    pub async fn play_media(
-        &self,
-        channel_id: &str,
-        media: &str,
-        lang: Option<&str>,
-        offset_ms: Option<u32>,
-        skip_ms: Option<u32>,
-        playback_id: Option<&str>,
-    ) -> Result<Playback> {
+    pub async fn play_media(&self, channel_id: &str, params: PlayMediaParams<'_>) -> Result<Playback> {
         let mut url = self.url().join(&format!("channels/{}/play", channel_id))?;
-        let mut url = url.query_pairs_mut();
-        self.add_api_key(&mut url);
-        url.append_pair("media", media);
+        self.set_authorized_query_params(&mut url, params);
 
-        if let Some(lang) = lang {
-            url.append_pair("lang", lang);
-        }
-
-        if let Some(offset_ms) = offset_ms {
-            url.append_pair("offset_ms", &offset_ms.to_string());
-        }
-
-        if let Some(skip_ms) = skip_ms {
-            url.append_pair("skip_ms", &skip_ms.to_string());
-        }
-
-        if let Some(playback_id) = playback_id {
-            url.append_pair("playback_id", playback_id);
-        }
-
-        let playback = reqwest::Client::new()
-            .post(url.finish().to_owned())
-            .send()
-            .await?
-            .json::<Playback>()
-            .await?;
-
-        event!(
-            Level::INFO,
-            "started media playback with id {} on channel with id {}",
-            playback.id,
-            channel_id
-        );
-
+        let playback = reqwest::Client::new().post(url).send().await?.json::<Playback>().await?;
         Ok(playback)
     }
 
-    pub async fn play_media_with_id(
-        &self,
-        channel_id: &str,
-        playback_id: &str,
-        media: Vec<&str>,
-        lang: Option<&str>,
-        offset_ms: Option<u32>,
-        skip_ms: Option<u32>,
-    ) -> Result<Playback> {
+    pub async fn play_media_with_id(&self, channel_id: &str, playback_id: &str, params: PlayMediaWithIdParams<'_>) -> Result<Playback> {
         let mut url = self.url().join(&format!("channels/{}/play/{}/media", channel_id, playback_id))?;
+        self.set_authorized_query_params(&mut url, params);
 
-        let mut url = url.query_pairs_mut();
-        self.add_api_key(&mut url);
-        let media = media.join(",");
-        url.append_pair("media", &media);
-
-        if let Some(lang) = lang {
-            url.append_pair("lang", lang);
-        }
-
-        if let Some(offset_ms) = offset_ms {
-            url.append_pair("offset_ms", &offset_ms.to_string());
-        }
-
-        if let Some(skip_ms) = skip_ms {
-            url.append_pair("skip_ms", &skip_ms.to_string());
-        }
-
-        let playback = reqwest::Client::new()
-            .post(url.finish().to_owned())
-            .send()
-            .await?
-            .json::<Playback>()
-            .await?;
-
-        event!(
-            Level::INFO,
-            "started media playback with id {} on channel with id {}",
-            playback.id,
-            channel_id
-        );
-
+        let playback = reqwest::Client::new().post(url).send().await?.json().await?;
         Ok(playback)
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub async fn record(
-        &self,
-        channel_id: &str,
-        name: &str,
-        format: &str,
-        max_duration_seconds: Option<u32>,
-        max_silence_seconds: Option<u32>,
-        if_exists: RecordingAction,
-        beep: bool,
-        terminate_on: RecordingTermination,
-    ) -> Result<LiveRecording> {
+    pub async fn record(&self, channel_id: &str, params: RecordParams<'_>) -> Result<LiveRecording> {
         let mut url = self.url().join(&format!("channels/{}/record", channel_id))?;
-        let mut url = url.query_pairs_mut();
-        self.add_api_key(&mut url);
+        self.set_authorized_query_params(&mut url, params);
 
-        url.append_pair("name", name)
-            .append_pair("format", format)
-            .append_pair("if_exists", &format!("{}", if_exists))
-            .append_pair("beep", &beep.to_string())
-            .append_pair("terminate_on", &format!("{}", terminate_on));
-
-        if let Some(max_duration_seconds) = max_duration_seconds {
-            url.append_pair("max_duration_seconds", &max_duration_seconds.to_string());
-        }
-
-        if let Some(max_silence_seconds) = max_silence_seconds {
-            url.append_pair("max_silence_seconds", &max_silence_seconds.to_string());
-        }
-
-        let recording = reqwest::Client::new()
-            .post(url.finish().to_owned())
-            .send()
-            .await?
-            .json::<LiveRecording>()
-            .await?;
-
-        event!(
-            Level::INFO,
-            "started recording with id {} on channel with id {}",
-            recording.id,
-            channel_id
-        );
-
+        let recording = reqwest::Client::new().post(url).send().await?.json().await?;
         Ok(recording)
     }
 
@@ -524,22 +496,11 @@ impl RequestClient {
         unimplemented!()
     }
 
-    pub async fn dial(&self, channel_id: &str, caller_id: Option<&str>, timeout: Option<u32>) -> Result<()> {
+    pub async fn dial(&self, channel_id: &str, params: DialParams<'_>) -> Result<()> {
         let mut url = self.url().join(&format!("channels/{}/dial", channel_id))?;
-        let mut url = url.query_pairs_mut();
-        self.add_api_key(&mut url);
+        self.set_authorized_query_params(&mut url, params);
 
-        if let Some(caller_id) = caller_id {
-            url.append_pair("callerId", caller_id);
-        }
-
-        if let Some(timeout) = timeout {
-            url.append_pair("timeout", &timeout.to_string());
-        }
-
-        reqwest::Client::new().post(url.finish().to_owned()).send().await?;
-
-        event!(Level::INFO, "dialed channel with id {}", channel_id);
+        reqwest::Client::new().post(url).send().await?;
         Ok(())
     }
 
@@ -557,58 +518,20 @@ impl RequestClient {
         Ok(channels)
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub async fn create(
-        &self,
-        endpoint: &str,
-        app: &str,
-        app_args: Vec<&str>,
-        channel_id: Option<&str>,
-        other_channel_id: Option<&str>,
-        originator: Option<&str>,
-        formats: Vec<&str>,
-        variables: HashMap<&str, &str>,
-    ) -> Result<Channel> {
+    pub async fn create(&self, params: ChannelCreateParams<'_>, variables: &HashMap<&str, &str>) -> Result<Channel> {
         let mut url = self.url().join("channels")?;
-        let mut url = url.query_pairs_mut();
-        self.add_api_key(&mut url);
-        url.append_pair("endpoint", endpoint).append_pair("app", app);
-
-        if !formats.is_empty() {
-            let formats = formats.join(",");
-            url.append_pair("formats", &formats);
-        }
-
-        if !app_args.is_empty() {
-            let app_args = app_args.join(",");
-            url.append_pair("app_args", &app_args);
-        }
-
-        if let Some(channel_id) = channel_id {
-            url.append_pair("channel_id", channel_id);
-        }
-
-        if let Some(other_channel_id) = other_channel_id {
-            url.append_pair("other_channel_id", other_channel_id);
-        }
-
-        if let Some(originator) = originator {
-            url.append_pair("originator", originator);
-        }
-
-        let body = json!({
-            "variables": variables
-        });
+        self.set_authorized_query_params(&mut url, params);
 
         let channel = reqwest::Client::new()
-            .post(url.finish().to_owned())
-            .json(&body)
+            .post(url)
+            .json(&json!({
+                "variables": variables
+            }))
             .send()
             .await?
-            .json::<Channel>()
+            .json()
             .await?;
 
-        event!(Level::INFO, "created channel with id {}", channel.id);
         Ok(channel)
     }
 
@@ -626,175 +549,43 @@ impl RequestClient {
         Ok(channel)
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub async fn originate<'a>(
-        &self,
-        endpoint: &str,
-        params: OriginateParams<'a>,
-        caller_id: Option<&str>,
-        timeout: Option<u32>,
-        channel_id: Option<&str>,
-        other_channel_id: Option<&str>,
-        originator: Option<&str>,
-        formats: Vec<&str>,
-        variables: HashMap<&str, &str>,
-    ) -> Result<Channel> {
+    pub async fn originate<'a>(&self, params: OriginateChannelParams<'a>, variables: &HashMap<&str, &str>) -> Result<Channel> {
         let mut url = self.url().join("channels")?;
-        let mut url = url.query_pairs_mut();
-        self.add_api_key(&mut url);
 
-        url.append_pair("endpoint", endpoint)
-            .append_pair("timeout", &timeout.unwrap_or(30).to_string());
-
-        if !formats.is_empty() {
-            let formats = formats.join(",");
-            url.append_pair("formats", &formats);
-        }
-
-        match params {
-            OriginateParams::Extension {
-                extension,
-                context,
-                priority,
-                label,
-            } => {
-                url.append_pair("extension", extension);
-
-                if let Some(context) = context {
-                    url.append_pair("context", context);
-                }
-
-                if let Some(priority) = priority {
-                    url.append_pair("priority", &priority.to_string());
-                }
-
-                if let Some(label) = label {
-                    url.append_pair("label", label);
-                }
-            }
-            OriginateParams::Application { app, app_args } => {
-                url.append_pair("app", app);
-
-                if !app_args.is_empty() {
-                    let app_args = app_args.join(",");
-                    url.append_pair("app_args", &app_args);
-                }
-            }
-        }
-
-        if let Some(caller_id) = caller_id {
-            url.append_pair("callerId", caller_id);
-        }
-
-        if let Some(channel_id) = channel_id {
-            url.append_pair("channel_id", channel_id);
-        }
-
-        if let Some(other_channel_id) = other_channel_id {
-            url.append_pair("other_channel_id", other_channel_id);
-        }
-
-        if let Some(originator) = originator {
-            url.append_pair("originator", originator);
-        }
-
-        let body = json!({
-            "variables": variables
-        });
+        self.set_authorized_query_params(&mut url, params);
 
         let channel = reqwest::Client::new()
-            .post(url.finish().to_owned())
-            .json(&body)
+            .post(url)
+            .json(&json!({
+                "variables": variables
+            }))
             .send()
             .await?
-            .json::<Channel>()
+            .json()
             .await?;
 
-        event!(Level::INFO, "originated channel with id {}", channel.id);
         Ok(channel)
     }
 
-    #[allow(clippy::too_many_arguments)]
     pub async fn originate_with_id<'a>(
         &self,
         channel_id: &str,
-        endpoint: &str,
-        params: OriginateParams<'a>,
-        caller_id: Option<&str>,
-        timeout: Option<u32>,
-        other_channel_id: Option<&str>,
-        originator: Option<&str>,
-        formats: Vec<&str>,
-        variables: HashMap<&str, &str>,
+        params: OriginateChannelWithIdParams<'a>,
+        variables: &HashMap<&str, &str>,
     ) -> Result<Channel> {
         let mut url = self.url().join(&format!("channels/{}", channel_id))?;
-        let mut url = url.query_pairs_mut();
-        self.add_api_key(&mut url);
-
-        url.append_pair("endpoint", endpoint)
-            .append_pair("timeout", &timeout.unwrap_or(30).to_string());
-
-        if !formats.is_empty() {
-            let formats = formats.join(",");
-            url.append_pair("formats", &formats);
-        }
-
-        match params {
-            OriginateParams::Extension {
-                extension,
-                context,
-                priority,
-                label,
-            } => {
-                url.append_pair("extension", extension);
-
-                if let Some(context) = context {
-                    url.append_pair("context", context);
-                }
-
-                if let Some(priority) = priority {
-                    url.append_pair("priority", &priority.to_string());
-                }
-
-                if let Some(label) = label {
-                    url.append_pair("label", label);
-                }
-            }
-            OriginateParams::Application { app, app_args } => {
-                url.append_pair("app", app);
-
-                if !app_args.is_empty() {
-                    let app_args = app_args.join(",");
-                    url.append_pair("app_args", &app_args);
-                }
-            }
-        }
-
-        if let Some(caller_id) = caller_id {
-            url.append_pair("callerId", caller_id);
-        }
-
-        if let Some(other_channel_id) = other_channel_id {
-            url.append_pair("otherChannelId", other_channel_id);
-        }
-
-        if let Some(originator) = originator {
-            url.append_pair("originator", originator);
-        }
-
-        let body = json!({
-            "variables": variables
-        });
+        self.set_authorized_query_params(&mut url, params);
 
         let channel = reqwest::Client::new()
-            .post(url.finish().to_owned())
-            .json(&body)
+            .post(url)
+            .json(&json!({
+                "variables": variables
+            }))
             .send()
             .await?
-            .json::<Channel>()
+            .json()
             .await?;
 
-        event!(Level::INFO, "originated channel with id {}", channel_id);
         Ok(channel)
     }
 
@@ -822,5 +613,35 @@ impl RequestClient {
 
     pub fn start_external_media(&self, _channel_id: &str) -> Result<Channel> {
         unimplemented!()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn serializes_parameters() {
+        let request_client = RequestClient {
+            url: "http://localhost:8080/".parse().unwrap(),
+            username: "asterisk".to_string(),
+            password: "asterisk".to_string(),
+        };
+
+        let mut url = request_client.url().join("channel").unwrap();
+
+        request_client.set_authorized_query_params(
+            &mut url,
+            PlayMediaParams {
+                media: "sound:hello",
+                lang: Some("en"),
+                offset_ms: None,
+                skip_ms: None,
+                playback_id: None,
+            },
+        );
+
+        let expected = "http://localhost:8080/channel?api_key=asterisk%3Aasterisk&media=sound%3Ahello&lang=en";
+        assert_eq!(expected, url.as_str())
     }
 }

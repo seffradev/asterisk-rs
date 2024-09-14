@@ -1,4 +1,4 @@
-use arirs::{Client, Event};
+use arirs::{Client, Event, PlayMediaParams};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -9,10 +9,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (request_client, mut event_listener) = Client::connect("http://localhost:8088/", "asterisk", "asterisk", "ari").await?;
 
     while let Some(event) = event_listener.recv().await {
-        if let Event::StasisStart(e) = event {
-            let channel = e.channel();
+        if let Event::StasisStart(event) = event {
             request_client
-                .play_media(channel.id(), "sound:hello", Some("en"), None, None, None)
+                .play_media(
+                    event.channel().id(),
+                    PlayMediaParams {
+                        media: "sound:hello",
+                        lang: Some("en"),
+                        offset_ms: None,
+                        skip_ms: None,
+                        playback_id: None,
+                    },
+                )
                 .await?;
         }
     }
