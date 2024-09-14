@@ -19,8 +19,8 @@ strum = { version = "0.26", features = ["derive"] }
 thiserror = "1.0.63"
 tokio = { version = "1.40.0", features = ["full"] }
 tokio-tungstenite = "0.23.1"
-tracing = { version = "0.1.40", features = ["attributes"] }
 url = "2.5.2"
 
 [dev-dependencies]
+tracing = { version = "0.1.40", features = ["attributes"] }
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

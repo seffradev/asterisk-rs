@@ -4,7 +4,6 @@ use futures_util::{SinkExt, StreamExt};
 use rand::Rng;
 use tokio::{sync::mpsc::UnboundedReceiver, task::JoinHandle, time::interval};
 use tokio_tungstenite::{connect_async, tungstenite};
-use tracing::{event, Level};
 use url::Url;
 
 use crate::*;
@@ -12,9 +11,26 @@ use crate::*;
 pub struct Client;
 
 impl Client {
-    /// Create a new client
+    /// Create a new Asterisk ARI client
     ///
-    /// `url` should end in `/`, `ari/` will be appended to it.
+    /// Spawns a [`tokio::task`] that connects to the Asterisk
+    /// WebSocket endpoint to immideatedly listen to incoming [`Event`]
+    /// (`crate::Event`)s. These may be listened to by polling the returned
+    /// [`tokio::sync::mpsc::UnboundedReceiver`] stream.
+    ///
+    // IMPROVEMENT: return differentiable errors for the respective cases
+    /// Event listener task is aborted if the listener stream is dropped,
+    /// or when WebSocket connection toward the Asterisk is dropped, be it
+    /// gracefully or unintentionally.
+    ///
+    /// # Arguments
+    ///
+    /// - `url` should end in `/`, `ari/` will be appended to it.
+    ///
+    /// # Panics
+    ///
+    /// - If called outside a Tokio runtime.
+    /// - If if the library fails to deserialize incoming asterisk messages
     pub async fn connect(
         url: impl AsRef<str>,
         app_name: impl AsRef<str>,
@@ -64,28 +80,27 @@ impl Client {
                                 let message = message?;
                                 match message {
                                     tungstenite::Message::Text(_) => {
-                                        if let Err(e) = tx.send(serde_json::from_slice(message.into_data().as_slice()).map_err(|err| AriError::Unknown(err.to_string()))?) {
-                                            event!(Level::ERROR, "Error sending event: {}", e);
+                                        let event_result = serde_json::from_slice(message.into_data().as_slice())
+                                            .expect("failed to deserialize asterisk event");
+                                        if tx.send(event_result).is_err() {
+                                            // Assume that tx has been dropped
+                                            break;
                                         }
                                     }
-                                    tungstenite::Message::Ping(data) => {
-                                        event!(Level::TRACE, "Received WebSocket Ping, sending Pong");
-                                        ws_sender.send(tungstenite::Message::Pong(data)).await?;
-                                    }
-                                    tungstenite::Message::Pong(_) => {
-                                        event!(Level::TRACE, "Received WebSocket Pong");
-                                    },
-                                    tungstenite::Message::Close(frame) => {
-                                        event!(Level::INFO, "WebSocket closed: {:?}", frame);
+                                    tungstenite::Message::Ping(data) => { ws_sender.send(tungstenite::Message::Pong(data)).await?; }
+                                    tungstenite::Message::Pong(_) => { },
+                                    tungstenite::Message::Close(_frame) => {
                                         break;
                                     },
-                                    _ => {
-                                        event!(Level::INFO, "Unknown WebSocket message");
+                                    tungstenite::Message::Frame(_) => {
+                                        unreachable!("raw frame not supposed to be received when reading incoming messages")
+                                    }
+                                    tungstenite::Message::Binary(_) => {
+                                        unreachable!("asterisk should send data marked using text payloads")
                                     }
                                 }
                             }
                             None => {
-                                tracing::error!("WebSocket closed");
                                 break;
                             }
                         }
@@ -94,8 +109,9 @@ impl Client {
                         // every 5 seconds we are sending ping to keep connection alive
                         // https://rust-lang-nursery.github.io/rust-cookbook/algorithms/randomness.html
                         let random_bytes = rand::thread_rng().gen::<[u8; 32]>().to_vec();
-                        let _ = ws_sender.send(tungstenite::Message::Ping(random_bytes)).await;
-                        event!(Level::DEBUG, "ARI connection ping sent");
+                        if ws_sender.send(tungstenite::Message::Ping(random_bytes)).await.is_err() {
+                            break;
+                        }
                     }
                 }
             }
