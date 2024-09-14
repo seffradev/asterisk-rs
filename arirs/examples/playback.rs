@@ -11,7 +11,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     while let Some(event) = event_listener.recv().await {
         if let Event::StasisStart(event) = event {
             request_client
-                .play_media(
+                .channel_play_media(
                     event.channel().id(),
                     PlayMediaParams {
                         playback_id: None,

@@ -28,7 +28,7 @@ async fn main() -> Result<()> {
         formats: &["alaw,ulaw"],
     };
 
-    client.originate(originate_params, &HashMap::new()).await?;
+    client.channel_originate(originate_params, &HashMap::new()).await?;
 
     Ok(())
 }

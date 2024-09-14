@@ -11,7 +11,7 @@ async fn main() -> Result<()> {
 
     let client = RequestClient::default();
 
-    for channel in client.list().await? {
+    for channel in client.channel_list().await? {
         debug!("Channel ID: {}", channel.id());
     }
 
