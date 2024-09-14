@@ -23,13 +23,13 @@ impl RequestClient {
     }
 
     pub(crate) async fn authorized_get<T: Serialize, R: DeserializeOwned>(&self, path: impl AsRef<[&str]>, params: T) -> Result<R> {
-        let url = self.authorized_url(path, params)?;
+        let url = self.authorized_url(path, params);
         let response = self.inner.get(url).send().await?.json().await?;
         Ok(response)
     }
 
     pub(crate) async fn authorized_post<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {
-        let url = self.authorized_url(path, params)?;
+        let url = self.authorized_url(path, params);
         self.inner.post(url).send().await?;
         Ok(())
     }
@@ -39,7 +39,7 @@ impl RequestClient {
         path: impl AsRef<[&str]>,
         params: T,
     ) -> Result<R> {
-        let url = self.authorized_url(path, params)?;
+        let url = self.authorized_url(path, params);
         let response = self.inner.post(url).send().await?.json().await?;
         Ok(response)
     }
@@ -50,7 +50,7 @@ impl RequestClient {
         params: T,
         variables: &HashMap<&str, &str>,
     ) -> Result<R> {
-        let url = self.authorized_url(path, params)?;
+        let url = self.authorized_url(path, params);
         let response = self
             .inner
             .post(url)
@@ -65,13 +65,13 @@ impl RequestClient {
     }
 
     pub(crate) async fn authorized_delete<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {
-        let url = self.authorized_url(path, params)?;
+        let url = self.authorized_url(path, params);
         self.inner.delete(url).send().await?;
         Ok(())
     }
 
-    fn authorized_url<'a, T: Serialize>(&self, path: impl AsRef<[&'a str]>, params: T) -> std::result::Result<Url, url::ParseError> {
-        Authorization::build_url(&self.url, path, &self.api_key, params)
+    fn authorized_url<'a, T: Serialize>(&self, path: impl AsRef<[&'a str]>, params: T) -> Url {
+        Authorization::build_url(&self.url, path, &self.api_key, params).expect("failed to create internally built url")
     }
 }
 
