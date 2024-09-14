@@ -8,4 +8,4 @@ mod authorization;
 pub(crate) use authorization::Authorization;
 
 mod event;
-pub use event::Event;
+pub use event::AsteriskEvent;

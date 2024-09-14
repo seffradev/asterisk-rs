@@ -1,4 +1,4 @@
-use asterisk_rs_ari::{Asterisk, Event, PlayMediaBaseParams, PlayMediaParams};
+use asterisk_rs_ari::{Asterisk, AsteriskEvent, PlayMediaBaseParams, PlayMediaParams};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -9,7 +9,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (request_client, mut event_listener) = Asterisk::connect("http://localhost:8088/", "asterisk", "asterisk", "ari").await?;
 
     while let Some(event) = event_listener.recv().await {
-        if let Event::StasisStart(event) = event {
+        if let AsteriskEvent::StasisStart(event) = event {
             request_client
                 .channel_play_media(
                     event.channel().id(),

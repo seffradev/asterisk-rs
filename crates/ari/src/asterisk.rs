@@ -26,7 +26,7 @@ impl Asterisk {
     /// Connect to the Asterisk, return an ARI request client and an WebSocket event stream.
     ///
     /// Spawns a [`tokio::task`] that connects to the Asterisk
-    /// WebSocket endpoint to immideatedly listen to incoming [`Event`]
+    /// WebSocket endpoint to immideatedly listen to incoming [`AsteriskEvent`]
     /// (`crate::Event`)s. These may be listened to by polling the returned
     /// [`tokio::sync::mpsc::UnboundedReceiver`] stream.
     ///
@@ -47,7 +47,7 @@ impl Asterisk {
         app_name: impl AsRef<str>,
         username: impl AsRef<str>,
         password: impl AsRef<str>,
-    ) -> Result<(AriClient, UnboundedReceiver<Event>), AsteriskError> {
+    ) -> Result<(AriClient, UnboundedReceiver<AsteriskEvent>), AsteriskError> {
         let url = url.as_ref().parse::<Url>()?.join("ari/")?;
 
         let api_key = Authorization::api_key(username.as_ref(), password.as_ref());
@@ -91,7 +91,7 @@ impl Asterisk {
         Ok(ws_url)
     }
 
-    async fn connect_ws(ws_url: &Url) -> Result<UnboundedReceiver<Event>, AsteriskError> {
+    async fn connect_ws(ws_url: &Url) -> Result<UnboundedReceiver<AsteriskEvent>, AsteriskError> {
         let (tx, rx) = tokio::sync::mpsc::unbounded_channel();
         let (ws_stream, _) = connect_async(ws_url).await.map_err(AsteriskError::WebSocketConnect)?;
 

@@ -23,6 +23,7 @@ strip = "debuginfo"
 [workspace.dependencies]
 chrono = "0.4"
 derive-getters = "0.5"
+derive_more = "1.0"
 futures-channel = "0.3"
 futures-util = "0.3"
 rand = "0.8"

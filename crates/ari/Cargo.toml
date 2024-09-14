@@ -8,6 +8,7 @@ version.workspace = true
 [dependencies]
 chrono = { workspace = true, features = ["serde"] }
 derive-getters.workspace = true
+derive_more = { workspace = true, features = ["deref"] }
 futures-channel.workspace = true
 futures-util.workspace = true
 rand.workspace = true

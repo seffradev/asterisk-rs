@@ -1,6 +1,6 @@
 use std::sync::{Arc, Mutex};
 
-use asterisk_rs_ari::{Asterisk, Event};
+use asterisk_rs_ari::{Asterisk, AsteriskEvent};
 use tracing::debug;
 use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -17,11 +17,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     while let Some(event) = event_listener.recv().await {
         match event {
-            Event::ChannelDtmfReceived(event) => {
+            AsteriskEvent::ChannelDtmfReceived(event) => {
                 debug!("Received DTMF: {}", event.digit());
                 dtmf_buffer.lock().unwrap().push_str(event.digit());
             }
-            Event::StasisEnd(_) => {
+            AsteriskEvent::StasisEnd(_) => {
                 debug!("Stasis ended, DTMF buffer: {}", dtmf_buffer.lock().unwrap());
                 dtmf_buffer.lock().unwrap().clear();
             }
