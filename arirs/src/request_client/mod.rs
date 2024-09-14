@@ -35,6 +35,12 @@ mod core {
             }
         }
 
+        pub(crate) async fn authorized_get<T: Serialize, R: DeserializeOwned>(&self, path: impl AsRef<[&str]>, params: T) -> Result<R> {
+            let url = self.authorized_url(path, params)?;
+            let response = self.as_ref().get(url).send().await?.json().await?;
+            Ok(response)
+        }
+
         pub(crate) async fn authorized_post<T: Serialize>(&self, path: impl AsRef<[&str]>, params: T) -> Result<()> {
             let url = self.authorized_url(path, params)?;
             self.as_ref().post(url).send().await?;

@@ -378,11 +378,7 @@ impl RequestClient {
     }
 
     pub async fn list(&self) -> Result<Vec<Channel>> {
-        let mut url = self.url().join("channels")?;
-        self.set_authorized_query_params(&mut url, ());
-
-        let channels = self.as_ref().get(url).send().await?.json().await?;
-        Ok(channels)
+        self.authorized_get(["channels"], ()).await
     }
 
     pub async fn create(&self, params: ChannelCreateParams<'_>, variables: &HashMap<&str, &str>) -> Result<Channel> {
@@ -390,16 +386,7 @@ impl RequestClient {
     }
 
     pub async fn get(self, channel_id: &str) -> Result<Channel> {
-        let url = self
-            .url()
-            .join(&format!("channels/{}", channel_id))?
-            .query_pairs_mut()
-            .append_pair("api_key", &self.get_api_key())
-            .finish()
-            .to_owned();
-
-        let channel = reqwest::get(url).await?.json::<Channel>().await?;
-        Ok(channel)
+        self.authorized_get(["channels", channel_id], ()).await
     }
 
     pub async fn originate<'a>(&self, params: OriginateChannelParams<'a>, variables: &HashMap<&str, &str>) -> Result<Channel> {
