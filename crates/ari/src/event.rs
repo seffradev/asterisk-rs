@@ -8,7 +8,7 @@ use crate::*;
 #[derive(Debug, Deserialize)]
 #[serde(tag = "type")]
 pub enum AsteriskEvent {
-    StasisStart(Event<StasisStart>),
+    StasisStart(Box<Event<StasisStart>>),
     StasisEnd(Event<StasisEnd>),
     ChannelCreated(Event<ChannelCreated>),
     ChannelDestroyed(Event<ChannelDestroyed>),
@@ -39,6 +39,7 @@ pub struct Event<D> {
 pub struct StasisStart {
     args: Vec<String>,
     channel: Channel,
+    replace_channel: Option<Channel>,
 }
 
 #[derive(Debug, Deserialize, Getters)]
