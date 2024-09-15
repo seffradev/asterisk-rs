@@ -1,0 +1,8 @@
+[package]
+name = "asterisk-rs-agi"
+
+edition.workspace = true
+readme.workspace = true
+version.workspace = true
+
+[dependencies]
