@@ -1,0 +1,8 @@
+[package]
+name = "asterisk-rs-ami"
+
+edition.workspace = true
+readme.workspace = true
+version.workspace = true
+
+[dependencies]

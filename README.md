@@ -2,14 +2,14 @@
 
 An Asterisk Library in Rust
 
-## arirs
+## `asterisk-rs-ari`
 
 A crate for Asterisk REST Interface tooling
 
-## amirs
+## `asterisk-rs-ami`
 
 A crate for Asterisk Management Interface tooling
 
-## agirs
+## `asterisk-rs-agi`
 
 A crate for Asterisk Gateway Interface tooling

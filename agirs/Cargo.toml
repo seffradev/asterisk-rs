@@ -1,6 +1,0 @@
-[package]
-edition = "2021"
-name = "agirs"
-version = "0.1.0"
-
-[dependencies]
