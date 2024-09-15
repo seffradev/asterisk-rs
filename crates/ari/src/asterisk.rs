@@ -34,10 +34,6 @@ impl Asterisk {
     /// when WebSocket connection toward the Astbrisk is dropped, be it
     /// gracefully or unintentionally. But also when any
     ///
-    /// # Arguments
-    ///
-    /// - `url` should end in `/`, `ari/` will be appended to it.
-    ///
     /// # Panics
     ///
     /// - If called outside a Tokio runtime.
@@ -48,17 +44,29 @@ impl Asterisk {
         username: impl AsRef<str>,
         password: impl AsRef<str>,
     ) -> Result<(AriClient, UnboundedReceiver<AsteriskEvent>), AsteriskError> {
-        let url = url.as_ref().parse::<Url>()?.join("ari/")?;
+        let url = Self::build_base_url(url.as_ref())?;
 
         let api_key = Authorization::api_key(username.as_ref(), password.as_ref());
 
         let ws_url = Self::build_ws_url(&url, &api_key, app_name.as_ref())?;
 
-        let request_client = AriClient::new(url, api_key);
+        let request_client = AriClient::new_with_api_key(url, api_key);
 
         let event_listener = Self::connect_ws(&ws_url).await?;
 
         Ok((request_client, event_listener))
+    }
+
+    pub(crate) fn build_base_url(url_str: &str) -> Result<Url, AsteriskError> {
+        // Prevents `ari/` joins to site.com/example/some/path to resolve to `site.com/ari/`
+        let url: Url = match url_str.ends_with('/') {
+            true => url_str.parse(),
+            false => format!("{}/", url_str).parse(),
+        }?;
+
+        let url = url.join("ari/")?;
+
+        Ok(url)
     }
 
     fn build_ws_url(base_url: &Url, api_key: &str, app_name: &str) -> Result<Url, AsteriskError> {

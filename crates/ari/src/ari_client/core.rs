@@ -21,7 +21,18 @@ pub enum AriClientError {
 }
 
 impl AriClient {
-    pub(crate) fn new(url: Url, api_key: String) -> Self {
+    /// Create a new client without connecting to a WebSocket as in [`Asterisk::connect`]
+    ///
+    /// # Parameters
+    /// - `url` is automatically appended with `/ari`
+    pub fn new(url: Url, username: impl AsRef<str>, password: impl AsRef<str>) -> Self {
+        let base_url = Asterisk::build_base_url(url.as_str()).expect("malformed URL parameter");
+        let api_key = Authorization::api_key(username.as_ref(), password.as_ref());
+        Self::new_with_api_key(base_url, api_key)
+    }
+
+    /// Expects URL to end in `ari/`
+    pub(crate) fn new_with_api_key(url: Url, api_key: String) -> Self {
         Self {
             url,
             api_key,
@@ -83,14 +94,5 @@ impl AriClient {
 
     fn authorized_url<'a, T: Serialize>(&self, path: impl AsRef<[&'a str]>, params: T) -> Url {
         Authorization::build_url(&self.url, path, &self.api_key, params).expect("failed to create internally built url")
-    }
-}
-
-impl Default for AriClient {
-    fn default() -> Self {
-        Self::new(
-            "http://localhost:8088/".parse().expect("failed to parse url"),
-            Authorization::api_key("asterisk", "asterisk"),
-        )
     }
 }

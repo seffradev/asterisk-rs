@@ -12,7 +12,7 @@ async fn main() -> Result<(), AriClientError> {
         .with(EnvFilter::from_default_env())
         .init();
 
-    let client = AriClient::default();
+    let client = AriClient::new("http://localhost:8088".parse().unwrap(), "asterisk", "asterisk");
 
     let originate_params = OriginateChannelParams {
         endpoint: "PJSIP/1000",

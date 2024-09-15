@@ -9,7 +9,7 @@ async fn main() -> Result<(), AriClientError> {
         .with(EnvFilter::from_default_env())
         .init();
 
-    let client = AriClient::default();
+    let client = AriClient::new("http://localhost:8088".parse().unwrap(), "asterisk", "asterisk");
 
     for channel in client.channel_list().await? {
         debug!("Channel ID: {}", channel.id());
