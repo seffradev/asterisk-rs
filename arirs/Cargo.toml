@@ -9,7 +9,7 @@ version = "0.1.0"
 chrono = { version = "0.4.38", features = ["serde"] }
 derive_more = { version = "1.0.0", features = ["display"] }
 futures-channel = "0.3.30"
-futures-util = "0.3.30"
+futures-util = "0.3.31"
 rand = "0.8.5"
 reqwest = { version = "0.12.7", features = ["json"] }
 serde = { version = "1.0.210", features = ["derive"] }
