@@ -160,7 +160,7 @@ impl Client {
                 _ = interval.tick() => {
                     // every 5 seconds we are sending ping to keep connection alive
                     // https://rust-lang-nursery.github.io/rust-cookbook/algorithms/randomness.html
-                    let random_bytes = rand::thread_rng().gen::<[u8; 32]>().to_vec();
+                    let random_bytes = rand::rng().random::<[u8; 32]>().to_vec();
                     let _ = ws_sender.send(tungstenite::Message::Ping(random_bytes.into())).await;
                     event!(Level::DEBUG, "ARI connection ping sent");
                 }
