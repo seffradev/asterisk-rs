@@ -133,7 +133,7 @@ impl Client {
                             match message {
                                 tungstenite::Message::Text(_) => {
                                     event!(Level::INFO, "Received WebSocket Text");
-                                    self.handle_message(message.into_data());
+                                    self.handle_message(message.into_data().into());
                                 }
                                 tungstenite::Message::Ping(data) => {
                                     event!(Level::INFO, "Received WebSocket Ping, sending Pong");
@@ -161,7 +161,7 @@ impl Client {
                     // every 5 seconds we are sending ping to keep connection alive
                     // https://rust-lang-nursery.github.io/rust-cookbook/algorithms/randomness.html
                     let random_bytes = rand::thread_rng().gen::<[u8; 32]>().to_vec();
-                    let _ = ws_sender.send(tungstenite::Message::Ping(random_bytes)).await;
+                    let _ = ws_sender.send(tungstenite::Message::Ping(random_bytes.into())).await;
                     event!(Level::DEBUG, "ARI connection ping sent");
                 }
             }
