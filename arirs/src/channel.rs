@@ -40,7 +40,6 @@ pub enum OriginateParams<'a> {
 
 #[derive(Debug, Display)]
 pub enum Reason {
-    #[display("{}", _0)]
     Code(u16),
     #[display("normal")]
     Normal,
