@@ -15,7 +15,7 @@ jobs:
     - name: Checkout sources
       uses: actions/checkout@v5
     - name: Get python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
     - name: Run pre-commit check
       uses: pre-commit/action@v3.0.1
       with:
