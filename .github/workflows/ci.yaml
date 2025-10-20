@@ -28,7 +28,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Assert conventional commit usage
-        uses: oknozor/cocogitto-action@v3
+        uses: oknozor/cocogitto-action@v4
   spell-check:
     name: Spell Checking
     runs-on: ubuntu-latest
