@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: Get python
       uses: actions/setup-python@v6
     - name: Run pre-commit check
@@ -34,7 +34,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout sources
-      uses: actions/checkout@v6
+      uses: actions/checkout@v7
     - name: typos
       uses: crate-ci/typos@master
   broken-url-check:
@@ -42,7 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Run lychee
         uses: lycheeverse/lychee-action@v2.8.0
         with:
@@ -54,7 +54,7 @@ jobs:
       image: tamasfe/taplo:0.8.0
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: taplo lint
         run: taplo lint
   toml-format-check:
@@ -64,7 +64,7 @@ jobs:
       image: tamasfe/taplo:0.8.0
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: taplo fmt
         run: taplo fmt --check --diff
   rust-format-check:
@@ -72,7 +72,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build setup
         uses: ./.github/actions/build-setup
       - name: cargo fmt
@@ -82,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build setup
         uses: ./.github/actions/build-setup
       - name: Run clippy
@@ -92,7 +92,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build setup
         uses: ./.github/actions/build-setup
       - name: Run cargo doc
@@ -103,7 +103,7 @@ jobs:
     name: Dependency Auditing
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
       - uses: taiki-e/install-action@cargo-deny
       - name: Vulnerability scanning
         run: cargo deny check advisories
@@ -112,7 +112,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build setup
         uses: ./.github/actions/build-setup
       - name: Run cargo-udeps
@@ -124,7 +124,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build setup
         uses: ./.github/actions/build-setup
       - name: Run tests
@@ -134,7 +134,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
       - name: Build setup
         uses: ./.github/actions/build-setup
       - name: mdBook setup
